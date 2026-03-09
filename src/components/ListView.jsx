@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
-import { StatusBadge, MotivoBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress, formatDate } from './Shared';
+import { StatusBadge, MotivoBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress } from './Shared';
+import { formatDate } from '../utils/formatters';
 import { Search, Filter, ChevronRight, Calendar, User, AlertCircle } from 'lucide-react';
-import { differenceInDays, parseISO, format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { differenceInDays, parseISO } from 'date-fns';
 
 function getUrgencyClass(dataPagamento, status) {
   if (status === 'pago' || status === 'cancelado') return '';

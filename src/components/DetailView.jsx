@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { StatusBadge, MotivoBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress, formatDate, formatDateTime } from './Shared';
+import { StatusBadge, MotivoBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress } from './Shared';
+import { formatDate, formatDateTime } from '../utils/formatters';
 import { ModalEditarDesligamento } from './Modals';
 import {
   ArrowLeft, Edit2, Trash2, Calendar, User, Briefcase,
@@ -20,14 +21,15 @@ export function DetailView({ id }) {
   const [nota, setNota] = useState('');
   const [acaoNote, setAcaoNote] = useState('');
   const [showNoteInput, setShowNoteInput] = useState(false);
-  const [savingStatus, setSavingStatus] = useState(false);
 
   if (!d) return null;
 
   async function handleDelete() {
     try {
       await actions.deleteDesligamento(d.id);
-    } catch {}
+    } catch {
+      // Erro silenciado para manter fluxo de navegação
+    }
     dispatch({ type: 'SET_SELECTED', id: null });
     dispatch({ type: 'SET_VIEW', view: 'lista' });
   }
@@ -49,11 +51,11 @@ export function DetailView({ id }) {
   }
 
   async function handleStatusChange(newStatus) {
-    setSavingStatus(true);
     try {
       await actions.changeStatus(d, newStatus);
-    } catch {}
-    setSavingStatus(false);
+    } catch {
+      // Erro gerenciado via AppContext (state.error)
+    }
   }
 
   // Group checklist by etapa

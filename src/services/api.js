@@ -23,7 +23,9 @@ async function request(method, endpoint, body) {
     try {
       const err = await res.json();
       message = err.error || err.detail || message;
-    } catch {}
+    } catch {
+      // Ignora erro de parsing do JSON
+    }
     throw new Error(message);
   }
 

@@ -1,7 +1,6 @@
 import React from 'react';
 import { STATUS_FLOW, MOTIVOS } from '../data/initialData';
-import { differenceInDays, format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { differenceInDays, parseISO } from 'date-fns';
 
 export function StatusBadge({ status }) {
   const labels = {
@@ -52,17 +51,13 @@ export function ProgressSteps({ status }) {
 export function DaysUntilPayment({ dataPagamento }) {
   if (!dataPagamento) return null;
   const days = differenceInDays(parseISO(dataPagamento), new Date());
-  let cls = 'highlight';
   let txt = '';
   if (days < 0) {
     txt = `Vencido há ${Math.abs(days)}d`;
-    cls = 'text-red';
   } else if (days === 0) {
     txt = 'Hoje!';
-    cls = 'text-orange';
   } else if (days <= 5) {
     txt = `${days}d restantes`;
-    cls = 'text-yellow';
   } else {
     txt = `${days}d`;
   }
@@ -86,16 +81,3 @@ export function ChecklistProgress({ checklist }) {
   );
 }
 
-export function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  try {
-    return format(parseISO(dateStr), "dd/MM/yyyy", { locale: ptBR });
-  } catch { return dateStr; }
-}
-
-export function formatDateTime(dateStr) {
-  if (!dateStr) return '—';
-  try {
-    return format(parseISO(dateStr), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
-  } catch { return dateStr; }
-}
