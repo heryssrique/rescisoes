@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { StatusBadge, MotivoBadge, formatDate, DaysUntilPayment } from './Shared';
+import { StatusBadge, MotivoBadge, DaysUntilPayment } from './Shared';
+import { formatDate } from '../utils/formatters';
 import { Calendar } from 'lucide-react';
 
 const COLUMNS = [
