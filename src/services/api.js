@@ -52,6 +52,11 @@ export function createDesligamento(data) {
   return request('POST', '/desligamentos', data);
 }
 
+/** Importa múltiplos desligamentos. */
+export function importDesligamentos(data) {
+  return request('POST', '/desligamentos/bulk', data);
+}
+
 /** Substitui todos os campos de um desligamento (update completo). */
 export function updateDesligamento(id, data) {
   return request('PUT', `/desligamentos/${id}`, data);

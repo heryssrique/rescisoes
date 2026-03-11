@@ -4,15 +4,17 @@ import { ListView } from './components/ListView';
 import { KanbanView } from './components/KanbanView';
 import { DetailView } from './components/DetailView';
 import { ModalNovoDesligamento } from './components/Modals';
+import { ModalImportarPlanilha } from './components/ImportModal';
 import { seedDatabase } from './services/api';
 import {
-  LayoutList, Columns, Plus, Users, Database, AlertTriangle, Loader
+  LayoutList, Columns, Plus, Users, Database, AlertTriangle, Loader, FileSpreadsheet
 } from 'lucide-react';
 
 function AppContent() {
   const { state, dispatch, actions } = useApp();
   const { view, selected, desligamentos, loading, error } = state;
   const [showNew, setShowNew] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [seeding, setSeeding] = useState(false);
 
   const activeCount = desligamentos.filter(d => d.status !== 'pago' && d.status !== 'cancelado').length;
@@ -96,6 +98,14 @@ function AppContent() {
             Novo Desligamento
           </button>
           <button
+            id="nav-import"
+            className="nav-item"
+            onClick={() => setShowImport(true)}
+          >
+            <FileSpreadsheet size={15} />
+            Importar Planilha
+          </button>
+          <button
             id="nav-seed"
             className="nav-item"
             onClick={handleSeed}
@@ -157,6 +167,7 @@ function AppContent() {
 
       {/* Modal */}
       {showNew && <ModalNovoDesligamento onClose={() => setShowNew(false)} />}
+      {showImport && <ModalImportarPlanilha onClose={() => setShowImport(false)} />}
     </div>
   );
 }

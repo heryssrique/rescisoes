@@ -162,6 +162,16 @@ export function AppProvider({ children }) {
       toggleChecklist,
       addHistorico,
       changeStatus,
+      importDesligamentos: async (data) => {
+        try {
+          const res = await api.importDesligamentos(data);
+          await fetchAll(); // Recarrega tudo para garantir sincronia
+          return res;
+        } catch (err) {
+          dispatch({ type: 'SET_ERROR', message: `Erro na importação: ${err.message}` });
+          throw err;
+        }
+      },
     },
   };
 

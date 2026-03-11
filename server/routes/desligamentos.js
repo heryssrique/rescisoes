@@ -141,4 +141,21 @@ router.post('/seed', async (req, res) => {
   }
 });
 
+// ─── POST /api/desligamentos/bulk ───────────────────────────────────────────
+// Importa múltiplos desligamentos de uma vez (ex: via planilha)
+router.post('/bulk', async (req, res) => {
+  try {
+    const data = Array.isArray(req.body) ? req.body : [req.body];
+    const docs = await Desligamento.insertMany(data, { runValidators: true });
+    res.status(201).json({ inserted: docs.length, docs });
+  } catch (err) {
+    if (err.name === 'ValidationError' || err.name === 'BulkWriteError') {
+      return res.status(422).json({ error: 'Erro de validação em um ou mais registros', detail: err.message });
+    }
+    console.error('[POST /desligamentos/bulk]', err);
+    res.status(500).json({ error: 'Erro ao importar dados', detail: err.message });
+  }
+});
+
 module.exports = router;
+
