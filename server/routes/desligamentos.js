@@ -146,13 +146,33 @@ router.post('/seed', async (req, res) => {
 router.post('/bulk', async (req, res) => {
   try {
     const data = Array.isArray(req.body) ? req.body : [req.body];
+    console.log(`[POST /desligamentos/bulk] Tentando importar ${data.length} registros`);
+    
+    // insertMany com runValidators garante que o schema seja respeitado
     const docs = await Desligamento.insertMany(data, { runValidators: true });
+    
+    console.log(`[POST /desligamentos/bulk] Sucesso: ${docs.length} registros inseridos`);
     res.status(201).json({ inserted: docs.length, docs });
   } catch (err) {
-    if (err.name === 'ValidationError' || err.name === 'BulkWriteError') {
-      return res.status(422).json({ error: 'Erro de validação em um ou mais registros', detail: err.message });
+    console.error('[POST /desligamentos/bulk] Erro:', err);
+    
+    // Captura erros de validação do Mongoose
+    if (err.name === 'ValidationError') {
+      return res.status(422).json({ 
+        error: 'Erro de validação nos dados', 
+        detail: err.message,
+        errors: err.errors // Detalhes por campo
+      });
     }
-    console.error('[POST /desligamentos/bulk]', err);
+
+    // Erros de escrita em lote do MongoDB
+    if (err.name === 'MongoBulkWriteError' || err.name === 'BulkWriteError') {
+      return res.status(422).json({ 
+        error: 'Erro na escrita em lote (probabilidade de dados duplicados ou inválidos)', 
+        detail: err.message 
+      });
+    }
+
     res.status(500).json({ error: 'Erro ao importar dados', detail: err.message });
   }
 });

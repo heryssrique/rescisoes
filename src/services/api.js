@@ -22,7 +22,7 @@ async function request(method, endpoint, body) {
     let message = `HTTP ${res.status}`;
     try {
       const err = await res.json();
-      message = err.error || err.detail || message;
+      message = err.detail ? `${err.error || 'Erro'}: ${err.detail}` : (err.error || message);
     } catch {
       // Ignora erro de parsing do JSON
     }
