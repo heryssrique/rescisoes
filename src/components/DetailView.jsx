@@ -162,7 +162,7 @@ export function DetailView({ id }) {
           <div className="info-item-value">{formatDate(d.dataDesligamento)}</div>
         </div>
         <div className="info-item">
-          <div className="info-item-label">📅 Data de Pagamento</div>
+          <div className="info-item-label">📅 Data de Pagamento ({d.prazoPagamento || '10'} dias)</div>
           <div className="info-item-value" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {formatDate(d.dataPagamento)}
             <DaysUntilPayment dataPagamento={d.dataPagamento} />

@@ -14,7 +14,9 @@ const COLUMN_MAP = {
   dataAdmissao: ['admissao', 'data de admissao', 'data admissao'],
   dataComunicado: ['comunicado', 'data do comunicado', 'data comunicado', 'ciencia'],
   dataDesligamento: ['desligamento', 'data de desligamento', 'data desligamento', 'saida', 'data saida', 'data demissao'],
-  dataPagamento: ['pagamento', 'data de pagamento', 'data pagamento', 'vencimento', 'prazo pagto 10', 'prazo pagto 7'],
+  dataPagamento: ['pagamento', 'data de pagamento', 'data pagamento', 'vencimento'],
+  prazoPagamento7: ['prazo pagto 7', '7 dias'],
+  prazoPagamento10: ['prazo pagto 10', '10 dias'],
   motivo: ['motivo', 'tipo'],
   avisoPrevio: ['aviso previo', 'tipo de aviso', 'aviso previo'],
   responsavel: ['responsavel', 'rh'],
@@ -30,7 +32,9 @@ const FIELD_LABELS = {
   dataAdmissao: 'Data de Admissão',
   dataComunicado: 'Data do Comunicado / Ciência',
   dataDesligamento: 'Data de Demissão',
-  dataPagamento: 'Prazo de Pagamento',
+  dataPagamento: 'Data de Pagamento',
+  prazoPagamento7: 'Prazo Pagto 7 Dias',
+  prazoPagamento10: 'Prazo Pagto 10 Dias',
   motivo: 'Motivo',
   avisoPrevio: 'Aviso Prévio',
   responsavel: 'Responsável',
@@ -185,24 +189,32 @@ export function ModalImportarPlanilha({ onClose }) {
       const now = format(new Date(), "yyyy-MM-dd'T'HH:mm:ss");
 
       const formattedData = data
-        .map(row => ({
-          nome: String(row[mapping.nome] || '').trim(),
-          coligada: String(row[mapping.coligada] ?? '').trim(),
-          cargo: String(row[mapping.cargo] ?? '').trim(),
-          departamento: String(row[mapping.departamento] ?? '').trim(),
-          matricula: String(row[mapping.matricula] ?? '').trim(),
-          dataAdmissao: formatDate(row[mapping.dataAdmissao]),
-          dataComunicado: formatDate(row[mapping.dataComunicado]) || today,
-          dataDesligamento: formatDate(row[mapping.dataDesligamento]) || '',
-          dataPagamento: formatDate(row[mapping.dataPagamento]) || '',
-          motivo: MOTIVO_MAP[norm(row[mapping.motivo])] || 'demissao',
-          avisoPrevio: AVISO_MAP[norm(row[mapping.avisoPrevio])] || 'indenizado',
-          responsavel: String(row[mapping.responsavel] ?? '').trim(),
-          observacoes: String(row[mapping.observacoes] ?? '').trim(),
-          status: 'comunicado',
-          checklist: CHECKLIST_TEMPLATE.map(c => ({ ...c, done: false, doneAt: null })),
-          historico: [{ data: now, acao: 'Importado via planilha', nota: '' }],
-        }))
+        .map(row => {
+          const dPag7 = formatDate(row[mapping.prazoPagamento7]);
+          const dPag10 = formatDate(row[mapping.prazoPagamento10]);
+          const dPag = formatDate(row[mapping.dataPagamento]) || dPag7 || dPag10 || '';
+          const prazo = dPag7 ? '7' : '10';
+
+          return {
+            nome: String(row[mapping.nome] || '').trim(),
+            coligada: String(row[mapping.coligada] ?? '').trim(),
+            cargo: String(row[mapping.cargo] ?? '').trim(),
+            departamento: String(row[mapping.departamento] ?? '').trim(),
+            matricula: String(row[mapping.matricula] ?? '').trim(),
+            dataAdmissao: formatDate(row[mapping.dataAdmissao]),
+            dataComunicado: formatDate(row[mapping.dataComunicado]) || today,
+            dataDesligamento: formatDate(row[mapping.dataDesligamento]) || '',
+            dataPagamento: dPag,
+            prazoPagamento: prazo,
+            motivo: MOTIVO_MAP[norm(row[mapping.motivo])] || 'demissao',
+            avisoPrevio: AVISO_MAP[norm(row[mapping.avisoPrevio])] || 'indenizado',
+            responsavel: String(row[mapping.responsavel] ?? '').trim(),
+            observacoes: String(row[mapping.observacoes] ?? '').trim(),
+            status: 'comunicado',
+            checklist: CHECKLIST_TEMPLATE.map(c => ({ ...c, done: false, doneAt: null })),
+            historico: [{ data: now, acao: 'Importado via planilha', nota: '' }],
+          };
+        })
         .filter(item => item.nome); // Remove linhas sem nome
 
       if (formattedData.length === 0) {
