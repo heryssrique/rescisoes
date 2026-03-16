@@ -2,11 +2,13 @@ import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { StatusBadge, MotivoBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress } from './Shared';
 import { formatDate } from '../utils/formatters';
-import { Search, Filter, ChevronRight, Calendar, User, AlertCircle } from 'lucide-react';
+import { Search, ChevronRight, Calendar, User, AlertCircle, Archive, ChevronDown, ChevronUp } from 'lucide-react';
 import { differenceInDays, parseISO } from 'date-fns';
 
+const ARCHIVED_STATUSES = ['pago', 'cancelado'];
+
 function getUrgencyClass(dataPagamento, status) {
-  if (status === 'pago' || status === 'cancelado') return '';
+  if (ARCHIVED_STATUSES.includes(status) || !dataPagamento) return '';
   const days = differenceInDays(parseISO(dataPagamento), new Date());
   if (days < 0) return 'urgency-crit';
   if (days <= 3) return 'urgency-high';
@@ -37,54 +39,82 @@ function DateGroupTag({ dataPagamento }) {
   return null;
 }
 
+function TermCard({ d, onOpen }) {
+  return (
+    <article
+      key={d.id}
+      className="term-card"
+      onClick={() => onOpen(d.id)}
+      id={`card-${d.id}`}
+    >
+      <div className={`urgency-bar ${getUrgencyClass(d.dataPagamento, d.status)}`} />
+      <div className="term-card-header">
+        <div>
+          <div className="term-name">{d.nome}</div>
+          <div className="term-role">{d.cargo}{d.departamento ? ` · ${d.departamento}` : ''}{d.matricula ? ` · ${d.matricula}` : ''}</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+          <StatusBadge status={d.status} />
+          <ChevronRight size={16} style={{ color: 'var(--text-muted)', marginTop: 2 }} />
+        </div>
+      </div>
+
+      <div className="term-meta">
+        <div className="term-meta-item">
+          <div className="term-meta-label">Comunicado</div>
+          <div className="term-meta-value">{formatDate(d.dataComunicado)}</div>
+        </div>
+        <div className="term-meta-item">
+          <div className="term-meta-label">Desligamento</div>
+          <div className="term-meta-value">{formatDate(d.dataDesligamento)}</div>
+        </div>
+        <div className="term-meta-item">
+          <div className="term-meta-label">Pagamento</div>
+          <div className="term-meta-value highlight">
+            {formatDate(d.dataPagamento)} <DaysUntilPayment dataPagamento={d.dataPagamento} />
+          </div>
+        </div>
+        <div className="term-meta-item">
+          <div className="term-meta-label">Motivo</div>
+          <div className="term-meta-value"><MotivoBadge motivo={d.motivo} /></div>
+        </div>
+        {d.responsavel && (
+          <div className="term-meta-item">
+            <div className="term-meta-label">Responsável</div>
+            <div className="term-meta-value">{d.responsavel}</div>
+          </div>
+        )}
+      </div>
+
+      <div style={{ marginTop: 14 }}>
+        <ChecklistProgress checklist={d.checklist} />
+      </div>
+      <ProgressSteps status={d.status} />
+    </article>
+  );
+}
+
 export function ListView() {
   const { state, dispatch } = useApp();
   const { desligamentos } = state;
 
   const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState('todos');
+  const [filterStatus, setFilterStatus] = useState('ativos'); // padrão: apenas ativos
   const [filterMotivo, setFilterMotivo] = useState('todos');
   const [sortBy, setSortBy] = useState('pagamento');
+  const [showArchived, setShowArchived] = useState(false);
 
-  const activeCount = desligamentos.filter(d => d.status !== 'pago' && d.status !== 'cancelado').length;
-
-  const filtered = useMemo(() => {
-    return desligamentos.filter(d => {
-      const matchSearch = !search ||
-        d.nome.toLowerCase().includes(search.toLowerCase()) ||
-        d.cargo.toLowerCase().includes(search.toLowerCase()) ||
-        d.departamento?.toLowerCase().includes(search.toLowerCase()) ||
-        d.matricula?.toLowerCase().includes(search.toLowerCase());
-      const matchStatus = filterStatus === 'todos' || d.status === filterStatus;
-      const matchMotivo = filterMotivo === 'todos' || d.motivo === filterMotivo;
-      return matchSearch && matchStatus && matchMotivo;
-    });
-  }, [desligamentos, search, filterStatus, filterMotivo]);
-
-  const grouped = useMemo(() => {
-    if (sortBy === 'pagamento') return groupByPaymentDate(filtered);
-    // Sort by status
-    const groups = {};
-    filtered.forEach(d => {
-      if (!groups[d.status]) groups[d.status] = [];
-      groups[d.status].push(d);
-    });
-    return Object.entries(groups);
-  }, [filtered, sortBy]);
-
-  function openDetail(id) {
-    dispatch({ type: 'SET_SELECTED', id });
-    dispatch({ type: 'SET_VIEW', view: 'detalhe' });
-  }
+  const activeCount = desligamentos.filter(d => !ARCHIVED_STATUSES.includes(d.status)).length;
+  const archivedCount = desligamentos.filter(d => ARCHIVED_STATUSES.includes(d.status)).length;
 
   const aVencer = desligamentos.filter(d => {
-    if (d.status === 'pago' || d.status === 'cancelado') return false;
+    if (ARCHIVED_STATUSES.includes(d.status) || !d.dataPagamento) return false;
     const days = differenceInDays(parseISO(d.dataPagamento), new Date());
     return days >= 0 && days <= 5;
   }).length;
 
   const vencidos = desligamentos.filter(d => {
-    if (d.status === 'pago' || d.status === 'cancelado') return false;
+    if (ARCHIVED_STATUSES.includes(d.status) || !d.dataPagamento) return false;
     const days = differenceInDays(parseISO(d.dataPagamento), new Date());
     return days < 0;
   }).length;
@@ -94,8 +124,45 @@ export function ListView() {
     documentacao: desligamentos.filter(d => d.status === 'documentacao').length,
     homologacao: desligamentos.filter(d => d.status === 'homologacao').length,
     aguardando: desligamentos.filter(d => d.status === 'aguardando').length,
-    pago: desligamentos.filter(d => d.status === 'pago').length,
   };
+
+  const applyFilter = (list, includeArchived) =>
+    list.filter(d => {
+      const isArchived = ARCHIVED_STATUSES.includes(d.status);
+      if (!includeArchived && isArchived) return false;
+      if (includeArchived && !isArchived) return false;
+
+      const matchSearch = !search ||
+        d.nome?.toLowerCase().includes(search.toLowerCase()) ||
+        d.cargo?.toLowerCase().includes(search.toLowerCase()) ||
+        d.departamento?.toLowerCase().includes(search.toLowerCase()) ||
+        d.matricula?.toLowerCase().includes(search.toLowerCase());
+
+      const matchStatus = filterStatus === 'ativos' || filterStatus === 'todos' || d.status === filterStatus;
+      const matchMotivo = filterMotivo === 'todos' || d.motivo === filterMotivo;
+      return matchSearch && matchStatus && matchMotivo;
+    });
+
+  const activeFiltered = useMemo(() => applyFilter(desligamentos, false), [desligamentos, search, filterStatus, filterMotivo]);
+  const archivedFiltered = useMemo(() => applyFilter(desligamentos, true), [desligamentos, search, filterMotivo]);
+
+  const makeGroups = (list) => {
+    if (sortBy === 'pagamento') return groupByPaymentDate(list);
+    const groups = {};
+    list.forEach(d => {
+      if (!groups[d.status]) groups[d.status] = [];
+      groups[d.status].push(d);
+    });
+    return Object.entries(groups);
+  };
+
+  const activeGrouped = useMemo(() => makeGroups(activeFiltered), [activeFiltered, sortBy]);
+  const archivedGrouped = useMemo(() => makeGroups(archivedFiltered), [archivedFiltered, sortBy]);
+
+  function openDetail(id) {
+    dispatch({ type: 'SET_SELECTED', id });
+    dispatch({ type: 'SET_VIEW', view: 'detalhe' });
+  }
 
   return (
     <div className="page-content">
@@ -117,9 +184,9 @@ export function ListView() {
           <div className="stat-icon"><AlertCircle size={48} /></div>
         </div>
         <div className="stat-card green">
-          <div className="stat-label">Pagos</div>
-          <div className="stat-value">{statusCounts.pago}</div>
-          <div className="stat-icon"><User size={48} /></div>
+          <div className="stat-label">Arquivados</div>
+          <div className="stat-value">{archivedCount}</div>
+          <div className="stat-icon"><Archive size={48} /></div>
         </div>
         <div className="stat-card purple">
           <div className="stat-label">Total Geral</div>
@@ -141,20 +208,18 @@ export function ListView() {
         </div>
 
         <select id="filter-status" className="filter-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-          <option value="todos">Todos os status</option>
+          <option value="ativos">Processos Ativos</option>
           <option value="comunicado">Comunicado ({statusCounts.comunicado})</option>
           <option value="documentacao">Documentação ({statusCounts.documentacao})</option>
           <option value="homologacao">Homologação ({statusCounts.homologacao})</option>
           <option value="aguardando">Ag. Pagamento ({statusCounts.aguardando})</option>
-          <option value="pago">Pago ({statusCounts.pago})</option>
-          <option value="cancelado">Cancelado</option>
         </select>
 
         <select id="filter-motivo" className="filter-select" value={filterMotivo} onChange={e => setFilterMotivo(e.target.value)}>
           <option value="todos">Todos os motivos</option>
           <option value="pedido">Pedido de Demissão</option>
           <option value="demissao">Sem Justa Causa</option>
-          <option value="acordo">Acordo Mútuo</option>
+          <option value="acordo">Acordo Mútuo / Término</option>
           <option value="justa">Justa Causa</option>
           <option value="aposentadoria">Aposentadoria</option>
         </select>
@@ -165,14 +230,15 @@ export function ListView() {
         </select>
       </div>
 
-      {filtered.length === 0 ? (
+      {/* Lista ativa */}
+      {activeFiltered.length === 0 ? (
         <div className="empty-state">
           <User size={64} />
-          <p>Nenhum desligamento encontrado</p>
+          <p>Nenhum processo ativo encontrado</p>
           <span>Tente ajustar os filtros ou crie um novo desligamento</span>
         </div>
       ) : (
-        grouped.map(([groupKey, items]) => (
+        activeGrouped.map(([groupKey, items]) => (
           <div key={groupKey} className="date-group">
             <div className="date-group-header">
               <Calendar size={14} style={{ color: 'var(--text-muted)' }} />
@@ -186,64 +252,81 @@ export function ListView() {
               <DateGroupTag dataPagamento={groupKey !== 'sem-data' ? groupKey : null} />
               <span className="section-count">{items.length}</span>
             </div>
-
             <div className="term-list">
-              {items.map(d => (
-                <article
-                  key={d.id}
-                  className="term-card"
-                  onClick={() => openDetail(d.id)}
-                  id={`card-${d.id}`}
-                >
-                  <div className={`urgency-bar ${getUrgencyClass(d.dataPagamento, d.status)}`} />
-                  <div className="term-card-header">
-                    <div>
-                      <div className="term-name">{d.nome}</div>
-                      <div className="term-role">{d.cargo}{d.departamento ? ` · ${d.departamento}` : ''}{d.matricula ? ` · ${d.matricula}` : ''}</div>
-                    </div>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                      <StatusBadge status={d.status} />
-                      <ChevronRight size={16} style={{ color: 'var(--text-muted)', marginTop: 2 }} />
-                    </div>
-                  </div>
-
-                  <div className="term-meta">
-                    <div className="term-meta-item">
-                      <div className="term-meta-label">Comunicado</div>
-                      <div className="term-meta-value">{formatDate(d.dataComunicado)}</div>
-                    </div>
-                    <div className="term-meta-item">
-                      <div className="term-meta-label">Desligamento</div>
-                      <div className="term-meta-value">{formatDate(d.dataDesligamento)}</div>
-                    </div>
-                    <div className="term-meta-item">
-                      <div className="term-meta-label">Pagamento</div>
-                      <div className="term-meta-value highlight">
-                        {formatDate(d.dataPagamento)} <DaysUntilPayment dataPagamento={d.dataPagamento} />
-                      </div>
-                    </div>
-                    <div className="term-meta-item">
-                      <div className="term-meta-label">Motivo</div>
-                      <div className="term-meta-value"><MotivoBadge motivo={d.motivo} /></div>
-                    </div>
-                    {d.responsavel && (
-                      <div className="term-meta-item">
-                        <div className="term-meta-label">Responsável</div>
-                        <div className="term-meta-value">{d.responsavel}</div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div style={{ marginTop: 14 }}>
-                    <ChecklistProgress checklist={d.checklist} />
-                  </div>
-
-                  <ProgressSteps status={d.status} />
-                </article>
-              ))}
+              {items.map(d => <TermCard key={d.id} d={d} onOpen={openDetail} />)}
             </div>
           </div>
         ))
+      )}
+
+      {/* Seção de Arquivados */}
+      {archivedCount > 0 && (
+        <div style={{ marginTop: 32 }}>
+          <button
+            id="btn-toggle-arquivados"
+            onClick={() => setShowArchived(v => !v)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              width: '100%',
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-md)',
+              padding: '12px 16px',
+              cursor: 'pointer',
+              color: 'var(--text-muted)',
+              fontSize: 13,
+              fontWeight: 600,
+              transition: 'all 0.2s',
+            }}
+          >
+            <Archive size={15} />
+            Arquivados — Pago / Cancelado
+            <span
+              style={{
+                marginLeft: 6,
+                background: 'var(--bg-card-hover)',
+                border: '1px solid var(--border-light)',
+                borderRadius: 20,
+                padding: '1px 8px',
+                fontSize: 11,
+              }}
+            >
+              {archivedCount}
+            </span>
+            <span style={{ marginLeft: 'auto' }}>
+              {showArchived ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+            </span>
+          </button>
+
+          {showArchived && (
+            <div style={{ marginTop: 16 }}>
+              {archivedFiltered.length === 0 ? (
+                <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 24, fontSize: 13 }}>
+                  Nenhum processo arquivado corresponde à busca.
+                </div>
+              ) : (
+                archivedGrouped.map(([groupKey, items]) => (
+                  <div key={groupKey} className="date-group">
+                    <div className="date-group-header" style={{ opacity: 0.75 }}>
+                      <Archive size={14} style={{ color: 'var(--text-muted)' }} />
+                      <span className="date-group-label">
+                        {groupKey === 'sem-data' ? 'Sem data' : (
+                          sortBy === 'pagamento' ? `Pagamento: ${formatDate(groupKey)}` : `Status: ${groupKey}`
+                        )}
+                      </span>
+                      <span className="section-count">{items.length}</span>
+                    </div>
+                    <div className="term-list" style={{ opacity: 0.7 }}>
+                      {items.map(d => <TermCard key={d.id} d={d} onOpen={openDetail} />)}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
