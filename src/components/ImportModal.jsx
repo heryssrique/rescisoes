@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import { X, Upload, Check, Loader, AlertTriangle } from 'lucide-react';
 import { CHECKLIST_TEMPLATE } from '../data/initialData';
 import { format } from 'date-fns';
-import { addBusinessDaysWithHolidays } from '../utils/dateUtils';
+import { getPaymentDate } from '../utils/dateUtils';
 
 const COLUMN_MAP = {
   nome: ['nome', 'funcionario', 'colaborador', 'nome do funcionário', 'nome completo'],
@@ -201,7 +201,7 @@ export function ModalImportarPlanilha({ onClose }) {
 
           // Se não tiver data de pagamento mas tiver desligamento, calcula
           if (!dPag && dDesl) {
-            dPag = addBusinessDaysWithHolidays(dDesl, prazo);
+            dPag = getPaymentDate(dDesl, prazo);
           }
 
           return {

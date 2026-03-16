@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { MOTIVOS, CHECKLIST_TEMPLATE, COLIGADAS } from '../data/initialData';
 import { format, addDays, parseISO } from 'date-fns';
-import { addBusinessDaysWithHolidays } from '../utils/dateUtils';
+import { getPaymentDate } from '../utils/dateUtils';
 import { X, User, Calendar, FileText, Info, Loader } from 'lucide-react';
 
 const INITIAL_FORM = {
@@ -72,11 +72,11 @@ export function ModalNovoDesligamento({ onClose }) {
         newForm.diasAvisoTrabalhado = '';
       }
 
-      // Auto-calculo da data de pagamento (padrão 10 dias úteis para o campo oculto)
+      // Auto-calculo da data de pagamento (padrão      // Auto-calculo da data de pagamento
       if (field === 'dataDesligamento') {
         if (newForm.dataDesligamento) {
           try {
-            newForm.dataPagamento = addBusinessDaysWithHolidays(newForm.dataDesligamento, 10);
+            newForm.dataPagamento = getPaymentDate(newForm.dataDesligamento, 10);
           } catch (e) {
             console.error('Erro ao calcular data de pagamento', e);
           }

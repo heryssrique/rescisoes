@@ -47,19 +47,16 @@ export function isHoliday(date) {
 }
 
 /**
- * Adiciona dias úteis (pula fins de semana e feriados)
+ * Calcula a data de pagamento: conta dias corridos e antecipa se cair em fim de semana ou feriado.
  */
-export function addBusinessDaysWithHolidays(startDateStr, days) {
+export function getPaymentDate(startDateStr, days) {
   if (!startDateStr) return '';
-  let date = parseISO(startDateStr);
-  let count = 0;
-  const target = parseInt(days);
+  let date = addDays(parseISO(startDateStr), parseInt(days));
 
-  while (count < target) {
-    date = addDays(date, 1);
-    if (!isWeekend(date) && !isHoliday(date)) {
-      count++;
-    }
+  // Enquanto for fim de semana ou feriado, antecipa 1 dia
+  while (isWeekend(date) || isHoliday(date)) {
+    date = addDays(date, -1);
   }
+
   return format(date, 'yyyy-MM-dd');
 }

@@ -5,7 +5,7 @@ import { formatDate } from '../utils/formatters';
 import { MOTIVOS } from '../data/initialData';
 import { Search, ChevronRight, Calendar, User, AlertCircle, Archive, ChevronDown, ChevronUp, Clock } from 'lucide-react';
 import { differenceInDays, parseISO } from 'date-fns';
-import { addBusinessDaysWithHolidays } from '../utils/dateUtils';
+import { getPaymentDate } from '../utils/dateUtils';
 
 const ARCHIVED_STATUSES = ['pago', 'cancelado'];
 
@@ -78,13 +78,13 @@ function TermCard({ d, onOpen }) {
           <div className="term-meta-value highlight" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', width: 22 }}>7d:</span>
-              <span>{formatDate(addBusinessDaysWithHolidays(d.dataDesligamento, 7))}</span>
-              <DaysUntilPayment dataPagamento={addBusinessDaysWithHolidays(d.dataDesligamento, 7)} />
+              <span>{formatDate(getPaymentDate(d.dataDesligamento, 7))}</span>
+              <DaysUntilPayment dataPagamento={getPaymentDate(d.dataDesligamento, 7)} />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', width: 22 }}>10d:</span>
-              <span style={{ color: 'var(--accent-yellow)', fontWeight: 600 }}>{formatDate(addBusinessDaysWithHolidays(d.dataDesligamento, 10))}</span>
-              <DaysUntilPayment dataPagamento={addBusinessDaysWithHolidays(d.dataDesligamento, 10)} />
+              <span style={{ color: 'var(--accent-yellow)', fontWeight: 600 }}>{formatDate(getPaymentDate(d.dataDesligamento, 10))}</span>
+              <DaysUntilPayment dataPagamento={getPaymentDate(d.dataDesligamento, 10)} />
             </div>
           </div>
         </div>
