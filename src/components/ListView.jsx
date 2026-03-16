@@ -111,8 +111,6 @@ export function ListView() {
 
   const activeCount = desligamentos.filter(d => !ARCHIVED_STATUSES.includes(d.status)).length;
   const archivedCount = desligamentos.filter(d => ARCHIVED_STATUSES.includes(d.status)).length;
-  const prazo7Count = desligamentos.filter(d => !ARCHIVED_STATUSES.includes(d.status) && d.prazoPagamento === '7').length;
-  const prazo10Count = desligamentos.filter(d => !ARCHIVED_STATUSES.includes(d.status) && (d.prazoPagamento === '10' || !d.prazoPagamento)).length;
 
   const aVencer = desligamentos.filter(d => {
     if (ARCHIVED_STATUSES.includes(d.status) || !d.dataPagamento) return false;
@@ -198,16 +196,6 @@ export function ListView() {
           <div className="stat-label">Arquivados</div>
           <div className="stat-value">{archivedCount}</div>
           <div className="stat-icon"><Archive size={48} /></div>
-        </div>
-        <div className="stat-card indigo">
-          <div className="stat-label">Prazo 7 Dias</div>
-          <div className="stat-value">{prazo7Count}</div>
-          <div className="stat-icon"><Clock size={48} /></div>
-        </div>
-        <div className="stat-card cyan">
-          <div className="stat-label">Prazo 10 Dias</div>
-          <div className="stat-value">{prazo10Count}</div>
-          <div className="stat-icon"><Calendar size={48} /></div>
         </div>
         <div className="stat-card purple">
           <div className="stat-label">Total Geral</div>
