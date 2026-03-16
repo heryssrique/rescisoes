@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { StatusBadge, MotivoBadge, ColigadaBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress } from './Shared';
 import { formatDate } from '../utils/formatters';
 import { MOTIVOS } from '../data/initialData';
-import { Search, ChevronRight, Calendar, User, AlertCircle, Archive, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, ChevronRight, Calendar, User, AlertCircle, Archive, ChevronDown, ChevronUp, Clock } from 'lucide-react';
 import { differenceInDays, parseISO } from 'date-fns';
 
 const ARCHIVED_STATUSES = ['pago', 'cancelado'];
