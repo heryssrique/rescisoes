@@ -15,7 +15,6 @@ const INITIAL_FORM = {
   dataComunicado: format(new Date(), 'yyyy-MM-dd'),
   dataDesligamento: '',
   dataPagamento: '',
-  prazoPagamento: '10',
   motivo: 'demissao',
   avisoPrevio: 'indenizado',
   diasAvisoTrabalhado: '',
@@ -73,12 +72,11 @@ export function ModalNovoDesligamento({ onClose }) {
         newForm.diasAvisoTrabalhado = '';
       }
 
-      // Auto-calculo da data de pagamento
-      if (field === 'dataDesligamento' || field === 'prazoPagamento') {
+      // Auto-calculo da data de pagamento (padrão 10 dias úteis para o campo oculto)
+      if (field === 'dataDesligamento') {
         if (newForm.dataDesligamento) {
-          const days = parseInt(newForm.prazoPagamento || '10');
           try {
-            newForm.dataPagamento = addBusinessDaysWithHolidays(newForm.dataDesligamento, days);
+            newForm.dataPagamento = addBusinessDaysWithHolidays(newForm.dataDesligamento, 10);
           } catch (e) {
             console.error('Erro ao calcular data de pagamento', e);
           }
@@ -213,29 +211,6 @@ export function ModalNovoDesligamento({ onClose }) {
               />
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Prazo Pagto</label>
-              <select 
-                className="form-input" 
-                value={form.prazoPagamento} 
-                onChange={e => set('prazoPagamento', e.target.value)}
-              >
-                <option value="10">10 Dias</option>
-                <option value="7">7 Dias</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Data de Pagamento <span className="required">*</span></label>
-              <input
-                id="input-pagamento"
-                type="date"
-                className="form-input"
-                value={form.dataPagamento}
-                onChange={e => set('dataPagamento', e.target.value)}
-                style={errors.dataPagamento ? { borderColor: 'var(--accent-red)' } : {}}
-              />
-            </div>
 
             <div className="form-section-title"><FileText size={13} /> Tipo e Aviso Prévio</div>
 
@@ -409,17 +384,6 @@ export function ModalEditarDesligamento({ desligamento, onClose }) {
             <div className="form-group">
               <label className="form-label">Data de Desligamento</label>
               <input type="date" className="form-input" value={form.dataDesligamento} onChange={e => set('dataDesligamento', e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Prazo Pagto</label>
-              <select className="form-input" value={form.prazoPagamento || '10'} onChange={e => set('prazoPagamento', e.target.value)}>
-                <option value="10">10 Dias</option>
-                <option value="7">7 Dias</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Data de Pagamento</label>
-              <input type="date" className="form-input" value={form.dataPagamento} onChange={e => set('dataPagamento', e.target.value)} />
             </div>
 
             <div className="form-section-title"><FileText size={13} /> Status e Tipo</div>
