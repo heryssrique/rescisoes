@@ -74,7 +74,7 @@ function TermCard({ d, onOpen }) {
           <div className="term-meta-value">{formatDate(d.dataDesligamento)}</div>
         </div>
         <div className="term-meta-item">
-          <div className="term-meta-label">Prazos de Pagamento (7d / 10d úteis)</div>
+          <div className="term-meta-label">Prazos de Pagamento (7d / 10d corridos)</div>
           <div className="term-meta-value highlight" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', width: 22 }}>7d:</span>

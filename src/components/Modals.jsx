@@ -72,7 +72,7 @@ export function ModalNovoDesligamento({ onClose }) {
         newForm.diasAvisoTrabalhado = '';
       }
 
-      // Auto-calculo da data de pagamento (padrão      // Auto-calculo da data de pagamento
+      // Auto-calculo da data de pagamento (10 dias corridos com antecipação)
       if (field === 'dataDesligamento') {
         if (newForm.dataDesligamento) {
           try {
@@ -312,12 +312,11 @@ export function ModalEditarDesligamento({ desligamento, onClose }) {
         newForm.diasAvisoTrabalhado = '';
       }
 
-      // Auto-calculo da data de pagamento
-      if (field === 'dataDesligamento' || field === 'prazoPagamento') {
+      // Auto-calculo da data de pagamento (10 dias corridos com antecipação)
+      if (field === 'dataDesligamento') {
         if (newForm.dataDesligamento) {
-          const days = parseInt(newForm.prazoPagamento || '10');
           try {
-            newForm.dataPagamento = addBusinessDaysWithHolidays(newForm.dataDesligamento, days);
+            newForm.dataPagamento = getPaymentDate(newForm.dataDesligamento, 10);
           } catch (e) {
             console.error('Erro ao calcular data de pagamento', e);
           }
