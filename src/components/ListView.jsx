@@ -105,11 +105,14 @@ export function ListView() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('ativos'); // padrão: apenas ativos
   const [filterMotivo, setFilterMotivo] = useState('todos');
+  const [filterPrazo, setFilterPrazo] = useState('todos');
   const [sortBy, setSortBy] = useState('pagamento');
   const [showArchived, setShowArchived] = useState(false);
 
   const activeCount = desligamentos.filter(d => !ARCHIVED_STATUSES.includes(d.status)).length;
   const archivedCount = desligamentos.filter(d => ARCHIVED_STATUSES.includes(d.status)).length;
+  const prazo7Count = desligamentos.filter(d => !ARCHIVED_STATUSES.includes(d.status) && d.prazoPagamento === '7').length;
+  const prazo10Count = desligamentos.filter(d => !ARCHIVED_STATUSES.includes(d.status) && (d.prazoPagamento === '10' || !d.prazoPagamento)).length;
 
   const aVencer = desligamentos.filter(d => {
     if (ARCHIVED_STATUSES.includes(d.status) || !d.dataPagamento) return false;
@@ -144,7 +147,11 @@ export function ListView() {
 
       const matchStatus = filterStatus === 'ativos' || filterStatus === 'todos' || d.status === filterStatus;
       const matchMotivo = filterMotivo === 'todos' || d.motivo === filterMotivo;
-      return matchSearch && matchStatus && matchMotivo;
+      const matchPrazo = filterPrazo === 'todos' || 
+                         (filterPrazo === '7' && d.prazoPagamento === '7') ||
+                         (filterPrazo === '10' && (d.prazoPagamento === '10' || !d.prazoPagamento));
+      
+      return matchSearch && matchStatus && matchMotivo && matchPrazo;
     });
 
   const activeFiltered = useMemo(() => applyFilter(desligamentos, false), [desligamentos, search, filterStatus, filterMotivo]);
@@ -192,6 +199,16 @@ export function ListView() {
           <div className="stat-value">{archivedCount}</div>
           <div className="stat-icon"><Archive size={48} /></div>
         </div>
+        <div className="stat-card indigo">
+          <div className="stat-label">Prazo 7 Dias</div>
+          <div className="stat-value">{prazo7Count}</div>
+          <div className="stat-icon"><Clock size={48} /></div>
+        </div>
+        <div className="stat-card cyan">
+          <div className="stat-label">Prazo 10 Dias</div>
+          <div className="stat-value">{prazo10Count}</div>
+          <div className="stat-icon"><Calendar size={48} /></div>
+        </div>
         <div className="stat-card purple">
           <div className="stat-label">Total Geral</div>
           <div className="stat-value">{desligamentos.length}</div>
@@ -224,6 +241,12 @@ export function ListView() {
           {MOTIVOS.map(m => (
             <option key={m.value} value={m.value}>{m.label}</option>
           ))}
+        </select>
+
+        <select id="filter-prazo" className="filter-select" value={filterPrazo} onChange={e => setFilterPrazo(e.target.value)}>
+          <option value="todos">Prazos: Todos</option>
+          <option value="7">Prazo 7 Dias</option>
+          <option value="10">Prazo 10 Dias</option>
         </select>
 
         <select id="sort-select" className="filter-select" value={sortBy} onChange={e => setSortBy(e.target.value)}>
