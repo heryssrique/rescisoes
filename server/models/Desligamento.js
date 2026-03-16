@@ -17,7 +17,7 @@ const HistoricoItemSchema = new mongoose.Schema({
 const DesligamentoSchema = new mongoose.Schema(
   {
     nome: { type: String, required: true, trim: true },
-    cargo: { type: String, required: true, trim: true },
+    cargo: { type: String, trim: true, default: '' },
     departamento: { type: String, trim: true, default: '' },
     matricula: { type: String, trim: true, default: '' },
     dataAdmissao: { type: String, default: '' },
