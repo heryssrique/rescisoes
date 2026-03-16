@@ -23,6 +23,24 @@ function reducer(state, action) {
           d.id === action.payload.id ? action.payload : d
         ),
       };
+    // Optimistic: inverte o item localmente SEM esperar o servidor
+    case 'TOGGLE_CHECKLIST_OPTIMISTIC': {
+      const now = new Date().toISOString();
+      return {
+        ...state,
+        desligamentos: state.desligamentos.map(d => {
+          if (d.id !== action.desligamentoId) return d;
+          return {
+            ...d,
+            checklist: d.checklist.map(c => {
+              if (c.id !== action.itemId) return c;
+              const newDone = !c.done;
+              return { ...c, done: newDone, doneAt: newDone ? now : null };
+            }),
+          };
+        }),
+      };
+    }
     case 'DELETE_DESLIGAMENTO':
       return { ...state, desligamentos: state.desligamentos.filter(d => d.id !== action.id) };
 
@@ -113,11 +131,18 @@ export function AppProvider({ children }) {
   }
 
   async function toggleChecklist(desligamentoId, itemId) {
+    // 1. Atualiza a UI imediatamente (optimistic update)
+    dispatch({ type: 'TOGGLE_CHECKLIST_OPTIMISTIC', desligamentoId, itemId });
+
     try {
+      // 2. Sincroniza com o servidor em segundo plano
       const doc = await api.toggleChecklistItem(desligamentoId, itemId);
+      // 3. Confirma com os dados reais do servidor (ex: doneAt preciso)
       dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: doc });
       return doc;
     } catch (err) {
+      // 4. Reverte o estado se falhar
+      dispatch({ type: 'TOGGLE_CHECKLIST_OPTIMISTIC', desligamentoId, itemId });
       dispatch({ type: 'SET_ERROR', message: `Erro no checklist: ${err.message}` });
       throw err;
     }
