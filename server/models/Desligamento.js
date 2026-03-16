@@ -21,9 +21,9 @@ const DesligamentoSchema = new mongoose.Schema(
     departamento: { type: String, trim: true, default: '' },
     matricula: { type: String, trim: true, default: '' },
     dataAdmissao: { type: String, default: '' },
-    dataComunicado: { type: String, required: true },
-    dataDesligamento: { type: String, required: true },
-    dataPagamento: { type: String, required: true },
+    dataComunicado: { type: String, default: '' },
+    dataDesligamento: { type: String, default: '' },
+    dataPagamento: { type: String, default: '' },
     motivo: {
       type: String,
       enum: ['pedido', 'demissao', 'acordo', 'justa', 'aposentadoria'],

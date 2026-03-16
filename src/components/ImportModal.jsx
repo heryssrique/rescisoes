@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import * as XLSX from 'xlsx';
-import { X, FileSpreadsheet, Upload, AlertCircle, Check, Loader } from 'lucide-react';
+import { X, Upload, Check, Loader, AlertTriangle } from 'lucide-react';
 import { CHECKLIST_TEMPLATE } from '../data/initialData';
 import { format } from 'date-fns';
 
@@ -9,72 +9,102 @@ const COLUMN_MAP = {
   nome: ['nome', 'funcionario', 'colaborador', 'nome do funcionário', 'nome completo'],
   cargo: ['cargo', 'função'],
   departamento: ['departamento', 'setor', 'área', 'obra'],
-  matricula: ['matrícula', 'id', 'registro', 'cód', 'chapa'],
-  dataAdmissao: ['admissão', 'data de admissão', 'data admissão'],
-  dataComunicado: ['comunicado', 'data do comunicado', 'data comunicado', 'ciência'],
-  dataDesligamento: ['desligamento', 'data de desligamento', 'data desligamento', 'saída', 'data saída', 'data demissão'],
+  matricula: ['matrícula', 'id', 'registro', 'cod', 'chapa'],
+  dataAdmissao: ['admissao', 'data de admissao', 'data admissao'],
+  dataComunicado: ['comunicado', 'data do comunicado', 'data comunicado', 'ciencia'],
+  dataDesligamento: ['desligamento', 'data de desligamento', 'data desligamento', 'saida', 'data saida', 'data demissao'],
   dataPagamento: ['pagamento', 'data de pagamento', 'data pagamento', 'vencimento', 'prazo pagto 10', 'prazo pagto 7'],
   motivo: ['motivo', 'tipo'],
-  avisoPrevio: ['aviso prévio', 'tipo de aviso', 'aviso'],
-  responsavel: ['responsável', 'rh'],
-  observacoes: ['observações', 'notas', 'obs'],
+  avisoPrevio: ['aviso previo', 'tipo de aviso', 'aviso previo'],
+  responsavel: ['responsavel', 'rh'],
+  observacoes: ['observacoes', 'notas', 'obs'],
+};
+
+const FIELD_LABELS = {
+  nome: 'Nome',
+  cargo: 'Cargo',
+  departamento: 'Departamento / Obra',
+  matricula: 'Matrícula / Chapa',
+  dataAdmissao: 'Data de Admissão',
+  dataComunicado: 'Data do Comunicado / Ciência',
+  dataDesligamento: 'Data de Demissão',
+  dataPagamento: 'Prazo de Pagamento',
+  motivo: 'Motivo',
+  avisoPrevio: 'Aviso Prévio',
+  responsavel: 'Responsável',
+  observacoes: 'Observações',
 };
 
 const MOTIVO_MAP = {
   'pedido': 'pedido',
-  'pedido de demissão': 'pedido',
+  'pedido de demissao': 'pedido',
   'pedido na experiencia': 'pedido',
   'pedido de demissao experiencia': 'pedido',
   'pedido de demissao com desconto do aviso': 'pedido',
-  'demissão': 'demissao',
-  'demissão sem justa causa': 'demissao',
+  'demissao': 'demissao',
+  'demissao sem justa causa': 'demissao',
   'dispensa s/ justa causa aviso indenizado': 'demissao',
   'dispensa s/ justa causa aviso trabalhado': 'demissao',
-  'demissão sem justa causa - trab': 'demissao',
+  'demissao sem justa causa - trab': 'demissao',
   'dispensa': 'demissao',
   'acordo': 'acordo',
   'justa causa': 'justa',
   'aposentadoria': 'aposentadoria',
-  'termino de contrato': 'acordo', // Geralmente tratado como acordo ou fim de prazo
+  'termino de contrato': 'acordo',
   'termino contrato': 'acordo',
+  'termino antecipado exp': 'demissao',
   'termino de contrato antec experiencia': 'demissao',
   'termino de contrato antecipado': 'demissao',
+  'aux. administrativo': 'demissao',
+  'auxiliar de logistica': 'demissao',
 };
 
 const AVISO_MAP = {
   'trabalhado': 'trabalhado',
   'indenizado': 'indenizado',
-  'ok': 'indenizado', // Frequentemente usado em planilhas para indicar que o aviso está OK (indenizado)
-  'não aplicável': 'nao_aplicavel',
+  'ok': 'indenizado',
   'nao aplicavel': 'nao_aplicavel',
   'n/a': 'nao_aplicavel',
 };
 
-function normalizeKey(key) {
-  return key.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+// Normaliza qualquer string: minúsculas, sem acentos, sem espaços extras
+function norm(key) {
+  if (!key) return '';
+  return String(key)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
 }
 
 function formatDate(val) {
-  if (!val) return '';
+  if (val === null || val === undefined || val === '') return '';
   if (typeof val === 'number') {
-    // Excel date serial
-    const date = new Date(Math.round((val - 25569) * 86400 * 1000));
-    return format(date, 'yyyy-MM-dd');
+    // Número serial do Excel
+    try {
+      const date = new Date(Math.round((val - 25569) * 86400 * 1000));
+      if (isNaN(date.getTime())) return '';
+      return format(date, 'yyyy-MM-dd');
+    } catch {
+      return '';
+    }
   }
   if (typeof val === 'string') {
-    const parts = val.split(/[-/]/);
+    const s = val.trim();
+    if (!s) return '';
+    const parts = s.split(/[-/]/);
     if (parts.length === 3) {
-      // Tenta DD/MM/YYYY
       if (parts[2].length === 4) {
+        // DD/MM/YYYY ou DD-MM-YYYY
         return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
       }
-      // Tenta YYYY-MM-DD
       if (parts[0].length === 4) {
+        // YYYY-MM-DD
         return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
       }
     }
   }
-  return val;
+  return String(val).trim();
 }
 
 export function ModalImportarPlanilha({ onClose }) {
@@ -84,12 +114,12 @@ export function ModalImportarPlanilha({ onClose }) {
   const [mapping, setMapping] = useState({});
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [preview, setPreview] = useState([]);
   const fileInputRef = useRef();
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     setLoading(true);
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -97,7 +127,7 @@ export function ModalImportarPlanilha({ onClose }) {
         const workbook = XLSX.read(event.target.result, { type: 'binary' });
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
-        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
 
         if (rows.length < 2) {
           alert('A planilha parece estar vazia ou não contém cabeçalhos.');
@@ -105,22 +135,28 @@ export function ModalImportarPlanilha({ onClose }) {
           return;
         }
 
-        const rawHeaders = rows[0];
-        const rawData = rows.slice(1);
-        
+        const rawHeaders = rows[0].map(h => String(h));
+        const rawData = rows.slice(1).filter(row => row.some(c => c !== '' && c !== null && c !== undefined));
+
         setHeaders(rawHeaders);
         setData(rawData);
-        
-        // Auto mapping
+        setPreview(rawData.slice(0, 5));
+
+        // Auto mapping — usa a função norm() para comparação robusta
         const initialMapping = {};
         rawHeaders.forEach((h, index) => {
-          const normH = normalizeKey(h.toString());
+          const normH = norm(h);
           for (const [key, aliases] of Object.entries(COLUMN_MAP)) {
-            if (aliases.some(alias => normalizeKey(alias) === normH)) {
+            if (aliases.some(alias => norm(alias) === normH)) {
               initialMapping[key] = index;
             }
           }
         });
+
+        // Log para depuração dos cabeçalhos identificados
+        console.log('[ImportModal] Cabeçalhos encontrados:', rawHeaders.map((h, i) => `${i}: "${h}" → norm: "${norm(h)}"`));
+        console.log('[ImportModal] Mapeamento automático:', initialMapping);
+
         setMapping(initialMapping);
       } catch (err) {
         console.error(err);
@@ -133,41 +169,44 @@ export function ModalImportarPlanilha({ onClose }) {
   };
 
   const handleImport = async () => {
-    if (!mapping.nome || !mapping.dataDesligamento || !mapping.dataPagamento) {
-      alert('Por favor, mapeie pelo menos o Nome, Data de Desligamento e Data de Pagamento.');
+    if (mapping.nome == null) {
+      alert('Por favor, mapeie pelo menos a coluna de Nome.');
       return;
     }
 
     setImporting(true);
     try {
-      const formattedData = data.map(row => {
-        const item = {
-          nome: row[mapping.nome] || '',
-          cargo: row[mapping.cargo] || '',
-          departamento: row[mapping.departamento] || '',
-          matricula: row[mapping.matricula]?.toString() || '',
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const now = format(new Date(), "yyyy-MM-dd'T'HH:mm:ss");
+
+      const formattedData = data
+        .map(row => ({
+          nome: String(row[mapping.nome] || '').trim(),
+          cargo: String(row[mapping.cargo] ?? '').trim(),
+          departamento: String(row[mapping.departamento] ?? '').trim(),
+          matricula: String(row[mapping.matricula] ?? '').trim(),
           dataAdmissao: formatDate(row[mapping.dataAdmissao]),
-          dataComunicado: formatDate(row[mapping.dataComunicado]) || format(new Date(), 'yyyy-MM-dd'),
-          dataDesligamento: formatDate(row[mapping.dataDesligamento]),
-          dataPagamento: formatDate(row[mapping.dataPagamento]),
-          motivo: MOTIVO_MAP[normalizeKey(row[mapping.motivo]?.toString() || '')] || 'demissao',
-          avisoPrevio: AVISO_MAP[normalizeKey(row[mapping.avisoPrevio]?.toString() || '')] || 'indenizado',
-          responsavel: row[mapping.responsavel] || '',
-          observacoes: row[mapping.observacoes] || '',
+          dataComunicado: formatDate(row[mapping.dataComunicado]) || today,
+          dataDesligamento: formatDate(row[mapping.dataDesligamento]) || '',
+          dataPagamento: formatDate(row[mapping.dataPagamento]) || '',
+          motivo: MOTIVO_MAP[norm(row[mapping.motivo])] || 'demissao',
+          avisoPrevio: AVISO_MAP[norm(row[mapping.avisoPrevio])] || 'indenizado',
+          responsavel: String(row[mapping.responsavel] ?? '').trim(),
+          observacoes: String(row[mapping.observacoes] ?? '').trim(),
           status: 'comunicado',
           checklist: CHECKLIST_TEMPLATE.map(c => ({ ...c, done: false, doneAt: null })),
-          historico: [
-            {
-              data: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
-              acao: 'Importado via planilha',
-              nota: '',
-            },
-          ],
-        };
-        return item;
-      }).filter(item => item.nome); // Remove linhas vazias
+          historico: [{ data: now, acao: 'Importado via planilha', nota: '' }],
+        }))
+        .filter(item => item.nome); // Remove linhas sem nome
+
+      if (formattedData.length === 0) {
+        alert('Nenhum registro válido encontrado. Verifique se a coluna "Nome" está mapeada corretamente.');
+        setImporting(false);
+        return;
+      }
 
       await actions.importDesligamentos(formattedData);
+      alert(`✅ ${formattedData.length} registro(s) importado(s) com sucesso!`);
       onClose();
     } catch (err) {
       alert('Erro na importação: ' + err.message);
@@ -176,9 +215,11 @@ export function ModalImportarPlanilha({ onClose }) {
     }
   };
 
+  const missingRequired = mapping.nome == null;
+
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="modal" style={{ maxWidth: 800 }}>
+      <div className="modal" style={{ maxWidth: 820 }}>
         <div className="modal-header">
           <div>
             <div className="modal-title">Importar Planilha</div>
@@ -191,7 +232,7 @@ export function ModalImportarPlanilha({ onClose }) {
           {!data ? (
             <div className="import-dropzone" onClick={() => fileInputRef.current.click()}>
               {loading ? (
-                <Loader size={32} className="spin" style={{ color: 'var(--primary)' }} />
+                <Loader size={32} className="spin" style={{ color: 'var(--accent-blue)' }} />
               ) : (
                 <>
                   <Upload size={32} style={{ color: 'var(--text-muted)', marginBottom: 12 }} />
@@ -199,31 +240,38 @@ export function ModalImportarPlanilha({ onClose }) {
                   <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Os cabeçalhos serão identificados automaticamente</div>
                 </>
               )}
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                style={{ display: 'none' }} 
-                accept=".xlsx, .xls, .csv" 
-                onChange={handleFileUpload} 
+              <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                accept=".xlsx, .xls, .csv"
+                onChange={handleFileUpload}
               />
             </div>
           ) : (
             <div className="import-config">
-              <div className="alert alert-info" style={{ marginBottom: 16 }}>
-                <Check size={14} />
-                <span>Planilha carregada com <strong>{data.length}</strong> linhas. Verifique o mapeamento das colunas:</span>
+              <div className="alert alert-info" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Check size={14} style={{ flexShrink: 0 }} />
+                <span>Planilha carregada com <strong>{data.length}</strong> linhas. Verifique o mapeamento das colunas abaixo:</span>
               </div>
+
+              {missingRequired && (
+                <div className="alert alert-warning" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+                  <span>A coluna <strong>Nome</strong> precisa ser mapeada para continuar.</span>
+                </div>
+              )}
 
               <div className="mapping-grid">
                 {Object.keys(COLUMN_MAP).map(field => (
                   <div key={field} className="mapping-item">
                     <label className="form-label" style={{ fontSize: 11, marginBottom: 4, display: 'block' }}>
-                      {field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
-                      {['nome', 'dataDesligamento', 'dataPagamento'].includes(field) && <span className="required">*</span>}
+                      {FIELD_LABELS[field]}
+                      {field === 'nome' && <span className="required"> *</span>}
                     </label>
-                    <select 
-                      className="form-input" 
-                      style={{ padding: '4px 8px', fontSize: 13 }}
+                    <select
+                      className="form-input"
+                      style={{ padding: '4px 8px', fontSize: 12 }}
                       value={mapping[field] ?? ''}
                       onChange={e => setMapping({ ...mapping, [field]: e.target.value === '' ? null : parseInt(e.target.value) })}
                     >
@@ -237,21 +285,23 @@ export function ModalImportarPlanilha({ onClose }) {
               </div>
 
               <div style={{ marginTop: 20 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 8 }}>Prévia dos primeiros registros:</div>
-                <div className="table-container" style={{ maxHeight: 200, overflow: 'auto', border: '1px solid var(--border-light)', borderRadius: 4 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 8 }}>
+                  Prévia dos primeiros registros:
+                </div>
+                <div style={{ maxHeight: 200, overflow: 'auto', border: '1px solid var(--border-light)', borderRadius: 4 }}>
                   <table className="data-table" style={{ fontSize: 11 }}>
                     <thead>
                       <tr>
                         {headers.map((h, i) => (
-                          <th key={i} style={{ background: 'var(--bg-light)', position: 'sticky', top: 0 }}>{h}</th>
+                          <th key={i} style={{ background: 'var(--bg-secondary)', position: 'sticky', top: 0 }}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {data.slice(0, 5).map((row, i) => (
+                      {preview.map((row, i) => (
                         <tr key={i}>
-                          {row.map((cell, j) => (
-                            <td key={j}>{cell?.toString() || '-'}</td>
+                          {headers.map((_, j) => (
+                            <td key={j}>{row[j]?.toString() || '-'}</td>
                           ))}
                         </tr>
                       ))}
@@ -266,8 +316,14 @@ export function ModalImportarPlanilha({ onClose }) {
         <div className="modal-footer">
           <button className="btn btn-secondary" onClick={onClose} disabled={importing}>Cancelar</button>
           {data && (
-            <button className="btn btn-primary" onClick={handleImport} disabled={importing}>
-              {importing ? <><Loader size={13} className="spin" /> Importando...</> : `Importar ${data.length} Registros`}
+            <button
+              className="btn btn-primary"
+              onClick={handleImport}
+              disabled={importing || missingRequired}
+            >
+              {importing
+                ? <><Loader size={13} className="spin" /> Importando...</>
+                : `Importar ${data.filter(r => r[mapping.nome]).length} Registros`}
             </button>
           )}
         </div>
