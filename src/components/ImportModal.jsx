@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 
 const COLUMN_MAP = {
   nome: ['nome', 'funcionario', 'colaborador', 'nome do funcionário', 'nome completo'],
+  coligada: ['coligada', 'empresa', 'filial', 'cód coligada'],
   cargo: ['cargo', 'função'],
   departamento: ['departamento', 'setor', 'área', 'obra'],
   matricula: ['matrícula', 'id', 'registro', 'cod', 'chapa'],
@@ -22,6 +23,7 @@ const COLUMN_MAP = {
 
 const FIELD_LABELS = {
   nome: 'Nome',
+  coligada: 'Coligada / Empresa',
   cargo: 'Cargo',
   departamento: 'Departamento / Obra',
   matricula: 'Matrícula / Chapa',
@@ -185,6 +187,7 @@ export function ModalImportarPlanilha({ onClose }) {
       const formattedData = data
         .map(row => ({
           nome: String(row[mapping.nome] || '').trim(),
+          coligada: String(row[mapping.coligada] ?? '').trim(),
           cargo: String(row[mapping.cargo] ?? '').trim(),
           departamento: String(row[mapping.departamento] ?? '').trim(),
           matricula: String(row[mapping.matricula] ?? '').trim(),

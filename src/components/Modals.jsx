@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { MOTIVOS, CHECKLIST_TEMPLATE } from '../data/initialData';
+import { MOTIVOS, CHECKLIST_TEMPLATE, COLIGADAS } from '../data/initialData';
 import { format } from 'date-fns';
 import { X, User, Calendar, FileText, Info, Loader } from 'lucide-react';
 
 const INITIAL_FORM = {
   nome: '',
+  coligada: '',
   cargo: '',
   departamento: '',
   matricula: '',
@@ -90,6 +91,20 @@ export function ModalNovoDesligamento({ onClose }) {
                 onChange={e => set('nome', e.target.value)}
                 style={errors.nome ? { borderColor: 'var(--accent-red)' } : {}}
               />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Coligada / Empresa</label>
+              <select
+                className="form-input"
+                value={form.coligada}
+                onChange={e => set('coligada', e.target.value)}
+              >
+                <option value="">Selecione a empresa</option>
+                {Object.entries(COLIGADAS).map(([code, c]) => (
+                  <option key={code} value={code}>{code} - {c.nome}</option>
+                ))}
+              </select>
             </div>
 
             <div className="form-group">
@@ -283,6 +298,15 @@ export function ModalEditarDesligamento({ desligamento, onClose }) {
             <div className="form-group">
               <label className="form-label">Nome</label>
               <input className="form-input" value={form.nome} onChange={e => set('nome', e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Coligada / Empresa</label>
+              <select className="form-input" value={form.coligada} onChange={e => set('coligada', e.target.value)}>
+                <option value="">Selecione a empresa</option>
+                {Object.entries(COLIGADAS).map(([code, c]) => (
+                  <option key={code} value={code}>{code} - {c.nome}</option>
+                ))}
+              </select>
             </div>
             <div className="form-group">
               <label className="form-label">Matrícula</label>

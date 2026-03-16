@@ -1,5 +1,5 @@
 import React from 'react';
-import { STATUS_FLOW, MOTIVOS } from '../data/initialData';
+import { STATUS_FLOW, MOTIVOS, COLIGADAS } from '../data/initialData';
 import { differenceInDays, parseISO } from 'date-fns';
 
 export function StatusBadge({ status }) {
@@ -23,6 +23,28 @@ export function MotivoBadge({ motivo }) {
   const m = MOTIVOS.find(x => x.value === motivo);
   if (!m) return null;
   return <span className={`motivo-tag ${m.class}`}>{m.label}</span>;
+}
+
+export function ColigadaBadge({ code }) {
+  const c = COLIGADAS[code];
+  if (!c) return <span className="coligada-tag" style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>{code}</span>;
+  return (
+    <span 
+      className="coligada-tag" 
+      style={{ 
+        background: `${c.color}20`, 
+        color: c.color,
+        border: `1px solid ${c.color}40`,
+        padding: '2px 8px',
+        borderRadius: '12px',
+        fontSize: '10px',
+        fontWeight: '700',
+        textTransform: 'uppercase'
+      }}
+    >
+      {code} - {c.nome}
+    </span>
+  );
 }
 
 export function ProgressSteps({ status }) {

@@ -1,5 +1,11 @@
 import { addDays, format, subDays } from 'date-fns';
 
+export const COLIGADAS = {
+  '1': { nome: 'Concreta', color: '#3b82f6' },
+  '4': { nome: 'JPL Gomes', color: '#10b981' },
+  '11': { nome: 'JC Gomes', color: '#8b5cf6' },
+};
+
 const today = new Date();
 
 export const MOTIVOS = [

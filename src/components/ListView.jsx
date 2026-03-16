@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
-import { StatusBadge, MotivoBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress } from './Shared';
+import { StatusBadge, MotivoBadge, ColigadaBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress } from './Shared';
 import { formatDate } from '../utils/formatters';
 import { MOTIVOS } from '../data/initialData';
 import { Search, ChevronRight, Calendar, User, AlertCircle, Archive, ChevronDown, ChevronUp } from 'lucide-react';
@@ -51,7 +51,10 @@ function TermCard({ d, onOpen }) {
       <div className={`urgency-bar ${getUrgencyClass(d.dataPagamento, d.status)}`} />
       <div className="term-card-header">
         <div>
-          <div className="term-name">{d.nome}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <div className="term-name">{d.nome}</div>
+            {d.coligada && <ColigadaBadge code={d.coligada} />}
+          </div>
           <div className="term-role">{d.cargo}{d.departamento ? ` · ${d.departamento}` : ''}{d.matricula ? ` · ${d.matricula}` : ''}</div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>

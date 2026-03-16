@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { StatusBadge, MotivoBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress } from './Shared';
+import { StatusBadge, MotivoBadge, ColigadaBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress } from './Shared';
 import { formatDate, formatDateTime } from '../utils/formatters';
 import { ModalEditarDesligamento } from './Modals';
 import {
@@ -91,7 +91,10 @@ export function DetailView({ id }) {
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
             <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: -0.5 }}>{d.nome}</h1>
-            <StatusBadge status={d.status} />
+            <div style={{ display: 'flex', gap: 8 }}>
+              {d.coligada && <ColigadaBadge code={d.coligada} />}
+              <StatusBadge status={d.status} />
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--text-muted)', fontSize: 13 }}>
             <span>{d.cargo}</span>
