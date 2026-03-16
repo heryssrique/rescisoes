@@ -26,7 +26,7 @@ const DesligamentoSchema = new mongoose.Schema(
     dataPagamento: { type: String, default: '' },
     motivo: {
       type: String,
-      enum: ['pedido', 'demissao', 'acordo', 'justa', 'aposentadoria'],
+      enum: ['pedido', 'demissao', 'acordo', 'justa', 'aposentadoria', 'termino_empresa', 'termino_empregado', 'termino_contrato'],
       default: 'demissao',
     },
     avisoPrevio: {

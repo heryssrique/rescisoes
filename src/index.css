@@ -1197,6 +1197,7 @@ select.form-input {
 .motivo-acordo { background: rgba(245,158,11,0.12); color: #fcd34d; }
 .motivo-justa { background: rgba(249,115,22,0.12); color: #fb923c; }
 .motivo-aposentadoria { background: rgba(20,184,166,0.12); color: #2dd4bf; }
+.motivo-termino { background: rgba(139,92,246,0.12); color: #c4b5fd; }
 
 /* Sidebar footer */
 .sidebar-footer {

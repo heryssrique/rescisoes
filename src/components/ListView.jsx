@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { StatusBadge, MotivoBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress } from './Shared';
 import { formatDate } from '../utils/formatters';
+import { MOTIVOS } from '../data/initialData';
 import { Search, ChevronRight, Calendar, User, AlertCircle, Archive, ChevronDown, ChevronUp } from 'lucide-react';
 import { differenceInDays, parseISO } from 'date-fns';
 
@@ -217,11 +218,9 @@ export function ListView() {
 
         <select id="filter-motivo" className="filter-select" value={filterMotivo} onChange={e => setFilterMotivo(e.target.value)}>
           <option value="todos">Todos os motivos</option>
-          <option value="pedido">Pedido de Demissão</option>
-          <option value="demissao">Sem Justa Causa</option>
-          <option value="acordo">Acordo Mútuo / Término</option>
-          <option value="justa">Justa Causa</option>
-          <option value="aposentadoria">Aposentadoria</option>
+          {MOTIVOS.map(m => (
+            <option key={m.value} value={m.value}>{m.label}</option>
+          ))}
         </select>
 
         <select id="sort-select" className="filter-select" value={sortBy} onChange={e => setSortBy(e.target.value)}>

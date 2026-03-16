@@ -8,6 +8,9 @@ export const MOTIVOS = [
   { value: 'acordo', label: 'Acordo Mútuo (§6 da CLT)', class: 'motivo-acordo' },
   { value: 'justa', label: 'Demissão com Justa Causa', class: 'motivo-justa' },
   { value: 'aposentadoria', label: 'Aposentadoria', class: 'motivo-aposentadoria' },
+  { value: 'termino_empresa', label: 'Término Antecipado — Empresa', class: 'motivo-termino' },
+  { value: 'termino_empregado', label: 'Término Antecipado — Empregado', class: 'motivo-termino' },
+  { value: 'termino_contrato', label: 'Término de Contrato', class: 'motivo-termino' },
 ];
 
 export const STATUS_FLOW = [
