@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { CHECKLIST_TEMPLATE, STATUS_FLOW } from '../data/initialData';
 import { format } from 'date-fns';
+import { getPaymentDate } from '../utils/dateUtils';
 
 const AVISO_LABEL = { trabalhado: 'Trabalhado', indenizado: 'Indenizado', nao_aplicavel: 'Não aplicável' };
 
@@ -162,10 +163,18 @@ export function DetailView({ id }) {
           <div className="info-item-value">{formatDate(d.dataDesligamento)}</div>
         </div>
         <div className="info-item">
-          <div className="info-item-label">📅 Data de Pagamento ({d.prazoPagamento || '10'} dias)</div>
-          <div className="info-item-value" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {formatDate(d.dataPagamento)}
-            <DaysUntilPayment dataPagamento={d.dataPagamento} />
+          <div className="info-item-label">📅 Prazos de Pagamento (corridos)</div>
+          <div className="info-item-value" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', width: 22 }}>7d:</span>
+              <span>{formatDate(getPaymentDate(d.dataDesligamento, 7))}</span>
+              <DaysUntilPayment dataPagamento={getPaymentDate(d.dataDesligamento, 7)} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', width: 22 }}>10d:</span>
+              <span style={{ color: 'var(--accent-yellow)', fontWeight: 600 }}>{formatDate(getPaymentDate(d.dataDesligamento, 10))}</span>
+              <DaysUntilPayment dataPagamento={getPaymentDate(d.dataDesligamento, 10)} />
+            </div>
           </div>
         </div>
         <div className="info-item">
