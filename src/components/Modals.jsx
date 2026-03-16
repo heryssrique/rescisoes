@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { MOTIVOS, CHECKLIST_TEMPLATE, COLIGADAS } from '../data/initialData';
 import { format, addDays, parseISO } from 'date-fns';
+import { addBusinessDaysWithHolidays } from '../utils/dateUtils';
 import { X, User, Calendar, FileText, Info, Loader } from 'lucide-react';
 
 const INITIAL_FORM = {
@@ -77,8 +78,7 @@ export function ModalNovoDesligamento({ onClose }) {
         if (newForm.dataDesligamento) {
           const days = parseInt(newForm.prazoPagamento || '10');
           try {
-            const date = addDays(parseISO(newForm.dataDesligamento), days);
-            newForm.dataPagamento = format(date, 'yyyy-MM-dd');
+            newForm.dataPagamento = addBusinessDaysWithHolidays(newForm.dataDesligamento, days);
           } catch (e) {
             console.error('Erro ao calcular data de pagamento', e);
           }
@@ -342,8 +342,7 @@ export function ModalEditarDesligamento({ desligamento, onClose }) {
         if (newForm.dataDesligamento) {
           const days = parseInt(newForm.prazoPagamento || '10');
           try {
-            const date = addDays(parseISO(newForm.dataDesligamento), days);
-            newForm.dataPagamento = format(date, 'yyyy-MM-dd');
+            newForm.dataPagamento = addBusinessDaysWithHolidays(newForm.dataDesligamento, days);
           } catch (e) {
             console.error('Erro ao calcular data de pagamento', e);
           }

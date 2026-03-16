@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 import { X, Upload, Check, Loader, AlertTriangle } from 'lucide-react';
 import { CHECKLIST_TEMPLATE } from '../data/initialData';
 import { format } from 'date-fns';
+import { addBusinessDaysWithHolidays } from '../utils/dateUtils';
 
 const COLUMN_MAP = {
   nome: ['nome', 'funcionario', 'colaborador', 'nome do funcionário', 'nome completo'],
@@ -192,10 +193,16 @@ export function ModalImportarPlanilha({ onClose }) {
 
       const formattedData = data
         .map(row => {
+          const dDesl = formatDate(row[mapping.dataDesligamento]) || '';
           const dPag7 = formatDate(row[mapping.prazoPagamento7]);
           const dPag10 = formatDate(row[mapping.prazoPagamento10]);
-          const dPag = formatDate(row[mapping.dataPagamento]) || dPag7 || dPag10 || '';
           const prazo = dPag7 ? '7' : '10';
+          let dPag = formatDate(row[mapping.dataPagamento]) || dPag7 || dPag10 || '';
+
+          // Se não tiver data de pagamento mas tiver desligamento, calcula
+          if (!dPag && dDesl) {
+            dPag = addBusinessDaysWithHolidays(dDesl, prazo);
+          }
 
           return {
             nome: String(row[mapping.nome] || '').trim(),
@@ -205,7 +212,7 @@ export function ModalImportarPlanilha({ onClose }) {
             matricula: String(row[mapping.matricula] ?? '').trim(),
             dataAdmissao: formatDate(row[mapping.dataAdmissao]),
             dataComunicado: formatDate(row[mapping.dataComunicado]) || today,
-            dataDesligamento: formatDate(row[mapping.dataDesligamento]) || '',
+            dataDesligamento: dDesl,
             dataPagamento: dPag,
             prazoPagamento: prazo,
             motivo: MOTIVO_MAP[norm(row[mapping.motivo])] || 'demissao',
