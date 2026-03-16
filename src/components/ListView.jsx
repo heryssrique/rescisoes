@@ -75,7 +75,7 @@ function TermCard({ d, onOpen }) {
         <div className="term-meta-item">
           <div className="term-meta-label">Pagamento</div>
           <div className="term-meta-value highlight">
-            {formatDate(d.dataPagamento)} <DaysUntilPayment dataPagamento={d.dataPagamento} />
+            {formatDate(d.dataPagamento)} <span style={{ fontSize: '0.9em', opacity: 0.8 }}>({d.prazoPagamento || '10'}d)</span> <DaysUntilPayment dataPagamento={d.dataPagamento} />
           </div>
         </div>
         <div className="term-meta-item">
