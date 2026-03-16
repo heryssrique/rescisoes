@@ -170,7 +170,10 @@ export function DetailView({ id }) {
         </div>
         <div className="info-item">
           <div className="info-item-label">Aviso Prévio</div>
-          <div className="info-item-value">{AVISO_LABEL[d.avisoPrevio] || d.avisoPrevio}</div>
+          <div className="info-item-value">
+            {AVISO_LABEL[d.avisoPrevio] || d.avisoPrevio}
+            {d.avisoPrevio === 'trabalhado' && d.diasAvisoTrabalhado && ` (${d.diasAvisoTrabalhado} dias)`}
+          </div>
         </div>
         <div className="info-item" style={{ gridColumn: '1/-1' }}>
           <div className="info-item-label">Motivo</div>

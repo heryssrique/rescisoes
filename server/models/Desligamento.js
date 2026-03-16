@@ -36,6 +36,7 @@ const DesligamentoSchema = new mongoose.Schema(
       enum: ['trabalhado', 'indenizado', 'nao_aplicavel'],
       default: 'indenizado',
     },
+    diasAvisoTrabalhado: { type: String, enum: ['', '23', '30'], default: '' },
     status: {
       type: String,
       enum: ['comunicado', 'documentacao', 'homologacao', 'aguardando', 'pago', 'cancelado'],

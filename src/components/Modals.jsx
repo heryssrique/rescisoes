@@ -17,6 +17,7 @@ const INITIAL_FORM = {
   prazoPagamento: '10',
   motivo: 'demissao',
   avisoPrevio: 'indenizado',
+  diasAvisoTrabalhado: '',
   status: 'comunicado',
   responsavel: '',
   observacoes: '',
@@ -66,6 +67,11 @@ export function ModalNovoDesligamento({ onClose }) {
     setForm(f => {
       const newForm = { ...f, [field]: value };
       
+      // Se mudar o aviso previo e nao for mais trabalhado, limpa os dias
+      if (field === 'avisoPrevio' && value !== 'trabalhado') {
+        newForm.diasAvisoTrabalhado = '';
+      }
+
       // Auto-calculo da data de pagamento
       if (field === 'dataDesligamento' || field === 'prazoPagamento') {
         if (newForm.dataDesligamento) {
@@ -261,6 +267,21 @@ export function ModalNovoDesligamento({ onClose }) {
               </select>
             </div>
 
+            {form.avisoPrevio === 'trabalhado' && (
+              <div className="form-group">
+                <label className="form-label">Dias do Aviso Trabalhado</label>
+                <select
+                  className="form-input"
+                  value={form.diasAvisoTrabalhado}
+                  onChange={e => set('diasAvisoTrabalhado', e.target.value)}
+                >
+                  <option value="">Selecione...</option>
+                  <option value="23">23 Dias (Opção pela redução de 7 dias)</option>
+                  <option value="30">30 Dias (Redução de 2 horas diárias)</option>
+                </select>
+              </div>
+            )}
+
             <div className="form-group full-width">
               <label className="form-label"><Info size={11} style={{ display: 'inline', marginRight: 4 }} />Observações</label>
               <textarea
@@ -311,6 +332,11 @@ export function ModalEditarDesligamento({ desligamento, onClose }) {
     setForm(f => {
       const newForm = { ...f, [field]: value };
       
+      // Se mudar o aviso previo e nao for mais trabalhado, limpa os dias
+      if (field === 'avisoPrevio' && value !== 'trabalhado') {
+        newForm.diasAvisoTrabalhado = '';
+      }
+
       // Auto-calculo da data de pagamento
       if (field === 'dataDesligamento' || field === 'prazoPagamento') {
         if (newForm.dataDesligamento) {
@@ -423,6 +449,16 @@ export function ModalEditarDesligamento({ desligamento, onClose }) {
                 <option value="nao_aplicavel">Não Aplicável</option>
               </select>
             </div>
+            {form.avisoPrevio === 'trabalhado' && (
+              <div className="form-group">
+                <label className="form-label">Dias do Aviso Trabalhado</label>
+                <select className="form-input" value={form.diasAvisoTrabalhado} onChange={e => set('diasAvisoTrabalhado', e.target.value)}>
+                  <option value="">Selecione...</option>
+                  <option value="23">23 Dias</option>
+                  <option value="30">30 Dias</option>
+                </select>
+              </div>
+            )}
             <div className="form-group full-width">
               <label className="form-label">Observações</label>
               <textarea className="form-input" value={form.observacoes} onChange={e => set('observacoes', e.target.value)} />

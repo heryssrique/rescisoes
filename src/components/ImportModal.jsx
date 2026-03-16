@@ -19,6 +19,7 @@ const COLUMN_MAP = {
   prazoPagamento10: ['prazo pagto 10', '10 dias'],
   motivo: ['motivo', 'tipo'],
   avisoPrevio: ['aviso previo', 'tipo de aviso', 'aviso previo'],
+  diasAvisoTrabalhado: ['dias aviso', 'quantidade dias', 'dias trabalhados'],
   responsavel: ['responsavel', 'rh'],
   observacoes: ['observacoes', 'notas', 'obs'],
 };
@@ -37,6 +38,7 @@ const FIELD_LABELS = {
   prazoPagamento10: 'Prazo Pagto 10 Dias',
   motivo: 'Motivo',
   avisoPrevio: 'Aviso Prévio',
+  diasAvisoTrabalhado: 'Dias (23 ou 30)',
   responsavel: 'Responsável',
   observacoes: 'Observações',
 };
@@ -208,6 +210,7 @@ export function ModalImportarPlanilha({ onClose }) {
             prazoPagamento: prazo,
             motivo: MOTIVO_MAP[norm(row[mapping.motivo])] || 'demissao',
             avisoPrevio: AVISO_MAP[norm(row[mapping.avisoPrevio])] || 'indenizado',
+            diasAvisoTrabalhado: String(row[mapping.diasAvisoTrabalhado] || '').trim(),
             responsavel: String(row[mapping.responsavel] ?? '').trim(),
             observacoes: String(row[mapping.observacoes] ?? '').trim(),
             status: 'comunicado',
