@@ -15,7 +15,7 @@ const AVISO_LABEL = { trabalhado: 'Trabalhado', indenizado: 'Indenizado', nao_ap
 
 export function DetailView({ id }) {
   const { state, dispatch, actions } = useApp();
-  const d = state.desligamentos.find(x => x.id === id);
+  const d = state.desligamentos.find(x => x.id === id) || state.archivedDesligamentos?.find(x => x.id === id);
   const [showEdit, setShowEdit] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [activeTab, setActiveTab] = useState('checklist');
@@ -25,6 +25,8 @@ export function DetailView({ id }) {
 
   if (!d) return null;
 
+  const isArchived = d.arquivado === true;
+
   async function handleDelete() {
     try {
       await actions.deleteDesligamento(d.id);
@@ -32,7 +34,21 @@ export function DetailView({ id }) {
       // Erro silenciado para manter fluxo de navegação
     }
     dispatch({ type: 'SET_SELECTED', id: null });
-    dispatch({ type: 'SET_VIEW', view: 'lista' });
+    dispatch({ type: 'SET_VIEW', view: isArchived ? 'arquivados' : 'lista' });
+  }
+
+  async function handleArchive() {
+    if (confirm('Mover este processo para o arquivo?')) {
+      await actions.archiveDesligamento(d.id);
+      dispatch({ type: 'SET_VIEW', view: 'arquivados' });
+    }
+  }
+
+  async function handleUnarchive() {
+    if (confirm('Reativar este processo? Ele voltará para a lista principal.')) {
+      await actions.unarchiveDesligamento(d.id);
+      dispatch({ type: 'SET_VIEW', view: 'lista' });
+    }
   }
 
   async function handleToggle(itemId) {
@@ -84,7 +100,7 @@ export function DetailView({ id }) {
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 24 }}>
         <button
           className="btn btn-secondary btn-sm"
-          onClick={() => { dispatch({ type: 'SET_SELECTED', id: null }); dispatch({ type: 'SET_VIEW', view: 'lista' }); }}
+          onClick={() => { dispatch({ type: 'SET_SELECTED', id: null }); dispatch({ type: 'SET_VIEW', view: isArchived ? 'arquivados' : 'lista' }); }}
           id="btn-voltar"
         >
           <ArrowLeft size={14} /> Voltar
@@ -95,6 +111,7 @@ export function DetailView({ id }) {
             <div style={{ display: 'flex', gap: 8 }}>
               {d.coligada && <ColigadaBadge code={d.coligada} />}
               <StatusBadge status={d.status} />
+              {isArchived && <span className="badge" style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>Arquivado</span>}
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--text-muted)', fontSize: 13 }}>
@@ -104,9 +121,23 @@ export function DetailView({ id }) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-secondary btn-sm" onClick={() => setShowEdit(true)} id="btn-editar">
-            <Edit2 size={13} /> Editar
-          </button>
+          {!isArchived ? (
+            <>
+              {(d.status === 'pago' || d.status === 'cancelado') && (
+                <button className="btn btn-secondary btn-sm" onClick={handleArchive}>
+                  <Archive size={13} /> Arquivar
+                </button>
+              )}
+              <button className="btn btn-secondary btn-sm" onClick={() => setShowEdit(true)} id="btn-editar">
+                <Edit2 size={13} /> Editar
+              </button>
+            </>
+          ) : (
+            <button className="btn btn-secondary btn-sm" onClick={handleUnarchive}>
+              <RotateCcw size={13} /> Reativar
+            </button>
+          )}
+          
           {!confirmDelete
             ? <button className="btn btn-danger btn-sm" onClick={() => setConfirmDelete(true)} id="btn-excluir">
                 <Trash2 size={13} /> Excluir

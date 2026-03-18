@@ -10,8 +10,15 @@ const Desligamento = require('../models/Desligamento');
 //   ?sort=dataPagamento →  campo de ordenação (padrão: dataPagamento asc)
 router.get('/', async (req, res) => {
   try {
-    const { status, motivo, q, sort = 'dataPagamento' } = req.query;
+    const { status, motivo, q, sort = 'dataPagamento', arquivado } = req.query;
     const filter = {};
+
+    // Filtro para arquivados: se não fornecido, busca apenas não arquivados
+    if (arquivado !== undefined) {
+      filter.arquivado = arquivado === 'true';
+    } else {
+      filter.arquivado = false;
+    }
 
     if (status && status !== 'todos') filter.status = status;
     if (motivo && motivo !== 'todos') filter.motivo = motivo;

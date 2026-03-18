@@ -41,7 +41,8 @@ function DateGroupTag({ dataPagamento }) {
   return null;
 }
 
-function TermCard({ d, onOpen }) {
+function TermCard({ d, onOpen, onArchive }) {
+  const isArchivable = d.status === 'pago' || d.status === 'cancelado';
   return (
     <article
       key={d.id}
@@ -58,8 +59,24 @@ function TermCard({ d, onOpen }) {
           </div>
           <div className="term-role">{d.cargo}{d.departamento ? ` · ${d.departamento}` : ''}{d.matricula ? ` · ${d.matricula}` : ''}</div>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-          <StatusBadge status={d.status} />
+        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+            <StatusBadge status={d.status} />
+            {isArchivable && (
+            <button
+              className="btn-icon-sm"
+              title="Mover para Arquivos"
+              onClick={(e) => {
+                e.stopPropagation();
+                onArchive(d.id);
+              }}
+              style={{ padding: '2px 6px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 4, display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 600, color: 'var(--text-secondary)' }}
+            >
+              <Archive size={10} />
+              Arquivar
+            </button>
+            )}
+          </div>
           <ChevronRight size={16} style={{ color: 'var(--text-muted)', marginTop: 2 }} />
         </div>
       </div>
@@ -109,7 +126,7 @@ function TermCard({ d, onOpen }) {
 }
 
 export function ListView() {
-  const { state, dispatch } = useApp();
+  const { state, dispatch, actions } = useApp();
   const { desligamentos } = state;
 
   const [search, setSearch] = useState('');
@@ -117,19 +134,17 @@ export function ListView() {
   const [filterMotivo, setFilterMotivo] = useState('todos');
   const [filterPrazo, setFilterPrazo] = useState('todos');
   const [sortBy, setSortBy] = useState('pagamento');
-  const [showArchived, setShowArchived] = useState(false);
 
-  const activeCount = desligamentos.filter(d => !ARCHIVED_STATUSES.includes(d.status)).length;
-  const archivedCount = desligamentos.filter(d => ARCHIVED_STATUSES.includes(d.status)).length;
+  const activeCount = desligamentos.length;
 
   const aVencer = desligamentos.filter(d => {
-    if (ARCHIVED_STATUSES.includes(d.status) || !d.dataPagamento) return false;
+    if (!d.dataPagamento) return false;
     const days = differenceInDays(parseISO(d.dataPagamento), new Date());
     return days >= 0 && days <= 5;
   }).length;
 
   const vencidos = desligamentos.filter(d => {
-    if (ARCHIVED_STATUSES.includes(d.status) || !d.dataPagamento) return false;
+    if (!d.dataPagamento) return false;
     const days = differenceInDays(parseISO(d.dataPagamento), new Date());
     return days < 0;
   }).length;
@@ -141,12 +156,8 @@ export function ListView() {
     aguardando: desligamentos.filter(d => d.status === 'aguardando').length,
   };
 
-  const applyFilter = (list, includeArchived) =>
+  const applyFilter = (list) =>
     list.filter(d => {
-      const isArchived = ARCHIVED_STATUSES.includes(d.status);
-      if (!includeArchived && isArchived) return false;
-      if (includeArchived && !isArchived) return false;
-
       const matchSearch = !search ||
         d.nome?.toLowerCase().includes(search.toLowerCase()) ||
         d.cargo?.toLowerCase().includes(search.toLowerCase()) ||
@@ -162,8 +173,7 @@ export function ListView() {
       return matchSearch && matchStatus && matchMotivo && matchPrazo;
     });
 
-  const activeFiltered = useMemo(() => applyFilter(desligamentos, false), [desligamentos, search, filterStatus, filterMotivo]);
-  const archivedFiltered = useMemo(() => applyFilter(desligamentos, true), [desligamentos, search, filterMotivo]);
+  const activeFiltered = useMemo(() => applyFilter(desligamentos), [desligamentos, search, filterStatus, filterMotivo]);
 
   const makeGroups = (list) => {
     if (sortBy === 'pagamento') return groupByPaymentDate(list);
@@ -176,11 +186,16 @@ export function ListView() {
   };
 
   const activeGrouped = useMemo(() => makeGroups(activeFiltered), [activeFiltered, sortBy]);
-  const archivedGrouped = useMemo(() => makeGroups(archivedFiltered), [archivedFiltered, sortBy]);
 
   function openDetail(id) {
     dispatch({ type: 'SET_SELECTED', id });
     dispatch({ type: 'SET_VIEW', view: 'detalhe' });
+  }
+
+  async function handleArchive(id) {
+    if (confirm('Mover este processo para o arquivo?')) {
+      await actions.archiveDesligamento(id);
+    }
   }
 
   return (
@@ -202,13 +217,8 @@ export function ListView() {
           <div className="stat-value">{vencidos}</div>
           <div className="stat-icon"><AlertCircle size={48} /></div>
         </div>
-        <div className="stat-card green">
-          <div className="stat-label">Arquivados</div>
-          <div className="stat-value">{archivedCount}</div>
-          <div className="stat-icon"><Archive size={48} /></div>
-        </div>
         <div className="stat-card purple">
-          <div className="stat-label">Total Geral</div>
+          <div className="stat-label">Total Ativos</div>
           <div className="stat-value">{desligamentos.length}</div>
           <div className="stat-icon"><User size={48} /></div>
         </div>
@@ -276,80 +286,10 @@ export function ListView() {
               <span className="section-count">{items.length}</span>
             </div>
             <div className="term-list">
-              {items.map(d => <TermCard key={d.id} d={d} onOpen={openDetail} />)}
+              {items.map(d => <TermCard key={d.id} d={d} onOpen={openDetail} onArchive={handleArchive} />)}
             </div>
           </div>
         ))
-      )}
-
-      {/* Seção de Arquivados */}
-      {archivedCount > 0 && (
-        <div style={{ marginTop: 32 }}>
-          <button
-            id="btn-toggle-arquivados"
-            onClick={() => setShowArchived(v => !v)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              width: '100%',
-              background: 'var(--bg-secondary)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-md)',
-              padding: '12px 16px',
-              cursor: 'pointer',
-              color: 'var(--text-muted)',
-              fontSize: 13,
-              fontWeight: 600,
-              transition: 'all 0.2s',
-            }}
-          >
-            <Archive size={15} />
-            Arquivados — Pago / Cancelado
-            <span
-              style={{
-                marginLeft: 6,
-                background: 'var(--bg-card-hover)',
-                border: '1px solid var(--border-light)',
-                borderRadius: 20,
-                padding: '1px 8px',
-                fontSize: 11,
-              }}
-            >
-              {archivedCount}
-            </span>
-            <span style={{ marginLeft: 'auto' }}>
-              {showArchived ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-            </span>
-          </button>
-
-          {showArchived && (
-            <div style={{ marginTop: 16 }}>
-              {archivedFiltered.length === 0 ? (
-                <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 24, fontSize: 13 }}>
-                  Nenhum processo arquivado corresponde à busca.
-                </div>
-              ) : (
-                archivedGrouped.map(([groupKey, items]) => (
-                  <div key={groupKey} className="date-group">
-                    <div className="date-group-header" style={{ opacity: 0.75 }}>
-                      <Archive size={14} style={{ color: 'var(--text-muted)' }} />
-                      <span className="date-group-label">
-                        {groupKey === 'sem-data' ? 'Sem data' : (
-                          sortBy === 'pagamento' ? `Pagamento: ${formatDate(groupKey)}` : `Status: ${groupKey}`
-                        )}
-                      </span>
-                      <span className="section-count">{items.length}</span>
-                    </div>
-                    <div className="term-list" style={{ opacity: 0.7 }}>
-                      {items.map(d => <TermCard key={d.id} d={d} onOpen={openDetail} />)}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </div>
       )}
     </div>
   );

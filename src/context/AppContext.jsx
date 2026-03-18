@@ -14,35 +14,56 @@ function reducer(state, action) {
     // Dados
     case 'SET_DESLIGAMENTOS':
       return { ...state, desligamentos: action.payload, loading: false };
+    case 'SET_ARCHIVED':
+      return { ...state, archivedDesligamentos: action.payload, loading: false };
     case 'ADD_DESLIGAMENTO':
       return { ...state, desligamentos: [...state.desligamentos, action.payload] };
-    case 'UPDATE_DESLIGAMENTO':
+    case 'UPDATE_DESLIGAMENTO': {
+      const updated = action.payload;
       return {
         ...state,
-        desligamentos: state.desligamentos.map(d =>
-          d.id === action.payload.id ? action.payload : d
-        ),
+        desligamentos: state.desligamentos.map(d => d.id === updated.id ? updated : d),
+        archivedDesligamentos: state.archivedDesligamentos ? state.archivedDesligamentos.map(d => d.id === updated.id ? updated : d) : [],
       };
+    }
     // Optimistic: inverte o item localmente SEM esperar o servidor
     case 'TOGGLE_CHECKLIST_OPTIMISTIC': {
       const now = new Date().toISOString();
+      const updateList = (list) => list.map(d => {
+        if (d.id !== action.desligamentoId) return d;
+        return {
+          ...d,
+          checklist: d.checklist.map(c => {
+            if (c.id !== action.itemId) return c;
+            const newDone = !c.done;
+            return { ...c, done: newDone, doneAt: newDone ? now : null };
+          }),
+        };
+      });
       return {
         ...state,
-        desligamentos: state.desligamentos.map(d => {
-          if (d.id !== action.desligamentoId) return d;
-          return {
-            ...d,
-            checklist: d.checklist.map(c => {
-              if (c.id !== action.itemId) return c;
-              const newDone = !c.done;
-              return { ...c, done: newDone, doneAt: newDone ? now : null };
-            }),
-          };
-        }),
+        desligamentos: updateList(state.desligamentos),
+        archivedDesligamentos: state.archivedDesligamentos ? updateList(state.archivedDesligamentos) : [],
       };
     }
+    case 'ARCHIVE_DESLIGAMENTO':
+      return {
+        ...state,
+        desligamentos: state.desligamentos.filter(d => d.id !== action.payload.id),
+        archivedDesligamentos: [action.payload, ...(state.archivedDesligamentos || [])],
+      };
+    case 'UNARCHIVE_DESLIGAMENTO':
+      return {
+        ...state,
+        archivedDesligamentos: (state.archivedDesligamentos || []).filter(d => d.id !== action.payload.id),
+        desligamentos: [action.payload, ...state.desligamentos],
+      };
     case 'DELETE_DESLIGAMENTO':
-      return { ...state, desligamentos: state.desligamentos.filter(d => d.id !== action.id) };
+      return {
+        ...state,
+        desligamentos: state.desligamentos.filter(d => d.id !== action.id),
+        archivedDesligamentos: (state.archivedDesligamentos || []).filter(d => d.id !== action.id),
+      };
 
     // UI
     case 'SET_VIEW':
@@ -65,6 +86,7 @@ function reducer(state, action) {
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, {
     desligamentos: [],
+    archivedDesligamentos: [],
     view: 'lista',
     selected: null,
     loading: true,
@@ -77,7 +99,7 @@ export function AppProvider({ children }) {
   const fetchAll = useCallback(async () => {
     dispatch({ type: 'SET_LOADING', value: true });
     try {
-      const data = await api.getDesligamentos();
+      const data = await api.getDesligamentos({ arquivado: false });
       dispatch({ type: 'SET_DESLIGAMENTOS', payload: data });
 
       // Se chegou dados do MongoDB, garante modo online
@@ -86,11 +108,21 @@ export function AppProvider({ children }) {
       console.warn('[AppContext] API indisponível, usando localStorage como fallback.', err.message);
       // Fallback: carrega do localStorage se a API falhar
       const saved = loadFromStorage();
-      dispatch({ type: 'SET_DESLIGAMENTOS', payload: saved });
+      dispatch({ type: 'SET_DESLIGAMENTOS', payload: saved.filter(d => !d.arquivado) });
       dispatch({
         type: 'SET_ERROR',
         message: '⚠️ API offline — dados carregados do cache local. Conecte o servidor para salvar alterações no banco.',
       });
+    }
+  }, []);
+
+  const fetchArchived = useCallback(async (searchQuery = '') => {
+    dispatch({ type: 'SET_LOADING', value: true });
+    try {
+      const data = await api.getDesligamentos({ arquivado: true, q: searchQuery });
+      dispatch({ type: 'SET_ARCHIVED', payload: data });
+    } catch (err) {
+      dispatch({ type: 'SET_ERROR', message: `Erro ao buscar arquivados: ${err.message}` });
     }
   }, []);
 
@@ -116,6 +148,40 @@ export function AppProvider({ children }) {
       return doc;
     } catch (err) {
       dispatch({ type: 'SET_ERROR', message: `Erro ao atualizar: ${err.message}` });
+      throw err;
+    }
+  }
+
+  async function archiveDesligamento(id) {
+    const desligamento = state.desligamentos.find(d => d.id === id);
+    if (!desligamento) return;
+    try {
+      const doc = await api.updateDesligamento(id, { ...desligamento, arquivado: true });
+      dispatch({ type: 'ARCHIVE_DESLIGAMENTO', payload: doc });
+      await addHistorico(id, {
+        data: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
+        acao: 'Processo arquivado',
+        nota: '',
+      });
+    } catch (err) {
+      dispatch({ type: 'SET_ERROR', message: `Erro ao arquivar: ${err.message}` });
+      throw err;
+    }
+  }
+
+  async function unarchiveDesligamento(id) {
+    const desligamento = state.archivedDesligamentos.find(d => d.id === id);
+    if (!desligamento) return;
+    try {
+      const doc = await api.updateDesligamento(id, { ...desligamento, arquivado: false });
+      dispatch({ type: 'UNARCHIVE_DESLIGAMENTO', payload: doc });
+      await addHistorico(id, {
+        data: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
+        acao: 'Processo desarquivado',
+        nota: '',
+      });
+    } catch (err) {
+      dispatch({ type: 'SET_ERROR', message: `Erro ao desarquivar: ${err.message}` });
       throw err;
     }
   }
@@ -181,8 +247,11 @@ export function AppProvider({ children }) {
     dispatch: uiDispatch,
     actions: {
       fetchAll,
+      fetchArchived,
       addDesligamento,
       updateDesligamento,
+      archiveDesligamento,
+      unarchiveDesligamento,
       deleteDesligamento,
       toggleChecklist,
       addHistorico,

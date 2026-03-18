@@ -44,6 +44,7 @@ const DesligamentoSchema = new mongoose.Schema(
     },
     responsavel: { type: String, trim: true, default: '' },
     observacoes: { type: String, default: '' },
+    arquivado: { type: Boolean, default: false },
     checklist: { type: [ChecklistItemSchema], default: [] },
     historico: { type: [HistoricoItemSchema], default: [] },
   },

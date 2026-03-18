@@ -37,7 +37,7 @@ async function request(method, endpoint, body) {
 /** Lista todos os desligamentos (com filtros opcionais). */
 export function getDesligamentos(params = {}) {
   const qs = new URLSearchParams(
-    Object.fromEntries(Object.entries(params).filter(([, v]) => v && v !== 'todos'))
+    Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== 'todos'))
   ).toString();
   return request('GET', `/desligamentos${qs ? `?${qs}` : ''}`);
 }

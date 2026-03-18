@@ -2,22 +2,24 @@ import React, { useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { ListView } from './components/ListView';
 import { KanbanView } from './components/KanbanView';
+import { ArchivedView } from './components/ArchivedView';
 import { DetailView } from './components/DetailView';
 import { ModalNovoDesligamento } from './components/Modals';
 import { ModalImportarPlanilha } from './components/ImportModal';
 import { seedDatabase } from './services/api';
 import {
-  LayoutList, Columns, Plus, Users, Database, AlertTriangle, Loader, FileSpreadsheet
+  LayoutList, Columns, Plus, Users, Database, AlertTriangle, Loader, FileSpreadsheet, Archive
 } from 'lucide-react';
 
 function AppContent() {
   const { state, dispatch, actions } = useApp();
-  const { view, selected, desligamentos, loading, error } = state;
+  const { view, selected, desligamentos, archivedDesligamentos, loading, error } = state;
   const [showNew, setShowNew] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [seeding, setSeeding] = useState(false);
 
-  const activeCount = desligamentos.filter(d => d.status !== 'pago' && d.status !== 'cancelado').length;
+  const activeCount = desligamentos.length;
+  const archivedCount = archivedDesligamentos?.length || 0;
 
   async function handleSeed() {
     if (!window.confirm('Isso irá apagar todos os dados e inserir os dados de exemplo. Confirma?')) return;
@@ -33,7 +35,7 @@ function AppContent() {
   }
 
   // Loading skeleton
-  if (loading) {
+  if (loading && !desligamentos.length && !archivedDesligamentos.length) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 12, color: 'var(--text-muted)' }}>
         <Loader size={24} style={{ animation: 'spin 1s linear infinite' }} />
@@ -45,18 +47,21 @@ function AppContent() {
   const navItems = [
     { id: 'lista', label: 'Lista de Processos', icon: <LayoutList size={15} />, badge: activeCount },
     { id: 'kanban', label: 'Quadro Kanban', icon: <Columns size={15} /> },
+    { id: 'arquivados', label: 'Arquivados', icon: <Archive size={15} />, badge: archivedCount },
   ];
 
   const viewTitles = {
     lista: 'Processos de Desligamento',
     kanban: 'Quadro Kanban',
+    arquivados: 'Processos Arquivados',
     detalhe: 'Detalhe do Processo',
   };
 
   const viewSubtitles = {
     lista: 'Organizados por data de pagamento',
     kanban: 'Visão por etapa do processo',
-    detalhe: selected ? desligamentos.find(d => d.id === selected)?.nome : '',
+    arquivados: 'Histórico de processos finalizados',
+    detalhe: selected ? (desligamentos.find(d => d.id === selected)?.nome || archivedDesligamentos.find(d => d.id === selected)?.nome) : '',
   };
 
   return (
@@ -119,7 +124,7 @@ function AppContent() {
 
         <div className="sidebar-footer">
           <div style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center' }}>
-            {desligamentos.length} processo{desligamentos.length !== 1 ? 's' : ''} registrado{desligamentos.length !== 1 ? 's' : ''}
+            {activeCount + archivedCount} processo{(activeCount + archivedCount) !== 1 ? 's' : ''} registrado{(activeCount + archivedCount) !== 1 ? 's' : ''}
           </div>
         </div>
       </nav>
@@ -162,6 +167,7 @@ function AppContent() {
         {/* Content */}
         {view === 'lista' && <ListView />}
         {view === 'kanban' && <KanbanView />}
+        {view === 'arquivados' && <ArchivedView />}
         {view === 'detalhe' && selected && <DetailView id={selected} />}
       </div>
 
