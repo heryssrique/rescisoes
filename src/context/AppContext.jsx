@@ -64,6 +64,20 @@ function reducer(state, action) {
         desligamentos: state.desligamentos.filter(d => d.id !== action.id),
         archivedDesligamentos: (state.archivedDesligamentos || []).filter(d => d.id !== action.id),
       };
+    case 'ARCHIVE_MULTIPLE': {
+      const archivedIds = action.payload.map(d => d.id);
+      return {
+        ...state,
+        desligamentos: state.desligamentos.filter(d => !archivedIds.includes(d.id)),
+        archivedDesligamentos: [...action.payload, ...(state.archivedDesligamentos || [])],
+      };
+    }
+    case 'DELETE_MULTIPLE':
+      return {
+        ...state,
+        desligamentos: state.desligamentos.filter(d => !action.ids.includes(d.id)),
+        archivedDesligamentos: (state.archivedDesligamentos || []).filter(d => !action.ids.includes(d.id)),
+      };
 
     // UI
     case 'SET_VIEW':
@@ -253,6 +267,37 @@ export function AppProvider({ children }) {
     }
   }
 
+  async function bulkArchive(ids) {
+    try {
+      const res = await api.bulkArchive(ids);
+      dispatch({ type: 'ARCHIVE_MULTIPLE', payload: res.docs });
+    } catch (err) {
+      console.warn('[AppContext] API offline — arquivando em lote localmente.', err.message);
+      const now = format(new Date(), "yyyy-MM-dd'T'HH:mm:ss");
+      const toArchive = state.desligamentos
+        .filter(d => ids.includes(d.id) && (d.status === 'pago' || d.status === 'cancelado'))
+        .map(d => ({
+          ...d,
+          arquivado: true,
+          historico: [...(d.historico || []), { data: now, acao: 'Arquivado em lote (offline)', nota: '' }]
+        }));
+      
+      dispatch({ type: 'ARCHIVE_MULTIPLE', payload: toArchive });
+      dispatch({ type: 'SET_ERROR', message: `⚠️ Servidor offline — ${toArchive.length} itens arquivados localmente.` });
+    }
+  }
+
+  async function bulkDelete(ids) {
+    try {
+      await api.bulkDelete(ids);
+      dispatch({ type: 'DELETE_MULTIPLE', ids });
+    } catch (err) {
+      console.warn('[AppContext] API offline — excluindo em lote localmente.', err.message);
+      dispatch({ type: 'DELETE_MULTIPLE', ids });
+      dispatch({ type: 'SET_ERROR', message: '⚠️ Servidor offline — itens excluídos apenas localmente.' });
+    }
+  }
+
   async function toggleChecklist(desligamentoId, itemId) {
     // 1. Atualiza a UI imediatamente (optimistic update)
     dispatch({ type: 'TOGGLE_CHECKLIST_OPTIMISTIC', desligamentoId, itemId });
@@ -321,6 +366,8 @@ export function AppProvider({ children }) {
       archiveDesligamento,
       unarchiveDesligamento,
       deleteDesligamento,
+      bulkArchive,
+      bulkDelete,
       toggleChecklist,
       addHistorico,
       changeStatus,

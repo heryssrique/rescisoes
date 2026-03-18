@@ -89,6 +89,16 @@ export function healthCheck() {
   return request('GET', '/health');
 }
 
+/** Arquiva múltiplos processos. */
+export function bulkArchive(ids) {
+  return request('POST', '/desligamentos/bulk-archive', { ids });
+}
+
+/** Exclui múltiplos processos. */
+export function bulkDelete(ids) {
+  return request('POST', '/desligamentos/bulk-delete', { ids });
+}
+
 /** Popula o banco com dados de exemplo (apenas dev). */
 export function seedDatabase() {
   return request('POST', '/desligamentos/seed');

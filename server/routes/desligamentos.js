@@ -128,6 +128,52 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// ─── POST /api/desligamentos/bulk-archive ──────────────────────────────────
+router.post('/bulk-archive', async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) return res.status(400).json({ error: 'Lista de IDs inválida' });
+
+    const now = new Date().toISOString();
+    const historyEntry = {
+      data: now,
+      acao: 'Arquivado em lote',
+      nota: '',
+    };
+
+    // Atualiza apenas os que estão em status finalizado/cancelado
+    const result = await Desligamento.updateMany(
+      { 
+        _id: { $in: ids }, 
+        status: { $in: ['pago', 'cancelado'] } 
+      },
+      { 
+        $set: { arquivado: true },
+        $push: { historico: historyEntry }
+      }
+    );
+
+    // Retorna os documentos atualizados
+    const docs = await Desligamento.find({ _id: { $in: ids }, arquivado: true });
+    res.json({ message: `${result.modifiedCount} registros arquivados`, docs });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao arquivar processos em lote', detail: err.message });
+  }
+});
+
+// ─── POST /api/desligamentos/bulk-delete ────────────────────────────────────
+router.post('/bulk-delete', async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) return res.status(400).json({ error: 'Lista de IDs inválida' });
+
+    const result = await Desligamento.deleteMany({ _id: { $in: ids } });
+    res.json({ message: `${result.deletedCount} registros excluídos`, ids });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao excluir processos em lote', detail: err.message });
+  }
+});
+
 // ─── POST /api/desligamentos/seed ──────────────────────────────────────────
 // Popula o banco com dados de exemplo (só usar em dev)
 router.post('/seed', async (req, res) => {

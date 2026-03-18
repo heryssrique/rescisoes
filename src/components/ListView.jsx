@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { StatusBadge, MotivoBadge, ColigadaBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress } from './Shared';
 import { formatDate } from '../utils/formatters';
 import { MOTIVOS } from '../data/initialData';
-import { Search, ChevronRight, Calendar, User, AlertCircle, Archive, ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import { Search, ChevronRight, Calendar, User, AlertCircle, Archive, ChevronDown, ChevronUp, Clock, CheckSquare, Square, Trash2 } from 'lucide-react';
 import { differenceInDays, parseISO } from 'date-fns';
 import { getPaymentDate } from '../utils/dateUtils';
 
@@ -41,16 +41,29 @@ function DateGroupTag({ dataPagamento }) {
   return null;
 }
 
-function TermCard({ d, onOpen, onArchive }) {
+function TermCard({ d, onOpen, onArchive, isSelected, onSelect }) {
   const isArchivable = d.status === 'pago' || d.status === 'cancelado';
   return (
     <article
       key={d.id}
-      className="term-card"
+      className={`term-card ${isSelected ? 'selected' : ''}`}
       onClick={() => onOpen(d.id)}
       id={`card-${d.id}`}
     >
       <div className={`urgency-bar ${getUrgencyClass(d.dataPagamento, d.status)}`} />
+      
+      {/* Botão de Seleção (Checkbox) */}
+      <button 
+        className="selection-checkbox"
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect(d.id);
+        }}
+        title="Selecionar"
+      >
+        {isSelected ? <CheckSquare size={16} color="var(--primary)" /> : <Square size={16} color="var(--text-muted)" />}
+      </button>
+
       <div className="term-card-header">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -134,6 +147,7 @@ export function ListView() {
   const [filterMotivo, setFilterMotivo] = useState('todos');
   const [filterPrazo, setFilterPrazo] = useState('todos');
   const [sortBy, setSortBy] = useState('pagamento');
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const activeCount = desligamentos.length;
 
@@ -195,6 +209,43 @@ export function ListView() {
   async function handleArchive(id) {
     if (confirm('Mover este processo para o arquivo?')) {
       await actions.archiveDesligamento(id);
+    }
+  }
+
+  function toggleSelection(id) {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.length === activeFiltered.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(activeFiltered.map(d => d.id));
+    }
+  }
+
+  async function handleBulkArchive() {
+    const archivableIds = activeFiltered
+      .filter(d => selectedIds.includes(d.id) && (d.status === 'pago' || d.status === 'cancelado'))
+      .map(d => d.id);
+    
+    if (archivableIds.length === 0) {
+      alert('Atenção: Nesses status selecionados, nenhum pode ser arquivado no momento (apenas Status "Pago" ou "Cancelado").');
+      return;
+    }
+
+    if (confirm(`Deseja arquivar os ${archivableIds.length} processos selecionados?`)) {
+      await actions.bulkArchive(archivableIds);
+      setSelectedIds([]);
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (confirm(`⚠️ EXCLUSÃO PERMANENTE: Deseja apagar os ${selectedIds.length} processos selecionados?`)) {
+      await actions.bulkDelete(selectedIds);
+      setSelectedIds([]);
     }
   }
 
@@ -261,9 +312,62 @@ export function ListView() {
           <option value="pagamento">Agrupar por Pagamento</option>
           <option value="status">Agrupar por Status</option>
         </select>
+
+        {/* Botão Selecionar Todos no final do toolbar */}
+        <button 
+          className={`btn-icon-sm ${selectedIds.length > 0 ? 'active' : ''}`}
+          onClick={toggleSelectAll}
+          style={{ padding: '0 12px', height: 36, gap: 8 }}
+          title="Selecionar Todos"
+        >
+          {selectedIds.length === activeFiltered.length && activeFiltered.length > 0 ? <CheckSquare size={16} /> : <Square size={16} />}
+          <span style={{ fontSize: 13, fontWeight: 600 }}>{selectedIds.length > 0 ? `${selectedIds.length} selecionados` : 'Sel. Todos'}</span>
+        </button>
       </div>
 
-      {/* Lista ativa */}
+      {/* Floating Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="bulk-actions-bar">
+          <div className="bulk-actions-content">
+            <span className="bulk-selection-count">
+              <CheckSquare size={16} />
+              {selectedIds.length} {selectedIds.length === 1 ? 'item selecionado' : 'itens selecionados'}
+            </span>
+            <div className="bulk-buttons">
+              <button 
+                type="button"
+                className="btn btn-secondary btn-sm" 
+                onClick={handleBulkArchive} 
+                title="Arquivar selecionados"
+                style={{ cursor: 'pointer', padding: '8px 16px' }}
+              >
+                <Archive size={14} />
+                Arquivar
+              </button>
+              <button 
+                type="button"
+                className="btn btn-danger btn-sm" 
+                onClick={handleBulkDelete} 
+                title="Excluir selecionados"
+                style={{ cursor: 'pointer', padding: '8px 16px' }}
+              >
+                <Trash2 size={14} />
+                Excluir
+              </button>
+              <button 
+                type="button"
+                className="btn-icon-sm" 
+                onClick={() => setSelectedIds([])} 
+                title="Limpar seleção"
+                style={{ cursor: 'pointer', marginLeft: 8 }}
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {activeFiltered.length === 0 ? (
         <div className="empty-state">
           <User size={64} />
