@@ -181,6 +181,9 @@ export function AppProvider({ children }) {
     }
   }, [state.desligamentos, state.archivedDesligamentos]);
 
+  // IDs já notificados nativamente nesta sessão para evitar spam
+  const notifiedSessionIds = React.useRef(new Set());
+
   // ── Notificações ────────────────────────────────────────────────────────
   useEffect(() => {
     localStorage.setItem('readNotificationIds', JSON.stringify(state.readNotificationIds));
@@ -240,6 +243,19 @@ export function AppProvider({ children }) {
 
     // Só atualiza se houver mudança real para evitar loops
     dispatch({ type: 'SET_NOTIFICATIONS', payload: newNotifications });
+
+    // Tentar notificação nativa para itens não lidos e não notificados nesta sessão
+    if (Notification.permission === 'granted') {
+      newNotifications.forEach(n => {
+        if (!n.read && !notifiedSessionIds.current.has(n.id)) {
+          new Notification('Alerta de Prazo', {
+            body: n.message,
+            icon: '/favicon.ico'
+          });
+          notifiedSessionIds.current.add(n.id);
+        }
+      });
+    }
   }, [state.desligamentos, state.readNotificationIds]);
 
   useEffect(() => {
@@ -248,6 +264,12 @@ export function AppProvider({ children }) {
 
   function markNotificationRead(id) {
     dispatch({ type: 'MARK_NOTIFICATION_READ', id });
+  }
+
+  function requestNotificationPermission() {
+    if ('Notification' in window) {
+      Notification.requestPermission();
+    }
   }
 
   // ── Ações (chamam a API e atualizam estado local com a resposta) ─────────
@@ -451,6 +473,7 @@ export function AppProvider({ children }) {
       bulkDelete,
       toggleChecklist,
       markNotificationRead,
+      requestNotificationPermission,
       addHistorico,
       changeStatus,
       importDesligamentos: async (data) => {

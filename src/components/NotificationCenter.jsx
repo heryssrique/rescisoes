@@ -55,9 +55,18 @@ export function NotificationCenter() {
         <div className="notif-dropdown">
           <div className="notif-header">
             <h3>Notificações</h3>
-            {unreadCount > 0 && (
-              <span className="notif-count">{unreadCount} novas</span>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {Notification.permission !== 'granted' && (
+                <button 
+                  className="btn-icon-sm" 
+                  onClick={actions.requestNotificationPermission}
+                  title="Ativar notificações do navegador"
+                >
+                  <Bell size={14} />
+                </button>
+              )}
+              {unreadCount > 0 && <span className="notif-count">{unreadCount} novas</span>}
+            </div>
           </div>
 
           <div className="notif-list">
