@@ -14,11 +14,8 @@ router.get('/', async (req, res) => {
     const filter = {};
 
     // Filtro para arquivados: se não fornecido, busca apenas não arquivados
-    if (arquivado !== undefined) {
-      filter.arquivado = arquivado === 'true';
-    } else {
-      filter.arquivado = false;
-    }
+    const isArquivado = arquivado === 'true';
+    filter.arquivado = isArquivado ? true : { $ne: true };
 
     if (status && status !== 'todos') filter.status = status;
     if (motivo && motivo !== 'todos') filter.motivo = motivo;
