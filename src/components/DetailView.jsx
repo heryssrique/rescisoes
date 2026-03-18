@@ -5,7 +5,8 @@ import { formatDate, formatDateTime } from '../utils/formatters';
 import { ModalEditarDesligamento } from './Modals';
 import {
   ArrowLeft, Edit2, Trash2, Calendar, User, Briefcase,
-  CheckSquare, Clock, AlertTriangle, MessageSquare, Plus, Loader
+  CheckSquare, Clock, AlertTriangle, MessageSquare, Plus, Loader,
+  Archive, RotateCcw
 } from 'lucide-react';
 import { CHECKLIST_TEMPLATE, STATUS_FLOW } from '../data/initialData';
 import { format } from 'date-fns';
