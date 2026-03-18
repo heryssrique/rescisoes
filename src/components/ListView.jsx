@@ -315,9 +315,10 @@ export function ListView() {
 
         {/* Botão Selecionar Todos no final do toolbar */}
         <button 
-          className={`btn-icon-sm ${selectedIds.length > 0 ? 'active' : ''}`}
+          type="button"
+          className={`btn btn-secondary btn-sm ${selectedIds.length > 0 ? 'active' : ''}`}
           onClick={toggleSelectAll}
-          style={{ padding: '0 12px', height: 36, gap: 8 }}
+          style={{ height: '38px', gap: 8, margin: 0 }}
           title="Selecionar Todos"
         >
           {selectedIds.length === activeFiltered.length && activeFiltered.length > 0 ? <CheckSquare size={16} /> : <Square size={16} />}
