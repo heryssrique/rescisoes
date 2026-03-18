@@ -76,12 +76,13 @@ export function DetailView({ id }) {
   }
 
   // Group checklist by etapa
+  const checklist = d.checklist || [];
   const checklistByEtapa = {
-    comunicado: d.checklist.filter(c => c.etapa === 'comunicado'),
-    documentacao: d.checklist.filter(c => c.etapa === 'documentacao'),
-    homologacao: d.checklist.filter(c => c.etapa === 'homologacao'),
-    aguardando: d.checklist.filter(c => c.etapa === 'aguardando'),
-    pago: d.checklist.filter(c => c.etapa === 'pago'),
+    comunicado: checklist.filter(c => c.etapa === 'comunicado'),
+    documentacao: checklist.filter(c => c.etapa === 'documentacao'),
+    homologacao: checklist.filter(c => c.etapa === 'homologacao'),
+    aguardando: checklist.filter(c => c.etapa === 'aguardando'),
+    pago: checklist.filter(c => c.etapa === 'pago'),
   };
 
   const etapaLabels = {
@@ -310,7 +311,7 @@ export function DetailView({ id }) {
           )}
 
           <div className="timeline">
-            {[...d.historico].reverse().map((h, i) => (
+            {[...(d.historico || [])].reverse().map((h, i) => (
               <div key={i} className="timeline-item">
                 <div className={`timeline-dot ${i === 0 ? 'active' : ''}`}>
                   <Clock size={12} />

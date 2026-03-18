@@ -4,6 +4,8 @@
  * (requer MongoDB rodando e .env configurado)
  */
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 const mongoose = require('mongoose');
 const Desligamento = require('../models/Desligamento');
 const { INITIAL_DATA } = require('./initialData');

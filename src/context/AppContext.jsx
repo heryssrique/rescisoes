@@ -113,6 +113,8 @@ export function AppProvider({ children }) {
         type: 'SET_ERROR',
         message: '⚠️ API offline — dados carregados do cache local. Conecte o servidor para salvar alterações no banco.',
       });
+    } finally {
+      dispatch({ type: 'SET_LOADING', value: false });
     }
   }, []);
 
@@ -122,11 +124,36 @@ export function AppProvider({ children }) {
       const data = await api.getDesligamentos({ arquivado: true, q: searchQuery });
       dispatch({ type: 'SET_ARCHIVED', payload: data });
     } catch (err) {
-      dispatch({ type: 'SET_ERROR', message: `Erro ao buscar arquivados: ${err.message}` });
+      console.warn('[AppContext] Falha ao buscar arquivados da API, tentando localStorage.', err.message);
+      const saved = loadFromStorage();
+      const filtered = saved.filter(d => d.arquivado);
+      
+      // Aplicar busca simples local se houver query
+      const searchTerm = searchQuery.toLowerCase();
+      const results = searchQuery 
+        ? filtered.filter(d => 
+            d.nome?.toLowerCase().includes(searchTerm) ||
+            d.cargo?.toLowerCase().includes(searchTerm) ||
+            d.matricula?.toLowerCase().includes(searchTerm) ||
+            d.departamento?.toLowerCase().includes(searchTerm)
+          ) 
+        : filtered;
+
+      dispatch({ type: 'SET_ARCHIVED', payload: results });
+      dispatch({ type: 'SET_ERROR', message: '⚠️ Servidor offline — carregando arquivados do cache local.' });
+    } finally {
+      dispatch({ type: 'SET_LOADING', value: false });
     }
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  useEffect(() => {
+    // Persiste no localStorage sempre que houver novos dados para garantir o modo offline
+    if (state.desligamentos.length > 0 || state.archivedDesligamentos.length > 0) {
+      saveToStorage([...state.desligamentos, ...state.archivedDesligamentos]);
+    }
+  }, [state.desligamentos, state.archivedDesligamentos]);
 
   // ── Ações (chamam a API e atualizam estado local com a resposta) ─────────
 
@@ -136,8 +163,17 @@ export function AppProvider({ children }) {
       dispatch({ type: 'ADD_DESLIGAMENTO', payload: doc });
       return doc;
     } catch (err) {
-      dispatch({ type: 'SET_ERROR', message: `Erro ao criar: ${err.message}` });
-      throw err;
+      console.warn('[AppContext] API offline — criando registro localmente.', err.message);
+      const localDoc = { 
+        ...formData, 
+        id: 'local-' + Date.now(),
+        checklist: formData.checklist || [],
+        historico: formData.historico || [],
+        arquivado: false 
+      };
+      dispatch({ type: 'ADD_DESLIGAMENTO', payload: localDoc });
+      dispatch({ type: 'SET_ERROR', message: '⚠️ Servidor offline — processo criado apenas localmente neste navegador.' });
+      return localDoc;
     }
   }
 
@@ -147,42 +183,62 @@ export function AppProvider({ children }) {
       dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: doc });
       return doc;
     } catch (err) {
-      dispatch({ type: 'SET_ERROR', message: `Erro ao atualizar: ${err.message}` });
-      throw err;
+      console.warn('[AppContext] API offline — atualizando registro localmente.', err.message);
+      dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: data });
+      dispatch({ type: 'SET_ERROR', message: '⚠️ Servidor offline — alteração salva apenas localmente.' });
+      return data;
     }
   }
 
   async function archiveDesligamento(id) {
     const desligamento = state.desligamentos.find(d => d.id === id);
     if (!desligamento) return;
+    
+    const historyEntry = {
+      data: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
+      acao: 'Processo arquivado',
+      nota: '',
+    };
+    
+    const updated = { 
+      ...desligamento, 
+      arquivado: true,
+      historico: [...(desligamento.historico || []), historyEntry]
+    };
+
     try {
-      const doc = await api.updateDesligamento(id, { ...desligamento, arquivado: true });
+      const doc = await api.updateDesligamento(id, updated);
       dispatch({ type: 'ARCHIVE_DESLIGAMENTO', payload: doc });
-      await addHistorico(id, {
-        data: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
-        acao: 'Processo arquivado',
-        nota: '',
-      });
     } catch (err) {
-      dispatch({ type: 'SET_ERROR', message: `Erro ao arquivar: ${err.message}` });
-      throw err;
+      console.warn('[AppContext] API offline — arquivando localmente.', err.message);
+      dispatch({ type: 'ARCHIVE_DESLIGAMENTO', payload: updated });
+      dispatch({ type: 'SET_ERROR', message: '⚠️ Servidor offline — arquivado localmente.' });
     }
   }
 
   async function unarchiveDesligamento(id) {
     const desligamento = state.archivedDesligamentos.find(d => d.id === id);
     if (!desligamento) return;
+
+    const historyEntry = {
+      data: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
+      acao: 'Processo reativado',
+      nota: '',
+    };
+
+    const updated = { 
+      ...desligamento, 
+      arquivado: false,
+      historico: [...(desligamento.historico || []), historyEntry]
+    };
+
     try {
-      const doc = await api.updateDesligamento(id, { ...desligamento, arquivado: false });
+      const doc = await api.updateDesligamento(id, updated);
       dispatch({ type: 'UNARCHIVE_DESLIGAMENTO', payload: doc });
-      await addHistorico(id, {
-        data: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
-        acao: 'Processo desarquivado',
-        nota: '',
-      });
     } catch (err) {
-      dispatch({ type: 'SET_ERROR', message: `Erro ao desarquivar: ${err.message}` });
-      throw err;
+      console.warn('[AppContext] API offline — reativando localmente.', err.message);
+      dispatch({ type: 'UNARCHIVE_DESLIGAMENTO', payload: updated });
+      dispatch({ type: 'SET_ERROR', message: '⚠️ Servidor offline — reativado localmente.' });
     }
   }
 
@@ -191,8 +247,9 @@ export function AppProvider({ children }) {
       await api.deleteDesligamento(id);
       dispatch({ type: 'DELETE_DESLIGAMENTO', id });
     } catch (err) {
-      dispatch({ type: 'SET_ERROR', message: `Erro ao excluir: ${err.message}` });
-      throw err;
+      console.warn('[AppContext] API offline — excluindo registro localmente.', err.message);
+      dispatch({ type: 'DELETE_DESLIGAMENTO', id });
+      dispatch({ type: 'SET_ERROR', message: '⚠️ Servidor offline — item removido apenas localmente.' });
     }
   }
 
@@ -220,19 +277,30 @@ export function AppProvider({ children }) {
       dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: doc });
       return doc;
     } catch (err) {
+      console.warn('[AppContext] API offline — adicionando histórico localmente.', err.message);
+      const d = state.desligamentos.find(x => x.id === desligamentoId) || state.archivedDesligamentos?.find(x => x.id === desligamentoId);
+      if (d) {
+        const updated = { ...d, historico: [...(d.historico || []), entry] };
+        dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: updated });
+        return updated;
+      }
       dispatch({ type: 'SET_ERROR', message: `Erro ao registrar histórico: ${err.message}` });
       throw err;
     }
   }
 
   async function changeStatus(desligamento, newStatus) {
-    const updated = { ...desligamento, status: newStatus };
-    const doc = await updateDesligamento(updated);
-    await addHistorico(doc.id, {
+    const historyEntry = {
       data: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
       acao: `Status alterado para: ${newStatus}`,
       nota: '',
-    });
+    };
+    const updated = { 
+      ...desligamento, 
+      status: newStatus,
+      historico: [...(desligamento.historico || []), historyEntry]
+    };
+    await updateDesligamento(updated);
   }
 
   // Mantém compatibilidade com o dispatch direto p/ navegação de UI
@@ -285,4 +353,12 @@ function loadFromStorage() {
     const raw = localStorage.getItem(LS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch { return []; }
+}
+
+function saveToStorage(data) {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(data));
+  } catch (err) {
+    console.warn('[AppContext] Erro ao salvar no localStorage', err);
+  }
 }
