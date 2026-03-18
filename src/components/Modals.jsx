@@ -21,6 +21,7 @@ const INITIAL_FORM = {
   status: 'comunicado',
   responsavel: '',
   observacoes: '',
+  prazoPagamento: '10',
 };
 
 export function ModalNovoDesligamento({ onClose }) {
@@ -72,11 +73,11 @@ export function ModalNovoDesligamento({ onClose }) {
         newForm.diasAvisoTrabalhado = '';
       }
 
-      // Auto-calculo da data de pagamento (10 dias corridos com antecipação)
-      if (field === 'dataDesligamento') {
-        if (newForm.dataDesligamento) {
+      // Auto-calculo da data de pagamento
+      if (field === 'dataDesligamento' || field === 'prazoPagamento') {
+        if (newForm.dataDesligamento && newForm.prazoPagamento) {
           try {
-            newForm.dataPagamento = getPaymentDate(newForm.dataDesligamento, 10);
+            newForm.dataPagamento = getPaymentDate(newForm.dataDesligamento, newForm.prazoPagamento);
           } catch (e) {
             console.error('Erro ao calcular data de pagamento', e);
           }
@@ -211,6 +212,29 @@ export function ModalNovoDesligamento({ onClose }) {
               />
             </div>
 
+            <div className="form-group">
+              <label className="form-label">Prazo de Pagamento</label>
+              <select
+                className="form-input"
+                value={form.prazoPagamento}
+                onChange={e => set('prazoPagamento', e.target.value)}
+              >
+                <option value="7">7 Dias Corridos (Antecipado)</option>
+                <option value="10">10 Dias Corridos (Antecipado)</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Data de Pagamento Estimada</label>
+              <input
+                type="date"
+                className="form-input"
+                value={form.dataPagamento}
+                readOnly
+                style={{ opacity: 0.8, cursor: 'not-allowed' }}
+              />
+            </div>
+
 
             <div className="form-section-title"><FileText size={13} /> Tipo e Aviso Prévio</div>
 
@@ -312,11 +336,11 @@ export function ModalEditarDesligamento({ desligamento, onClose }) {
         newForm.diasAvisoTrabalhado = '';
       }
 
-      // Auto-calculo da data de pagamento (10 dias corridos com antecipação)
-      if (field === 'dataDesligamento') {
-        if (newForm.dataDesligamento) {
+      // Auto-calculo da data de pagamento
+      if (field === 'dataDesligamento' || field === 'prazoPagamento') {
+        if (newForm.dataDesligamento && newForm.prazoPagamento) {
           try {
-            newForm.dataPagamento = getPaymentDate(newForm.dataDesligamento, 10);
+            newForm.dataPagamento = getPaymentDate(newForm.dataDesligamento, newForm.prazoPagamento);
           } catch (e) {
             console.error('Erro ao calcular data de pagamento', e);
           }
@@ -383,6 +407,17 @@ export function ModalEditarDesligamento({ desligamento, onClose }) {
             <div className="form-group">
               <label className="form-label">Data de Desligamento</label>
               <input type="date" className="form-input" value={form.dataDesligamento} onChange={e => set('dataDesligamento', e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Prazo de Pagamento</label>
+              <select className="form-input" value={form.prazoPagamento || '10'} onChange={e => set('prazoPagamento', e.target.value)}>
+                <option value="7">7 Dias Corridos (Antecipado)</option>
+                <option value="10">10 Dias Corridos (Antecipado)</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Data Estimada</label>
+              <input type="date" className="form-input" value={form.dataPagamento} readOnly style={{ opacity: 0.8 }} />
             </div>
 
             <div className="form-section-title"><FileText size={13} /> Status e Tipo</div>

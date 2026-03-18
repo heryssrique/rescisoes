@@ -91,6 +91,16 @@ function reducer(state, action) {
     case 'CLEAR_ERROR':
       return { ...state, error: null };
 
+    // Notificações
+    case 'SET_NOTIFICATIONS':
+      return { ...state, notifications: action.payload };
+    case 'MARK_NOTIFICATION_READ':
+      return { 
+        ...state, 
+        readNotificationIds: [...state.readNotificationIds, action.id],
+        notifications: state.notifications.map(n => n.id === action.id ? { ...n, read: true } : n)
+      };
+
     default:
       return state;
   }
@@ -107,6 +117,8 @@ export function AppProvider({ children }) {
     error: null,
     // Modo offline: true = usa localStorage como fallback
     offline: false,
+    notifications: [],
+    readNotificationIds: JSON.parse(localStorage.getItem('readNotificationIds') || '[]'),
   });
 
   // ── Carrega lista ao montar ──────────────────────────────────────────────
@@ -168,6 +180,75 @@ export function AppProvider({ children }) {
       saveToStorage([...state.desligamentos, ...state.archivedDesligamentos]);
     }
   }, [state.desligamentos, state.archivedDesligamentos]);
+
+  // ── Notificações ────────────────────────────────────────────────────────
+  useEffect(() => {
+    localStorage.setItem('readNotificationIds', JSON.stringify(state.readNotificationIds));
+  }, [state.readNotificationIds]);
+
+  const generateNotifications = useCallback(() => {
+    const { desligamentos, readNotificationIds } = state;
+    if (!desligamentos || !desligamentos.length) return;
+
+    const now = new Date();
+    // Normalizar 'agora' para ser 00:00:00 para comparação de dias inteiros
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    const newNotifications = [];
+
+    desligamentos.forEach(d => {
+      // Ignorar processos já pagos ou cancelados
+      if (d.status === 'pago' || d.status === 'cancelado' || !d.dataPagamento) return;
+
+      const [year, month, day] = d.dataPagamento.split('-').map(Number);
+      const paymentDate = new Date(year, month - 1, day);
+      
+      const diffTime = paymentDate - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      let type = '';
+      let message = '';
+      let severity = '';
+
+      if (diffDays < 0) {
+        type = 'vencido';
+        message = `O prazo de pagamento de ${d.nome} venceu em ${day}/${month}.`;
+        severity = 'error';
+      } else if (diffDays === 0) {
+        type = 'vence_hoje';
+        message = `O prazo de pagamento de ${d.nome} vence hoje!`;
+        severity = 'warning';
+      } else if (diffDays <= 3) {
+        type = 'proximo';
+        message = `Faltam ${diffDays} dias para o pagamento de ${d.nome}.`;
+        severity = 'info';
+      }
+
+      if (type) {
+        const notifId = `${d.id}-${type}`;
+        newNotifications.push({
+          id: notifId,
+          desligamentoId: d.id,
+          type,
+          message,
+          severity,
+          date: new Date().toISOString(),
+          read: readNotificationIds.includes(notifId)
+        });
+      }
+    });
+
+    // Só atualiza se houver mudança real para evitar loops
+    dispatch({ type: 'SET_NOTIFICATIONS', payload: newNotifications });
+  }, [state.desligamentos, state.readNotificationIds]);
+
+  useEffect(() => {
+    generateNotifications();
+  }, [state.desligamentos, state.readNotificationIds]);
+
+  function markNotificationRead(id) {
+    dispatch({ type: 'MARK_NOTIFICATION_READ', id });
+  }
 
   // ── Ações (chamam a API e atualizam estado local com a resposta) ─────────
 
@@ -369,6 +450,7 @@ export function AppProvider({ children }) {
       bulkArchive,
       bulkDelete,
       toggleChecklist,
+      markNotificationRead,
       addHistorico,
       changeStatus,
       importDesligamentos: async (data) => {

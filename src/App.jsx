@@ -6,6 +6,7 @@ import { ArchivedView } from './components/ArchivedView';
 import { DetailView } from './components/DetailView';
 import { ModalNovoDesligamento } from './components/Modals';
 import { ModalImportarPlanilha } from './components/ImportModal';
+import { NotificationCenter } from './components/NotificationCenter';
 import { seedDatabase } from './services/api';
 import {
   LayoutList, Columns, Plus, Users, Database, AlertTriangle, Loader, FileSpreadsheet, Archive
@@ -150,6 +151,18 @@ function AppContent() {
               Novo Desligamento
             </button>
           )}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <NotificationCenter />
+            
+            <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 8px', borderRadius: 8, background: 'var(--bg-card)' }}>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-purple), var(--accent-indigo))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700 }}>
+                HR
+              </div>
+            </div>
+          </div>
         </header>
 
         {/* Offline/Error banner */}
