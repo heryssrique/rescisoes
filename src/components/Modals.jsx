@@ -262,6 +262,7 @@ export function ModalNovoDesligamento({ onClose }) {
               >
                 <option value="trabalhado">Trabalhado</option>
                 <option value="indenizado">Indenizado</option>
+                <option value="descontado">Descontado</option>
                 <option value="nao_aplicavel">Não Aplicável</option>
               </select>
             </div>
@@ -443,6 +444,7 @@ export function ModalEditarDesligamento({ desligamento, onClose }) {
               <select className="form-input" value={form.avisoPrevio} onChange={e => set('avisoPrevio', e.target.value)}>
                 <option value="trabalhado">Trabalhado</option>
                 <option value="indenizado">Indenizado</option>
+                <option value="descontado">Descontado</option>
                 <option value="nao_aplicavel">Não Aplicável</option>
               </select>
             </div>
