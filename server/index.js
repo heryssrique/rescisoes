@@ -52,16 +52,30 @@ app.use((err, _req, res, _next) => {
 // ── Conexão MongoDB e inicialização ───────────────────────────────────────
 async function start() {
   try {
-    await mongoose.connect(MONGODB_URI);
-    console.log(`✅ MongoDB conectado → ${MONGODB_URI}`);
+    console.log('⏳ Iniciando conexão com o MongoDB...');
+    const connectOptions = {
+      serverSelectionTimeoutMS: 10000, // 10 segundos para desistir de encontrar o servidor
+      heartbeatFrequencyMS: 2000,      // Checa a saúde da conexão a cada 2 segundos
+    };
+
+    await mongoose.connect(MONGODB_URI, connectOptions);
+    console.log(`✅ MongoDB conectado com sucesso`);
 
     app.listen(PORT, () => {
-      console.log(`🚀 API rodando em http://localhost:${PORT}`);
+      console.log(`🚀 API rodando na porta ${PORT}`);
       console.log(`   Health: http://localhost:${PORT}/api/health`);
-      console.log(`   Desligamentos: http://localhost:${PORT}/api/desligamentos`);
     });
   } catch (err) {
-    console.error('❌ Falha ao conectar no MongoDB:', err.message);
+    console.error('❌ ERRO CRÍTICO NA CONEXÃO MONGODB:');
+    console.error('   Nome do Erro:', err.name);
+    console.error('   Mensagem:', err.message);
+    if (err.reason) console.error('   Razão:', JSON.stringify(err.reason, null, 2));
+    
+    console.log('\n🔍 DICA DO ANALISTA:');
+    console.log('1. Verifique se o IP do servidor de produção está liberado no Atlas (Network Access).');
+    console.log('2. Em produção, tente usar "0.0.0.0/0" se o IP for dinâmico.');
+    console.log('3. Verifique se a variável MONGODB_URI está configurada e correta nas variáveis de ambiente do Render.');
+    
     process.exit(1);
   }
 }
