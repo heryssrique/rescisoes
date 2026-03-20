@@ -82,29 +82,6 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// ─── PATCH /api/desligamentos/:id/checklist/:itemId ─────────────────────────
-// Toggle de um item específico do checklist sem substituir o array inteiro
-router.patch('/:id/checklist/:itemId', async (req, res) => {
-  try {
-    const doc = await Desligamento.findById(req.params.id);
-    if (!doc) return res.status(404).json({ error: 'Não encontrado' });
-
-    const item = doc.checklist.find(c => c.id === req.params.itemId);
-    if (!item) return res.status(404).json({ error: 'Item de checklist não encontrado' });
-
-    item.done = !item.done;
-    item.doneAt = item.done ? new Date().toISOString() : null;
-    
-    // Se marcar como concluído, garante que não está como N/A
-    if (item.done) item.notApplicable = false;
-    
-    await doc.save();
-    res.json(doc);
-  } catch (err) {
-    res.status(400).json({ error: 'Erro no toggle do checklist', detail: err.message });
-  }
-});
-
 // Toggle "Não Aplicável" para um item do checklist
 router.patch('/:id/checklist/:itemId/nao-aplicavel', async (req, res) => {
   try {
@@ -126,6 +103,29 @@ router.patch('/:id/checklist/:itemId/nao-aplicavel', async (req, res) => {
     res.json(doc);
   } catch (err) {
     res.status(400).json({ error: 'Erro no toggle "N/A"', detail: err.message });
+  }
+});
+
+// ─── PATCH /api/desligamentos/:id/checklist/:itemId ─────────────────────────
+// Toggle de um item específico do checklist sem substituir o array inteiro
+router.patch('/:id/checklist/:itemId', async (req, res) => {
+  try {
+    const doc = await Desligamento.findById(req.params.id);
+    if (!doc) return res.status(404).json({ error: 'Não encontrado' });
+
+    const item = doc.checklist.find(c => c.id === req.params.itemId);
+    if (!item) return res.status(404).json({ error: 'Item de checklist não encontrado' });
+
+    item.done = !item.done;
+    item.doneAt = item.done ? new Date().toISOString() : null;
+    
+    // Se marcar como concluído, garante que não está como N/A
+    if (item.done) item.notApplicable = false;
+    
+    await doc.save();
+    res.json(doc);
+  } catch (err) {
+    res.status(400).json({ error: 'Erro no toggle do checklist', detail: err.message });
   }
 });
 
