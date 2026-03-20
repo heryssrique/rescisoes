@@ -96,6 +96,10 @@ function TermCard({ d, onOpen, onArchive, isSelected, onSelect }) {
 
       <div className="term-meta">
         <div className="term-meta-item">
+          <div className="term-meta-label">Admissão</div>
+          <div className="term-meta-value">{formatDate(d.dataAdmissao)}</div>
+        </div>
+        <div className="term-meta-item">
           <div className="term-meta-label">Comunicado</div>
           <div className="term-meta-value">{formatDate(d.dataComunicado)}</div>
         </div>
@@ -395,7 +399,16 @@ export function ListView() {
               <span className="section-count">{items.length}</span>
             </div>
             <div className="term-list">
-              {items.map(d => <TermCard key={d.id} d={d} onOpen={openDetail} onArchive={handleArchive} />)}
+              {items.map(d => (
+                <TermCard 
+                  key={d.id} 
+                  d={d} 
+                  onOpen={openDetail} 
+                  onArchive={handleArchive} 
+                  isSelected={selectedIds.includes(d.id)}
+                  onSelect={toggleSelection}
+                />
+              ))}
             </div>
           </div>
         ))

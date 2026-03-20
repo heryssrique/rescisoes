@@ -192,6 +192,10 @@ export function DetailView({ id }) {
       {/* Info grid */}
       <div className="info-grid" style={{ marginBottom: 20 }}>
         <div className="info-item">
+          <div className="info-item-label">Data de Admissão</div>
+          <div className="info-item-value">{formatDate(d.dataAdmissao)}</div>
+        </div>
+        <div className="info-item">
           <div className="info-item-label">Data do Comunicado</div>
           <div className="info-item-value">{formatDate(d.dataComunicado)}</div>
         </div>

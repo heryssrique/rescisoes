@@ -60,6 +60,10 @@ function TermCard({ d, onOpen, onUnarchive }) {
 
       <div className="term-meta">
         <div className="term-meta-item">
+          <div className="term-meta-label">Admissão</div>
+          <div className="term-meta-value">{formatDate(d.dataAdmissao)}</div>
+        </div>
+        <div className="term-meta-item">
           <div className="term-meta-label">Comunicado</div>
           <div className="term-meta-value">{formatDate(d.dataComunicado)}</div>
         </div>
