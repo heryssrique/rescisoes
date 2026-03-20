@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
-import { StatusBadge, MotivoBadge, ColigadaBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress } from './Shared';
+import { StatusBadge, MotivoBadge, ColigadaBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress, AvisoBadge } from './Shared';
 import { formatDate } from '../utils/formatters';
 import { MOTIVOS } from '../data/initialData';
 import { Search, ChevronRight, Calendar, User, AlertCircle, Archive, ChevronDown, ChevronUp, Clock, CheckSquare, Square, Trash2 } from 'lucide-react';
@@ -121,6 +121,10 @@ function TermCard({ d, onOpen, onArchive, isSelected, onSelect }) {
         <div className="term-meta-item">
           <div className="term-meta-label">Motivo</div>
           <div className="term-meta-value"><MotivoBadge motivo={d.motivo} /></div>
+        </div>
+        <div className="term-meta-item">
+          <div className="term-meta-label">Aviso Prévio</div>
+          <div className="term-meta-value"><AvisoBadge aviso={d.avisoPrevio} dias={d.diasAvisoTrabalhado} /></div>
         </div>
         {d.responsavel && (
           <div className="term-meta-item">

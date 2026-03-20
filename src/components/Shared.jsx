@@ -25,6 +25,23 @@ export function MotivoBadge({ motivo }) {
   return <span className={`motivo-tag ${m.class}`}>{m.label}</span>;
 }
 
+export function AvisoBadge({ aviso, dias }) {
+  const labels = {
+    trabalhado: 'Trabalhado',
+    indenizado: 'Indenizado',
+    descontado: 'Descontado',
+    nao_aplicavel: 'N/A',
+  };
+  if (!aviso) return null;
+  const label = labels[aviso] || aviso;
+  return (
+    <span className={`aviso-tag aviso-${aviso}`}>
+      {label}
+      {aviso === 'trabalhado' && dias && ` (${dias}d)`}
+    </span>
+  );
+}
+
 export function ColigadaBadge({ code }) {
   const c = COLIGADAS[code];
   if (!c) return <span className="coligada-tag" style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>{code}</span>;

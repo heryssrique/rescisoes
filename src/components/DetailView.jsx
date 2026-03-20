@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { StatusBadge, MotivoBadge, ColigadaBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress } from './Shared';
+import { StatusBadge, MotivoBadge, ColigadaBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress, AvisoBadge } from './Shared';
 import { formatDate, formatDateTime } from '../utils/formatters';
 import { ModalEditarDesligamento } from './Modals';
 import {
@@ -213,8 +213,7 @@ export function DetailView({ id }) {
         <div className="info-item">
           <div className="info-item-label">Aviso Prévio</div>
           <div className="info-item-value">
-            {AVISO_LABEL[d.avisoPrevio] || d.avisoPrevio}
-            {d.avisoPrevio === 'trabalhado' && d.diasAvisoTrabalhado && ` (${d.diasAvisoTrabalhado} dias)`}
+            <AvisoBadge aviso={d.avisoPrevio} dias={d.diasAvisoTrabalhado} />
           </div>
         </div>
         <div className="info-item" style={{ gridColumn: '1/-1' }}>

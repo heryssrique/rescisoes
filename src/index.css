@@ -1201,6 +1201,22 @@ select.form-input {
 .motivo-aposentadoria { background: rgba(20,184,166,0.12); color: #2dd4bf; }
 .motivo-termino { background: rgba(139,92,246,0.12); color: #c4b5fd; }
 
+/* Aviso tags */
+.aviso-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.aviso-trabalhado { background: rgba(59,130,246,0.1); color: #60a5fa; border-color: rgba(59,130,246,0.2); }
+.aviso-indenizado { background: rgba(16,185,129,0.1); color: #34d399; border-color: rgba(16,185,129,0.2); }
+.aviso-descontado { background: rgba(249,115,22,0.1); color: #fb923c; border-color: rgba(249,115,22,0.2); }
+.aviso-nao_aplicavel { background: rgba(148,163,184,0.1); color: #94a3b8; border-color: rgba(148,163,184,0.2); }
+
 /* Sidebar footer */
 .sidebar-footer {
   padding: 16px;
