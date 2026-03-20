@@ -104,8 +104,9 @@ export function DaysUntilPayment({ dataPagamento }) {
 }
 
 export function ChecklistProgress({ checklist }) {
-  const total = checklist?.length || 0;
-  const done = checklist?.filter(c => c.done).length || 0;
+  const activeItems = checklist?.filter(c => !c.notApplicable) || [];
+  const total = activeItems.length || 0;
+  const done = activeItems.filter(c => c.done).length || 0;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
   return (
     <div>

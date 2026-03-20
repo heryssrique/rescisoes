@@ -94,10 +94,38 @@ router.patch('/:id/checklist/:itemId', async (req, res) => {
 
     item.done = !item.done;
     item.doneAt = item.done ? new Date().toISOString() : null;
+    
+    // Se marcar como concluído, garante que não está como N/A
+    if (item.done) item.notApplicable = false;
+    
     await doc.save();
     res.json(doc);
   } catch (err) {
     res.status(400).json({ error: 'Erro no toggle do checklist', detail: err.message });
+  }
+});
+
+// Toggle "Não Aplicável" para um item do checklist
+router.patch('/:id/checklist/:itemId/nao-aplicavel', async (req, res) => {
+  try {
+    const doc = await Desligamento.findById(req.params.id);
+    if (!doc) return res.status(404).json({ error: 'Não encontrado' });
+
+    const item = doc.checklist.find(c => c.id === req.params.itemId);
+    if (!item) return res.status(404).json({ error: 'Item de checklist não encontrado' });
+
+    item.notApplicable = !item.notApplicable;
+    
+    // Se for N/A, limpa o done
+    if (item.notApplicable) {
+      item.done = false;
+      item.doneAt = null;
+    }
+
+    await doc.save();
+    res.json(doc);
+  } catch (err) {
+    res.status(400).json({ error: 'Erro no toggle "N/A"', detail: err.message });
   }
 });
 

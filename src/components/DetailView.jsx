@@ -56,6 +56,10 @@ export function DetailView({ id }) {
     await actions.toggleChecklist(d.id, itemId);
   }
 
+  async function handleToggleNaoAplicavel(itemId) {
+    await actions.toggleNaoAplicavel(d.id, itemId);
+  }
+
   async function handleAddNota() {
     if (!nota.trim() && !acaoNote.trim()) return;
     await actions.addHistorico(d.id, {
@@ -259,15 +263,39 @@ export function DetailView({ id }) {
                 </span>
               </div>
               {items.map(item => (
-                <label key={item.id} className={`checklist-item ${item.done ? 'done' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={item.done}
-                    onChange={() => handleToggle(item.id)}
-                  />
-                  <span className="checklist-label">{item.label}</span>
-                  {item.doneAt && <span className="checklist-meta">{formatDateTime(item.doneAt)}</span>}
-                </label>
+                <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <label className={`checklist-item ${item.done ? 'done' : ''} ${item.notApplicable ? 'na' : ''}`} style={{ flex: 1, marginBottom: 0 }}>
+                    <input
+                      type="checkbox"
+                      checked={item.done}
+                      disabled={item.notApplicable}
+                      onChange={() => handleToggle(item.id)}
+                    />
+                    <span className="checklist-label">
+                      {item.label}
+                      {item.notApplicable && <span style={{ marginLeft: 6, fontSize: 10, opacity: 0.6, fontStyle: 'italic' }}>(N/A)</span>}
+                    </span>
+                    {item.doneAt && <span className="checklist-meta">{formatDateTime(item.doneAt)}</span>}
+                  </label>
+                  <button 
+                    className={`btn-na ${item.notApplicable ? 'active' : ''}`}
+                    onClick={(e) => { e.preventDefault(); handleToggleNaoAplicavel(item.id); }}
+                    title={item.notApplicable ? "Remover N/A" : "Marcar como não aplicável"}
+                    style={{ 
+                      padding: '4px 8px', 
+                      fontSize: 10, 
+                      borderRadius: 4, 
+                      border: '1px solid var(--border)',
+                      background: item.notApplicable ? 'var(--bg-card-hover)' : 'transparent',
+                      color: item.notApplicable ? 'var(--accent-blue-light)' : 'var(--text-muted)',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    N/A
+                  </button>
+                </div>
               ))}
             </div>
           ))}

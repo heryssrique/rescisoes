@@ -864,6 +864,12 @@ select.form-input {
   background: rgba(16,185,129,0.04);
 }
 
+.checklist-item.na {
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  opacity: 0.6;
+}
+
 .checklist-item input[type="checkbox"] {
   width: 16px;
   height: 16px;

@@ -36,7 +36,36 @@ function reducer(state, action) {
           checklist: d.checklist.map(c => {
             if (c.id !== action.itemId) return c;
             const newDone = !c.done;
-            return { ...c, done: newDone, doneAt: newDone ? now : null };
+            // Se estiver concluindo, desmarca N/A se houver
+            return { 
+              ...c, 
+              done: newDone, 
+              doneAt: newDone ? now : null,
+              notApplicable: newDone ? false : c.notApplicable
+            };
+          }),
+        };
+      });
+      return {
+        ...state,
+        desligamentos: updateList(state.desligamentos),
+        archivedDesligamentos: state.archivedDesligamentos ? updateList(state.archivedDesligamentos) : [],
+      };
+    }
+    case 'TOGGLE_NAO_APLICAVEL_OPTIMISTIC': {
+      const updateList = (list) => list.map(d => {
+        if (d.id !== action.desligamentoId) return d;
+        return {
+          ...d,
+          checklist: d.checklist.map(c => {
+            if (c.id !== action.itemId) return c;
+            const newNA = !c.notApplicable;
+            return { 
+              ...c, 
+              notApplicable: newNA,
+              done: newNA ? false : c.done,
+              doneAt: newNA ? null : c.doneAt
+            };
           }),
         };
       });
@@ -419,6 +448,21 @@ export function AppProvider({ children }) {
     }
   }
 
+  async function toggleNaoAplicavel(desligamentoId, itemId) {
+    // Optimistic update
+    dispatch({ type: 'TOGGLE_NAO_APLICAVEL_OPTIMISTIC', desligamentoId, itemId });
+
+    try {
+      const doc = await api.toggleChecklistNaoAplicavel(desligamentoId, itemId);
+      dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: doc });
+      return doc;
+    } catch (err) {
+      dispatch({ type: 'TOGGLE_NAO_APLICAVEL_OPTIMISTIC', desligamentoId, itemId });
+      dispatch({ type: 'SET_ERROR', message: `Erro ao marcar N/A: ${err.message}` });
+      throw err;
+    }
+  }
+
   async function addHistorico(desligamentoId, entry) {
     try {
       const doc = await api.addHistorico(desligamentoId, entry);
@@ -472,6 +516,7 @@ export function AppProvider({ children }) {
       bulkArchive,
       bulkDelete,
       toggleChecklist,
+      toggleNaoAplicavel,
       markNotificationRead,
       requestNotificationPermission,
       addHistorico,
