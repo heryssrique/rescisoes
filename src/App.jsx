@@ -8,8 +8,9 @@ import { ModalNovoDesligamento } from './components/Modals';
 import { ModalImportarPlanilha } from './components/ImportModal';
 import { NotificationCenter } from './components/NotificationCenter';
 import { seedDatabase } from './services/api';
+import { Dashboard } from './components/Dashboard';
 import {
-  LayoutList, Columns, Plus, Users, Database, AlertTriangle, Loader, FileSpreadsheet, Archive
+  LayoutList, Columns, Plus, Users, Database, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon
 } from 'lucide-react';
 
 function AppContent() {
@@ -46,12 +47,14 @@ function AppContent() {
   }
 
   const navItems = [
+    { id: 'dashboard', label: 'Estatísticas', icon: <PieChartIcon size={15} /> },
     { id: 'lista', label: 'Lista de Processos', icon: <LayoutList size={15} />, badge: activeCount },
     { id: 'kanban', label: 'Quadro Kanban', icon: <Columns size={15} /> },
     { id: 'arquivados', label: 'Arquivados', icon: <Archive size={15} />, badge: archivedCount },
   ];
 
   const viewTitles = {
+    dashboard: 'Estatísticas do RH',
     lista: 'Processos de Desligamento',
     kanban: 'Quadro Kanban',
     arquivados: 'Processos Arquivados',
@@ -59,6 +62,7 @@ function AppContent() {
   };
 
   const viewSubtitles = {
+    dashboard: 'Visão geral por motivos e empresas',
     lista: 'Organizados por data de pagamento',
     kanban: 'Visão por etapa do processo',
     arquivados: 'Histórico de processos finalizados',
@@ -178,6 +182,7 @@ function AppContent() {
         )}
 
         {/* Content */}
+        {view === 'dashboard' && <Dashboard />}
         {view === 'lista' && <ListView />}
         {view === 'kanban' && <KanbanView />}
         {view === 'arquivados' && <ArchivedView />}

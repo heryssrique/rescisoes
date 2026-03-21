@@ -11,6 +11,7 @@ import {
 import { CHECKLIST_TEMPLATE, STATUS_FLOW } from '../data/initialData';
 import { format } from 'date-fns';
 import { getPaymentDate } from '../utils/dateUtils';
+import confetti from 'canvas-confetti';
 
 const AVISO_LABEL = { trabalhado: 'Trabalhado', indenizado: 'Indenizado', nao_aplicavel: 'Não aplicável' };
 
@@ -74,6 +75,14 @@ export function DetailView({ id }) {
 
   async function handleStatusChange(newStatus) {
     try {
+      if (newStatus === 'pago') {
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']
+        });
+      }
       await actions.changeStatus(d, newStatus);
     } catch {
       // Erro gerenciado via AppContext (state.error)
