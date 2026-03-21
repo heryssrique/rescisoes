@@ -296,7 +296,7 @@ export function ListView({ data: injectedData }) {
         </div>
         <div className="stat-card purple">
           <div className="stat-label">Total Ativos</div>
-          <div className="stat-value">{desligamentos.length}</div>
+          <div className="stat-value">{currentList.length}</div>
           <div className="stat-icon"><User size={48} /></div>
         </div>
       </div>
