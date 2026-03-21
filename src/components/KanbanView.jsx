@@ -13,9 +13,9 @@ const COLUMNS = [
   { key: 'pago', label: 'Pago', color: 'var(--accent-green)' },
 ];
 
-export function KanbanView() {
+export function KanbanView({ data: injectedData }) {
   const { state, dispatch } = useApp();
-  const { desligamentos } = state;
+  const desligamentos = injectedData || state.desligamentos;
 
   function openDetail(id) {
     dispatch({ type: 'SET_SELECTED', id });

@@ -21,7 +21,22 @@ function AppContent() {
   const [showImport, setShowImport] = useState(false);
   const [seeding, setSeeding] = useState(false);
 
-  const activeCount = desligamentos.length;
+  const idsToRemove = ['d4', 'd5', 'h6', 'h7'];
+  const isOnlyMissingComprovante = (d) => {
+    const checklist = (d.checklist || []).filter(c => !idsToRemove.includes(c.id));
+    if (checklist.length === 0) return false;
+    const p2 = checklist.find(c => c.id === 'p2');
+    if (!p2 || p2.done || p2.notApplicable) return false;
+    const others = checklist.filter(c => c.id !== 'p2' && c.id !== 'p3');
+    if (others.length === 0) return false;
+    return others.every(c => c.done || c.notApplicable);
+  };
+
+  const pendentesComprovante = desligamentos.filter(d => isOnlyMissingComprovante(d));
+  const mainDesligamentos = desligamentos.filter(d => !isOnlyMissingComprovante(d));
+
+  const activeCount = mainDesligamentos.length;
+  const pendenteCount = pendentesComprovante.length;
   const archivedCount = archivedDesligamentos?.length || 0;
 
   async function handleSeed() {
@@ -51,6 +66,7 @@ function AppContent() {
     { id: 'dashboard', label: 'Estatísticas', icon: <PieChartIcon size={15} /> },
     { id: 'lista', label: 'Lista de Processos', icon: <LayoutList size={15} />, badge: activeCount },
     { id: 'kanban', label: 'Quadro Kanban', icon: <Columns size={15} /> },
+    { id: 'pendentes', label: 'Pend. Comprovante', icon: <AlertTriangle size={15} />, badge: pendenteCount },
     { id: 'arquivados', label: 'Arquivados', icon: <Archive size={15} />, badge: archivedCount },
   ];
 
@@ -58,6 +74,7 @@ function AppContent() {
     dashboard: 'Estatísticas do RH',
     lista: 'Processos de Desligamento',
     kanban: 'Quadro Kanban',
+    pendentes: 'Aguardando Comprovante',
     arquivados: 'Processos Arquivados',
     detalhe: 'Detalhe do Processo',
   };
@@ -66,6 +83,7 @@ function AppContent() {
     dashboard: 'Visão geral por motivos e empresas',
     lista: 'Organizados por data de pagamento',
     kanban: 'Visão por etapa do processo',
+    pendentes: 'Processos com pagamento pendente de arquivo',
     arquivados: 'Histórico de processos finalizados',
     detalhe: selected ? (desligamentos.find(d => d.id === selected)?.nome || archivedDesligamentos.find(d => d.id === selected)?.nome) : '',
   };
@@ -193,9 +211,10 @@ function AppContent() {
               transition={{ duration: 0.25, ease: 'easeOut' }}
               style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
             >
-              {view === 'dashboard' && <Dashboard />}
-              {view === 'lista' && <ListView />}
-              {view === 'kanban' && <KanbanView />}
+              {view === 'dashboard' && <Dashboard data={mainDesligamentos} />}
+              {view === 'lista' && <ListView data={mainDesligamentos} />}
+              {view === 'pendentes' && <ListView data={pendentesComprovante} />}
+              {view === 'kanban' && <KanbanView data={mainDesligamentos} />}
               {view === 'arquivados' && <ArchivedView />}
               {view === 'detalhe' && selected && <DetailView id={selected} />}
             </motion.div>

@@ -6,9 +6,9 @@ import { motion } from 'framer-motion';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#f97316', '#14b8a6'];
 
-export function Dashboard() {
+export function Dashboard({ data: injectedData }) {
   const { state } = useApp();
-  const { desligamentos } = state;
+  const desligamentos = injectedData || state.desligamentos;
 
   const stats = useMemo(() => {
     const data = {
