@@ -155,8 +155,20 @@ export function ListView() {
   const { state, dispatch, actions } = useApp();
   const { desligamentos } = state;
 
+  const idsToRemove = ['d4', 'd5', 'h6', 'h7'];
+  const isOnlyMissingComprovante = (d) => {
+    const checklist = (d.checklist || []).filter(c => !idsToRemove.includes(c.id));
+    if (checklist.length === 0) return false;
+    const p2 = checklist.find(c => c.id === 'p2');
+    if (!p2 || p2.done || p2.notApplicable) return false;
+    const others = checklist.filter(c => c.id !== 'p2' && c.id !== 'p3');
+    if (others.length === 0) return false;
+    return others.every(c => c.done || c.notApplicable);
+  };
+
+  const [activeTab, setActiveTab] = useState('main'); // 'main' ou 'pendentes'
   const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState('ativos'); // padrão: apenas ativos
+  const [filterStatus, setFilterStatus] = useState('ativos');
   const [filterMotivo, setFilterMotivo] = useState('todos');
   const [filterPrazo, setFilterPrazo] = useState('todos');
   const [sortBy, setSortBy] = useState('pagamento');
@@ -164,25 +176,27 @@ export function ListView() {
   const [showFilters, setShowFilters] = useState(false);
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
-  const activeCount = desligamentos.length;
+  const pendentesList = desligamentos.filter(d => isOnlyMissingComprovante(d));
+  const mainList = desligamentos.filter(d => !isOnlyMissingComprovante(d));
+  const currentList = activeTab === 'main' ? mainList : pendentesList;
 
-  const aVencer = desligamentos.filter(d => {
+  const aVencer = currentList.filter(d => {
     if (!d.dataPagamento) return false;
     const days = differenceInDays(parseISO(d.dataPagamento), new Date());
     return days >= 0 && days <= 5;
   }).length;
 
-  const vencidos = desligamentos.filter(d => {
+  const vencidos = currentList.filter(d => {
     if (!d.dataPagamento) return false;
     const days = differenceInDays(parseISO(d.dataPagamento), new Date());
     return days < 0;
   }).length;
 
   const statusCounts = {
-    comunicado: desligamentos.filter(d => d.status === 'comunicado').length,
-    documentacao: desligamentos.filter(d => d.status === 'documentacao').length,
-    homologacao: desligamentos.filter(d => d.status === 'homologacao').length,
-    aguardando: desligamentos.filter(d => d.status === 'aguardando').length,
+    comunicado: mainList.filter(d => d.status === 'comunicado').length,
+    documentacao: mainList.filter(d => d.status === 'documentacao').length,
+    homologacao: mainList.filter(d => d.status === 'homologacao').length,
+    aguardando: mainList.filter(d => d.status === 'aguardando').length,
   };
 
   const applyFilter = (list) =>
@@ -212,7 +226,7 @@ export function ListView() {
       return matchSearch && matchStatus && matchMotivo && matchPrazo && matchDate;
     });
 
-  const activeFiltered = useMemo(() => applyFilter(desligamentos), [desligamentos, search, filterStatus, filterMotivo, filterPrazo, dateRange]);
+  const activeFiltered = useMemo(() => applyFilter(currentList), [currentList, search, filterStatus, filterMotivo, filterPrazo, dateRange]);
 
   const makeGroups = (list) => {
     if (sortBy === 'pagamento') return groupByPaymentDate(list);
@@ -251,6 +265,8 @@ export function ListView() {
     }
   }
 
+  const activeCount = currentList.length;
+
   async function handleBulkArchive() {
     const archivableIds = activeFiltered
       .filter(d => selectedIds.includes(d.id) && (d.status === 'pago' || d.status === 'cancelado'))
@@ -276,8 +292,23 @@ export function ListView() {
 
   return (
     <div className="page-content">
+      {/* Tabs */}
+      <div className="tabs" style={{ marginBottom: 24, paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
+        <button className={`tab ${activeTab === 'main' ? 'active' : ''}`} onClick={() => { setActiveTab('main'); setSelectedIds([]); }}>
+          <User size={14} style={{ display: 'inline', marginRight: 6 }} />
+          Painel Principal
+          <span className="badge" style={{ marginLeft: 8, background: activeTab === 'main' ? 'var(--accent-blue)' : 'var(--bg-secondary)' }}>{mainList.length}</span>
+        </button>
+        <button className={`tab ${activeTab === 'pendentes' ? 'active' : ''}`} onClick={() => { setActiveTab('pendentes'); setSelectedIds([]); }}>
+          <AlertCircle size={14} style={{ display: 'inline', marginRight: 6 }} />
+          Aguardando Comprovante
+          <span className="badge" style={{ marginLeft: 8, background: activeTab === 'pendentes' ? 'var(--accent-orange)' : 'var(--bg-secondary)' }}>{pendentesList.length}</span>
+        </button>
+      </div>
+
       {/* Stats */}
       <div className="stats-grid">
+
         <div className="stat-card blue">
           <div className="stat-label">Em Andamento</div>
           <div className="stat-value">{activeCount}</div>
