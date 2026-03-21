@@ -27,23 +27,43 @@ function AppContent() {
     const checklist = d.checklist || [];
     const p1 = checklist.find(c => c.id === 'p1'); // Depósito
     const p2 = checklist.find(c => c.id === 'p2'); // Comprovante arquivado
-    
+
     // Check se já pagou (status pago ou p1 feito) mas sem comprovante (p2 vazio)
     const paid = (p1 && p1.done) || d.status === 'pago';
     const noReceipt = p2 && !p2.done && !p2.notApplicable;
-    
+
     return paid && noReceipt;
   };
 
+  const applyColigadaFilter = (list) => {
+    if (state.globalColigadaFilter === 'todas' || !state.globalColigadaFilter) return list;
+    return list.filter(d => d.coligada === state.globalColigadaFilter);
+  };
+
   const allDesligamentos = [...desligamentos, ...(archivedDesligamentos || [])];
-  const pendentesComprovante = allDesligamentos.filter(d => isOnlyMissingComprovante(d));
-  
-  const mainDesligamentos = desligamentos.filter(d => !isOnlyMissingComprovante(d));
-  const mainArquivados = (archivedDesligamentos || []).filter(d => !isOnlyMissingComprovante(d));
+
+  const filteredDesligamentos = applyColigadaFilter(desligamentos);
+  const filteredArchived = applyColigadaFilter(archivedDesligamentos || []);
+  const filteredAll = applyColigadaFilter(allDesligamentos);
+
+  const pendentesComprovante = filteredAll.filter(d => isOnlyMissingComprovante(d));
+  const mainDesligamentos = filteredDesligamentos.filter(d => !isOnlyMissingComprovante(d));
+  const mainArquivados = filteredArchived.filter(d => !isOnlyMissingComprovante(d));
 
   const activeCount = mainDesligamentos.length;
   const pendenteCount = pendentesComprovante.length;
   const archivedCount = mainArquivados.length;
+
+  // We need to fetch COLIGADAS here to render the topbar filter
+  let coligadosObj = {};
+  try {
+    const saved = localStorage.getItem('desligest_coligadas');
+    if (saved) coligadosObj = JSON.parse(saved);
+  } catch (e) { }
+  if (Object.keys(coligadosObj).length === 0) {
+    // Basic fallback if empty
+    coligadosObj = { '1': { nome: 'Concreta' }, '4': { nome: 'JPL Gomes' }, '11': { nome: 'JC Gomes' } };
+  }
 
   async function handleSeed() {
     if (!window.confirm('Isso irá apagar todos os dados e inserir os dados de exemplo. Confirma?')) return;
@@ -113,8 +133,8 @@ function AppContent() {
               </div>
             )}
           </div>
-          <button 
-            className="btn btn-icon" 
+          <button
+            className="btn btn-icon"
             style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
             title={isSidebarCollapsed ? "Expandir Menu" : "Recolher Menu"}
@@ -210,9 +230,9 @@ function AppContent() {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <NotificationCenter />
-            
+
             <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
-            
+
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 8px', borderRadius: 8, background: 'var(--bg-card)' }}>
               <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-purple), var(--accent-indigo))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700 }}>
                 HR

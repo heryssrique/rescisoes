@@ -113,6 +113,8 @@ function reducer(state, action) {
       return { ...state, view: action.view };
     case 'SET_SELECTED':
       return { ...state, selected: action.id };
+    case 'SET_GLOBAL_COLIGADA_FILTER':
+      return { ...state, globalColigadaFilter: action.payload };
     case 'SET_LOADING':
       return { ...state, loading: action.value };
     case 'SET_ERROR':
@@ -142,6 +144,7 @@ export function AppProvider({ children }) {
     archivedDesligamentos: [],
     view: 'lista',
     selected: null,
+    globalColigadaFilter: 'todas',
     loading: true,
     error: null,
     // Modo offline: true = usa localStorage como fallback
