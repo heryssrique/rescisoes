@@ -3,9 +3,10 @@ import { useApp } from '../context/AppContext';
 import { StatusBadge, MotivoBadge, ColigadaBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress, AvisoBadge } from './Shared';
 import { formatDate } from '../utils/formatters';
 import { MOTIVOS } from '../data/initialData';
-import { Search, ChevronRight, Calendar, User, AlertCircle, Archive, ChevronDown, ChevronUp, Clock, CheckSquare, Square, Trash2 } from 'lucide-react';
-import { differenceInDays, parseISO } from 'date-fns';
+import { Search, ChevronRight, Calendar, User, AlertCircle, Archive, ChevronDown, ChevronUp, Clock, CheckSquare, Square, Trash2, Filter, X } from 'lucide-react';
+import { differenceInDays, parseISO, isWithinInterval } from 'date-fns';
 import { getPaymentDate } from '../utils/dateUtils';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ARCHIVED_STATUSES = ['pago', 'cancelado'];
 
@@ -44,8 +45,12 @@ function DateGroupTag({ dataPagamento }) {
 function TermCard({ d, onOpen, onArchive, isSelected, onSelect }) {
   const isArchivable = d.status === 'pago' || d.status === 'cancelado';
   return (
-    <article
-      key={d.id}
+    <motion.article
+      layout
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.98 }}
+      whileHover={{ scale: 1.005, backgroundColor: 'var(--bg-card-hover)' }}
       className={`term-card ${isSelected ? 'selected' : ''}`}
       onClick={() => onOpen(d.id)}
       id={`card-${d.id}`}
@@ -142,7 +147,7 @@ function TermCard({ d, onOpen, onArchive, isSelected, onSelect }) {
         <ChecklistProgress checklist={d.checklist} />
       </div>
       <ProgressSteps status={d.status} />
-    </article>
+    </motion.article>
   );
 }
 
@@ -156,6 +161,8 @@ export function ListView() {
   const [filterPrazo, setFilterPrazo] = useState('todos');
   const [sortBy, setSortBy] = useState('pagamento');
   const [selectedIds, setSelectedIds] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
   const activeCount = desligamentos.length;
 
@@ -192,10 +199,20 @@ export function ListView() {
                          (filterPrazo === '7' && d.prazoPagamento === '7') ||
                          (filterPrazo === '10' && (d.prazoPagamento === '10' || !d.prazoPagamento));
       
-      return matchSearch && matchStatus && matchMotivo && matchPrazo;
+      let matchDate = true;
+      if (dateRange.start && dateRange.end && d.dataDesligamento) {
+        try {
+          matchDate = isWithinInterval(parseISO(d.dataDesligamento), {
+            start: parseISO(dateRange.start),
+            end: parseISO(dateRange.end)
+          });
+        } catch (e) { console.error('Data filter error', e); }
+      }
+      
+      return matchSearch && matchStatus && matchMotivo && matchPrazo && matchDate;
     });
 
-  const activeFiltered = useMemo(() => applyFilter(desligamentos), [desligamentos, search, filterStatus, filterMotivo]);
+  const activeFiltered = useMemo(() => applyFilter(desligamentos), [desligamentos, search, filterStatus, filterMotivo, filterPrazo, dateRange]);
 
   const makeGroups = (list) => {
     if (sortBy === 'pagamento') return groupByPaymentDate(list);
@@ -321,6 +338,14 @@ export function ListView() {
           <option value="status">Agrupar por Status</option>
         </select>
 
+        <button 
+          className={`btn btn-secondary ${showFilters ? 'active' : ''}`} 
+          onClick={() => setShowFilters(!showFilters)}
+          style={{ height: '38px' }}
+        >
+          <Filter size={14} /> Filtros
+        </button>
+
         {/* Botão Selecionar Todos no final do toolbar */}
         <button 
           type="button"
@@ -333,6 +358,58 @@ export function ListView() {
           <span style={{ fontSize: 13, fontWeight: 600 }}>{selectedIds.length > 0 ? `${selectedIds.length} selecionados` : 'Sel. Todos'}</span>
         </button>
       </div>
+
+      {/* Advanced Filters Panel */}
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="filters-panel"
+            style={{ 
+              marginBottom: 20, 
+              padding: 20, 
+              background: 'var(--bg-card)', 
+              borderRadius: 'var(--radius-lg)',
+              border: '1px solid var(--border)',
+              display: 'flex',
+              gap: 20,
+              overflow: 'hidden'
+            }}
+          >
+            <div className="form-group">
+              <label className="form-label">Data de Desligamento (Início)</label>
+              <input 
+                type="date" 
+                className="form-input" 
+                value={dateRange.start} 
+                onChange={e => setDateRange({...dateRange, start: e.target.value})} 
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Data de Desligamento (Fim)</label>
+              <input 
+                type="date" 
+                className="form-input" 
+                value={dateRange.end} 
+                onChange={e => setDateRange({...dateRange, end: e.target.value})} 
+              />
+            </div>
+            <button 
+              className="btn btn-secondary btn-sm" 
+              style={{ marginTop: 'auto', marginBottom: 2 }}
+              onClick={() => {
+                setDateRange({ start: '', end: '' });
+                setFilterMotivo('todos');
+                setFilterPrazo('todos');
+              }}
+            >
+              <X size={12} /> Limpar
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Floating Bulk Action Bar */}
       {selectedIds.length > 0 && (
@@ -399,16 +476,18 @@ export function ListView() {
               <span className="section-count">{items.length}</span>
             </div>
             <div className="term-list">
-              {items.map(d => (
-                <TermCard 
-                  key={d.id} 
-                  d={d} 
-                  onOpen={openDetail} 
-                  onArchive={handleArchive} 
-                  isSelected={selectedIds.includes(d.id)}
-                  onSelect={toggleSelection}
-                />
-              ))}
+              <AnimatePresence mode="popLayout">
+                {items.map(d => (
+                  <TermCard 
+                    key={d.id} 
+                    d={d} 
+                    onOpen={openDetail} 
+                    onArchive={handleArchive} 
+                    isSelected={selectedIds.includes(d.id)}
+                    onSelect={toggleSelection}
+                  />
+                ))}
+              </AnimatePresence>
             </div>
           </div>
         ))

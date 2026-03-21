@@ -7,15 +7,17 @@
 }
 
 :root {
-  --bg-primary: #0a0f1e;
-  --bg-secondary: #0f1629;
-  --bg-card: #141d35;
-  --bg-card-hover: #1a2540;
-  --border: #1e2d4d;
-  --border-light: #243660;
+  --bg-primary: #040813;
+  --bg-secondary: #0a0f24;
+  --bg-card: rgba(22, 32, 60, 0.7);
+  --bg-card-hover: rgba(30, 42, 80, 0.85);
+  --glass: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --border: rgba(30, 45, 77, 0.8);
+  --border-light: rgba(59, 130, 246, 0.3);
 
   --accent-blue: #3b82f6;
-  --accent-blue-light: #60a5fa;
+  --accent-blue-glow: rgba(59, 130, 246, 0.5);
   --accent-indigo: #6366f1;
   --accent-purple: #8b5cf6;
   --accent-green: #10b981;
@@ -24,9 +26,9 @@
   --accent-orange: #f97316;
   --accent-teal: #14b8a6;
 
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #475569;
+  --text-primary: #ffffff;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
 
   --status-comunicado: #3b82f6;
   --status-documentacao: #f59e0b;
@@ -35,24 +37,28 @@
   --status-pago: #10b981;
   --status-cancelado: #ef4444;
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 32px;
 
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
-  --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.15);
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 20px 50px -10px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 25px rgba(59, 130, 246, 0.25);
 }
 
 html, body, #root {
   height: 100%;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: var(--bg-primary);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.1) 0px, transparent 50%);
   color: var(--text-primary);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
 ::-webkit-scrollbar {

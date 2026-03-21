@@ -64,20 +64,50 @@ router.post('/', async (req, res) => {
 });
 
 // ─── PUT /api/desligamentos/:id ─────────────────────────────────────────────
-// Atualiza qualquer campo (incluindo checklist e status)
+// Atualiza qualquer campo (incluindo checklist e status) e gera log de auditoria
 router.put('/:id', async (req, res) => {
   try {
+    const existing = await Desligamento.findById(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Não encontrado' });
+
+    const updates = req.body;
+    const historyEntries = [];
+    const ignoreFields = ['historico', 'checklist', 'updatedAt', 'createdAt', '__v', '_id'];
+
+    // Comparar campos para auditoria
+    for (const key in updates) {
+      if (ignoreFields.includes(key)) continue;
+
+      const oldVal = String(existing[key] || '');
+      const newVal = String(updates[key] || '');
+
+      if (oldVal !== newVal) {
+        historyEntries.push({
+          data: new Date().toISOString(),
+          acao: `Campo '${key}' alterado`,
+          nota: `De: "${oldVal}" Para: "${newVal}"`
+        });
+      }
+    }
+
+    // Se houver mudanças, adiciona ao histórico
+    if (historyEntries.length > 0) {
+      if (!updates.historico) updates.historico = existing.historico || [];
+      updates.historico.push(...historyEntries);
+    }
+
     const doc = await Desligamento.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updates,
       { new: true, runValidators: true }
     );
-    if (!doc) return res.status(404).json({ error: 'Não encontrado' });
+    
     res.json(doc);
   } catch (err) {
     if (err.name === 'ValidationError') {
       return res.status(422).json({ error: 'Dados inválidos', detail: err.message });
     }
+    console.error('[PUT /desligamentos/:id]', err);
     res.status(400).json({ error: 'Erro ao atualizar', detail: err.message });
   }
 });
