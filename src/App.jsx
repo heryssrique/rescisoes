@@ -8,10 +8,11 @@ import { ModalNovoDesligamento } from './components/Modals';
 import { ModalImportarPlanilha } from './components/ImportModal';
 import { NotificationCenter } from './components/NotificationCenter';
 import { seedDatabase } from './services/api';
+import { SettingsView } from './components/SettingsView';
 import { Dashboard } from './components/Dashboard';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LayoutList, Columns, Plus, Users, Database, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose
+  LayoutList, Columns, Plus, Users, Database, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings
 } from 'lucide-react';
 
 function AppContent() {
@@ -73,6 +74,7 @@ function AppContent() {
     { id: 'pendentes', label: 'Pend. Comprovante', icon: <AlertTriangle size={15} />, badge: pendenteCount },
     { id: 'arquivados', label: 'Arquivados', icon: <Archive size={15} />, badge: archivedCount },
     { id: 'dashboard', label: 'Estatísticas', icon: <PieChartIcon size={15} /> },
+    { id: 'configuracoes', label: 'Configurações', icon: <Settings size={15} /> },
   ];
 
   const viewTitles = {
@@ -81,6 +83,7 @@ function AppContent() {
     kanban: 'Quadro Kanban',
     pendentes: 'Aguardando Comprovante',
     arquivados: 'Processos Arquivados',
+    configuracoes: 'Configurações do Sistema',
     detalhe: 'Detalhe do Processo',
   };
 
@@ -90,6 +93,7 @@ function AppContent() {
     kanban: 'Visão por etapa do processo',
     pendentes: 'Processos com pagamento pendente de arquivo',
     arquivados: 'Histórico de processos finalizados',
+    configuracoes: 'Administração de dados e preferências',
     detalhe: selected ? (allDesligamentos.find(d => d.id === selected)?.nome) : '',
   };
 
@@ -245,6 +249,7 @@ function AppContent() {
               {view === 'pendentes' && <ListView data={pendentesComprovante} />}
               {view === 'kanban' && <KanbanView data={mainDesligamentos} />}
               {view === 'arquivados' && <ArchivedView data={mainArquivados} />}
+              {view === 'configuracoes' && <SettingsView />}
               {view === 'detalhe' && selected && <DetailView id={selected} />}
             </motion.div>
           </AnimatePresence>
