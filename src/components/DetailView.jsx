@@ -267,16 +267,22 @@ export function DetailView({ id }) {
 
       {activeTab === 'checklist' && (
         <div>
-          {Object.entries(checklistByEtapa).map(([etapa, items]) => (
-            <div key={etapa} style={{ marginBottom: 20 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
-                  {etapaLabels[etapa]}
-                </span>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                  {items.filter(i => i.done).length}/{items.length}
-                </span>
-              </div>
+          {Object.entries(checklistByEtapa).map(([etapa, items]) => {
+            const validItems = items.filter(i => !i.notApplicable);
+            const doneCount = validItems.filter(i => i.done).length;
+            const validTotal = validItems.length;
+
+            return (
+              <div key={etapa} style={{ marginBottom: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+                    {etapaLabels[etapa]}
+                  </span>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                    {doneCount}/{validTotal}
+                  </span>
+                </div>
+
               {items.map(item => (
                 <div key={item.id} className={`todo-item ${item.done ? 'done' : ''} ${item.notApplicable ? 'na' : ''}`}>
                   <button 
@@ -315,7 +321,8 @@ export function DetailView({ id }) {
                 </div>
               ))}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
