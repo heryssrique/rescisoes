@@ -9,6 +9,7 @@ import { ModalImportarPlanilha } from './components/ImportModal';
 import { NotificationCenter } from './components/NotificationCenter';
 import { seedDatabase } from './services/api';
 import { Dashboard } from './components/Dashboard';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutList, Columns, Plus, Users, Database, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon
 } from 'lucide-react';
@@ -182,11 +183,24 @@ function AppContent() {
         )}
 
         {/* Content */}
-        {view === 'dashboard' && <Dashboard />}
-        {view === 'lista' && <ListView />}
-        {view === 'kanban' && <KanbanView />}
-        {view === 'arquivados' && <ArchivedView />}
-        {view === 'detalhe' && selected && <DetailView id={selected} />}
+        <div className="page-wrapper" style={{ flex: 1, position: 'relative' }}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={view + (selected || '')}
+              initial={{ opacity: 0, scale: 0.98, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 1.02, y: -10 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              style={{ height: '100%', width: '100%' }}
+            >
+              {view === 'dashboard' && <Dashboard />}
+              {view === 'lista' && <ListView />}
+              {view === 'kanban' && <KanbanView />}
+              {view === 'arquivados' && <ArchivedView />}
+              {view === 'detalhe' && selected && <DetailView id={selected} />}
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* Modal */}
