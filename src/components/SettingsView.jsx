@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Bell, Database, Download, FileSpreadsheet, AlertTriangle, ShieldAlert, Users, Plus, X, Save } from 'lucide-react';
+import { Bell, Database, Download, FileSpreadsheet, AlertTriangle, ShieldAlert, Users, Plus, X, Save, FileText, ListChecks } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
-import { DEFAULT_COLIGADAS } from '../data/initialData';
+import { DEFAULT_COLIGADAS, DEFAULT_MOTIVOS, DEFAULT_CHECKLIST_TEMPLATE } from '../data/initialData';
 
 export function SettingsView() {
   const { state, actions } = useApp();
   const { desligamentos, archivedDesligamentos } = state;
 
+  // Estado das Coligadas
   const [coligadasList, setColigadasList] = useState(() => {
     let coligadosObj = DEFAULT_COLIGADAS;
     try {
@@ -17,6 +18,52 @@ export function SettingsView() {
     } catch (e) {}
     return Object.entries(coligadosObj).map(([code, data]) => ({ code, nome: data.nome, color: data.color }));
   });
+
+  // Estado dos Motivos
+  const [motivosList, setMotivosList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('desligest_motivos');
+      return saved ? JSON.parse(saved) : DEFAULT_MOTIVOS;
+    } catch { return DEFAULT_MOTIVOS; }
+  });
+
+  // Estado do Checklist
+  const [checklistList, setChecklistList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('desligest_checklist');
+      return saved ? JSON.parse(saved) : DEFAULT_CHECKLIST_TEMPLATE;
+    } catch { return DEFAULT_CHECKLIST_TEMPLATE; }
+  });
+
+  const handleSaveMotivos = () => {
+    const valid = motivosList.filter(m => m.value.trim() && m.label.trim());
+    localStorage.setItem('desligest_motivos', JSON.stringify(valid));
+    alert('Padrões de motivos salvos e atualizados no sistema!');
+    window.location.reload();
+  };
+
+  const updateMotivo = (index, field, value) => {
+    const newList = [...motivosList];
+    newList[index][field] = value;
+    setMotivosList(newList);
+  };
+  const addMotivo = () => setMotivosList([...motivosList, { value: '', label: '', class: 'motivo-demissao' }]);
+  const removeMotivo = (index) => setMotivosList(motivosList.filter((_, i) => i !== index));
+
+  const handleSaveChecklist = () => {
+    const valid = checklistList.filter(c => c.id.trim() && c.label.trim() && c.etapa);
+    localStorage.setItem('desligest_checklist', JSON.stringify(valid));
+    alert('Checklist padrão salvo e atualizado nas novas rescisões!');
+    window.location.reload();
+  };
+
+  const updateChecklist = (index, field, value) => {
+    const newList = [...checklistList];
+    newList[index][field] = value;
+    setChecklistList(newList);
+  };
+  const addChecklistItem = () => setChecklistList([...checklistList, { id: `cx${Date.now()}`, label: '', etapa: 'comunicado' }]);
+  const removeChecklistItem = (index) => setChecklistList(checklistList.filter((_, i) => i !== index));
 
   const handleExportData = () => {
     const backup = {
@@ -123,6 +170,110 @@ export function SettingsView() {
               </button>
               <button className="btn btn-primary" onClick={handleSaveColigadas} style={{ fontSize: 13 }}>
                 <Save size={14} /> Salvar Padrões
+              </button>
+            </div>
+          </section>
+
+          <section className="card">
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+              <FileText size={18} color="var(--accent-indigo)" />
+              Motivos de Desligamento
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>
+              Edite as opções e cores dos motivos disponíveis ao criar um novo fluxo. Valores em branco serão ignorados.
+            </p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+              {motivosList.map((motivo, idx) => (
+                <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input 
+                    className="form-input" 
+                    placeholder="Valor Interno" 
+                    value={motivo.value}
+                    onChange={e => updateMotivo(idx, 'value', e.target.value)}
+                    style={{ flex: 1, padding: '8px' }}
+                  />
+                  <input 
+                    className="form-input" 
+                    placeholder="Nome" 
+                    value={motivo.label}
+                    onChange={e => updateMotivo(idx, 'label', e.target.value)}
+                    style={{ flex: 1.5, padding: '8px' }}
+                  />
+                  <select 
+                    className="form-input" 
+                    value={motivo.class}
+                    onChange={e => updateMotivo(idx, 'class', e.target.value)}
+                    style={{ flex: 1, padding: '8px' }}
+                  >
+                    <option value="motivo-pedido">Azul (Pedido)</option>
+                    <option value="motivo-demissao">Laranja (Demissão)</option>
+                    <option value="motivo-acordo">Amarelo (Acordo)</option>
+                    <option value="motivo-justa">Vermelho (Justa Causa)</option>
+                    <option value="motivo-aposentadoria">Verde (Aposenta.)</option>
+                    <option value="motivo-termino">Roxo (Término)</option>
+                  </select>
+                  <button className="btn btn-icon" onClick={() => removeMotivo(idx)} style={{ color: 'var(--text-muted)' }} title="Remover">
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-start' }}>
+              <button className="btn" onClick={addMotivo} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', fontSize: 13 }}>
+                <Plus size={14} /> Novo Motivo
+              </button>
+              <button className="btn btn-primary" onClick={handleSaveMotivos} style={{ fontSize: 13 }}>
+                <Save size={14} /> Salvar Motivos
+              </button>
+            </div>
+          </section>
+
+          <section className="card">
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+              <ListChecks size={18} color="var(--accent-green)" />
+              Checklist Padrão Automático
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>
+              Configure a lista de tarefas automáticas criadas para todo novo processo, assim como a Etapa exigida para sua conclusão.
+            </p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16, maxHeight: 400, overflowY: 'auto', paddingRight: 8 }}>
+              {checklistList.map((item, idx) => (
+                <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input 
+                    className="form-input" 
+                    placeholder="Tarefa..." 
+                    value={item.label}
+                    onChange={e => updateChecklist(idx, 'label', e.target.value)}
+                    style={{ flex: 2, padding: '8px', fontSize: 13 }}
+                  />
+                  <select 
+                    className="form-input" 
+                    value={item.etapa}
+                    onChange={e => updateChecklist(idx, 'etapa', e.target.value)}
+                    style={{ flex: 1, padding: '8px', fontSize: 13 }}
+                  >
+                    <option value="comunicado">Comunicado</option>
+                    <option value="documentacao">Documentação</option>
+                    <option value="homologacao">Homologação</option>
+                    <option value="aguardando">Ag. Pagamento</option>
+                    <option value="pago">Pago</option>
+                  </select>
+                  <button className="btn btn-icon" onClick={() => removeChecklistItem(idx)} style={{ color: 'var(--text-muted)' }} title="Remover">
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-start' }}>
+              <button className="btn" onClick={addChecklistItem} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', fontSize: 13 }}>
+                <Plus size={14} /> Nova Tarefa
+              </button>
+              <button className="btn btn-primary" onClick={handleSaveChecklist} style={{ fontSize: 13 }}>
+                <Save size={14} /> Salvar Checklist
               </button>
             </div>
           </section>

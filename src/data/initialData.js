@@ -30,7 +30,7 @@ export const DEFAULT_MOTIVOS = [
 
 export const MOTIVOS = getConfig('desligest_motivos', DEFAULT_MOTIVOS);
 
-export const STATUS_FLOW = [
+export const DEFAULT_STATUS_FLOW = [
   { key: 'comunicado', label: 'Comunicado', short: 'Com.' },
   { key: 'documentacao', label: 'Documentação', short: 'Doc.' },
   { key: 'homologacao', label: 'Homologação', short: 'Hom.' },
@@ -38,7 +38,9 @@ export const STATUS_FLOW = [
   { key: 'pago', label: 'Pago', short: 'Pago' },
 ];
 
-export const CHECKLIST_TEMPLATE = [
+export const STATUS_FLOW = getConfig('desligest_status_flow', DEFAULT_STATUS_FLOW);
+
+export const DEFAULT_CHECKLIST_TEMPLATE = [
   { id: 'c1', label: 'Comunicado de desligamento assinado', etapa: 'comunicado' },
   { id: 'c2', label: 'Aviso prévio calculado e registrado', etapa: 'comunicado' },
   { id: 'c3', label: 'Notificação ao eSocial enviada', etapa: 'comunicado' },
@@ -55,6 +57,8 @@ export const CHECKLIST_TEMPLATE = [
   { id: 'p2', label: 'Comprovante de pagamento arquivado', etapa: 'pago' },
   { id: 'p3', label: 'Processo encerrado no sistema', etapa: 'pago' },
 ];
+
+export const CHECKLIST_TEMPLATE = getConfig('desligest_checklist', DEFAULT_CHECKLIST_TEMPLATE);
 
 function makeChecklist() {
   return CHECKLIST_TEMPLATE.map(item => ({ ...item, done: false, doneAt: null }));
