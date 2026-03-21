@@ -1,14 +1,23 @@
 import { addDays, format, subDays } from 'date-fns';
 
-export const COLIGADAS = {
+function getConfig(key, fallback) {
+  try {
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : fallback;
+  } catch { return fallback; }
+}
+
+export const DEFAULT_COLIGADAS = {
   '1': { nome: 'Concreta', color: '#3b82f6' },
   '4': { nome: 'JPL Gomes', color: '#10b981' },
   '11': { nome: 'JC Gomes', color: '#8b5cf6' },
 };
 
+export const COLIGADAS = getConfig('desligest_coligadas', DEFAULT_COLIGADAS);
+
 const today = new Date();
 
-export const MOTIVOS = [
+export const DEFAULT_MOTIVOS = [
   { value: 'pedido', label: 'Pedido de Demissão', class: 'motivo-pedido' },
   { value: 'demissao', label: 'Demissão sem Justa Causa', class: 'motivo-demissao' },
   { value: 'acordo', label: 'Acordo Mútuo (§6 da CLT)', class: 'motivo-acordo' },
@@ -18,6 +27,8 @@ export const MOTIVOS = [
   { value: 'termino_empregado', label: 'Término Antecipado — Empregado', class: 'motivo-termino' },
   { value: 'termino_contrato', label: 'Término de Contrato', class: 'motivo-termino' },
 ];
+
+export const MOTIVOS = getConfig('desligest_motivos', DEFAULT_MOTIVOS);
 
 export const STATUS_FLOW = [
   { key: 'comunicado', label: 'Comunicado', short: 'Com.' },

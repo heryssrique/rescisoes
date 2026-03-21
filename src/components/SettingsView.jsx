@@ -1,12 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Bell, Database, Download, FileSpreadsheet, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { Bell, Database, Download, FileSpreadsheet, AlertTriangle, ShieldAlert, Users, Plus, X, Save } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
+import { DEFAULT_COLIGADAS } from '../data/initialData';
 
 export function SettingsView() {
   const { state, actions } = useApp();
   const { desligamentos, archivedDesligamentos } = state;
+
+  const [coligadasList, setColigadasList] = useState(() => {
+    let coligadosObj = DEFAULT_COLIGADAS;
+    try {
+      const saved = localStorage.getItem('desligest_coligadas');
+      if (saved) coligadosObj = JSON.parse(saved);
+    } catch (e) {}
+    return Object.entries(coligadosObj).map(([code, data]) => ({ code, nome: data.nome, color: data.color }));
+  });
 
   const handleExportData = () => {
     const backup = {
@@ -33,6 +43,25 @@ export function SettingsView() {
     actions.requestNotificationPermission();
   };
 
+  const handleSaveColigadas = () => {
+    const newColigadas = {};
+    coligadasList.forEach(c => {
+      if (c.code.trim()) newColigadas[c.code] = { nome: c.nome, color: c.color };
+    });
+    localStorage.setItem('desligest_coligadas', JSON.stringify(newColigadas));
+    alert('Padrões de empresas salvos e atualizados no sistema!');
+    window.location.reload();
+  };
+
+  const updateColigada = (index, field, value) => {
+    const newList = [...coligadasList];
+    newList[index][field] = value;
+    setColigadasList(newList);
+  };
+
+  const addColigada = () => setColigadasList([...coligadasList, { code: '', nome: '', color: '#3b82f6' }]);
+  const removeColigada = (index) => setColigadasList(coligadasList.filter((_, i) => i !== index));
+
   return (
     <motion.div 
       className="page-content"
@@ -51,7 +80,56 @@ export function SettingsView() {
           
           <section className="card">
             <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-              <Bell size={18} color="var(--accent-blue)" />
+              <Users size={18} color="var(--accent-blue)" />
+              Padrões de Empresas (Coligadas)
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>
+              Configure aqui os códigos, os nomes comerciais e as cores padrão (usadas nos gráficos e painéis) para representar diferentes unidades/empresas do grupo. 
+            </p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+              {coligadasList.map((coligada, idx) => (
+                <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input 
+                    className="form-input" 
+                    placeholder="Cód." 
+                    value={coligada.code}
+                    onChange={e => updateColigada(idx, 'code', e.target.value)}
+                    style={{ width: '80px', padding: '8px' }}
+                  />
+                  <input 
+                    className="form-input" 
+                    placeholder="Nome da Empresa" 
+                    value={coligada.nome}
+                    onChange={e => updateColigada(idx, 'nome', e.target.value)}
+                    style={{ flex: 1, padding: '8px' }}
+                  />
+                  <input 
+                    type="color" 
+                    value={coligada.color}
+                    onChange={e => updateColigada(idx, 'color', e.target.value)}
+                    style={{ width: 40, height: 36, padding: 0, border: '1px solid var(--border)', borderRadius: 4, cursor: 'pointer', background: 'transparent' }}
+                  />
+                  <button className="btn btn-icon" onClick={() => removeColigada(idx)} style={{ color: 'var(--text-muted)' }} title="Remover">
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-start' }}>
+              <button className="btn" onClick={addColigada} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', fontSize: 13 }}>
+                <Plus size={14} /> Adicionar Empresa
+              </button>
+              <button className="btn btn-primary" onClick={handleSaveColigadas} style={{ fontSize: 13 }}>
+                <Save size={14} /> Salvar Padrões
+              </button>
+            </div>
+          </section>
+
+          <section className="card">
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+              <Bell size={18} color="var(--accent-yellow)" />
               Notificações
             </h3>
             <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>
