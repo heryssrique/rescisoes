@@ -67,11 +67,11 @@ function AppContent() {
   }
 
   const navItems = [
-    { id: 'dashboard', label: 'Estatísticas', icon: <PieChartIcon size={15} /> },
     { id: 'lista', label: 'Lista de Processos', icon: <LayoutList size={15} />, badge: activeCount },
     { id: 'kanban', label: 'Quadro Kanban', icon: <Columns size={15} /> },
     { id: 'pendentes', label: 'Pend. Comprovante', icon: <AlertTriangle size={15} />, badge: pendenteCount },
     { id: 'arquivados', label: 'Arquivados', icon: <Archive size={15} />, badge: archivedCount },
+    { id: 'dashboard', label: 'Estatísticas', icon: <PieChartIcon size={15} /> },
   ];
 
   const viewTitles = {
