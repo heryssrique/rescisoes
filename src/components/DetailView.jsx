@@ -90,7 +90,9 @@ export function DetailView({ id }) {
   }
 
   // Group checklist by etapa
-  const checklist = d.checklist || [];
+  const idsToRemove = ['d4', 'd5', 'h6', 'h7'];
+  const checklist = (d.checklist || []).filter(c => !idsToRemove.includes(c.id));
+  
   const checklistByEtapa = {
     comunicado: checklist.filter(c => c.etapa === 'comunicado'),
     documentacao: checklist.filter(c => c.etapa === 'documentacao'),
@@ -195,7 +197,7 @@ export function DetailView({ id }) {
           <ProgressSteps status={d.status} />
         </div>
         <div className="divider" />
-        <ChecklistProgress checklist={d.checklist} />
+        <ChecklistProgress checklist={checklist} />
       </div>
 
       {/* Info grid */}
