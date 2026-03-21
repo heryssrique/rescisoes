@@ -122,6 +122,14 @@ function reducer(state, action) {
     case 'CLEAR_ERROR':
       return { ...state, error: null };
 
+    // Auth
+    case 'LOGIN':
+      localStorage.setItem('desligest_auth_user', JSON.stringify(action.payload));
+      return { ...state, user: action.payload };
+    case 'LOGOUT':
+      localStorage.removeItem('desligest_auth_user');
+      return { ...state, user: null };
+
     // Notificações
     case 'SET_NOTIFICATIONS':
       return { ...state, notifications: action.payload };
@@ -137,9 +145,17 @@ function reducer(state, action) {
   }
 }
 
+const getStoredUser = () => {
+  try {
+    const saved = localStorage.getItem('desligest_auth_user');
+    return saved ? JSON.parse(saved) : null;
+  } catch { return null; }
+};
+
 // ─── Provider ─────────────────────────────────────────────────────────────
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, {
+    user: getStoredUser(),
     desligamentos: [],
     archivedDesligamentos: [],
     view: 'lista',

@@ -10,9 +10,10 @@ import { NotificationCenter } from './components/NotificationCenter';
 import { seedDatabase } from './services/api';
 import { SettingsView } from './components/SettingsView';
 import { Dashboard } from './components/Dashboard';
+import { LoginView } from './components/LoginView';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LayoutList, Columns, Plus, Users, Database, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings
+  LayoutList, Columns, Plus, Users, Database, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut
 } from 'lucide-react';
 
 function AppContent() {
@@ -22,6 +23,10 @@ function AppContent() {
   const [showImport, setShowImport] = useState(false);
   const [seeding, setSeeding] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  if (!state.user) {
+    return <LoginView />;
+  }
 
   const isOnlyMissingComprovante = (d) => {
     const checklist = d.checklist || [];
@@ -234,9 +239,21 @@ function AppContent() {
             <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 8px', borderRadius: 8, background: 'var(--bg-card)' }}>
-              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-purple), var(--accent-indigo))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700 }}>
-                HR
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-purple), var(--accent-indigo))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff', textTransform: 'uppercase' }}>
+                {state.user?.name ? state.user.name.substring(0, 2) : 'HR'}
               </div>
+              <div style={{ display: 'flex', flexDirection: 'column', marginRight: 8 }}>
+                <span style={{ fontSize: 14, fontWeight: 600 }}>{state.user?.name || 'Admin'}</span>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{state.user?.role || 'RH Corporativo'}</span>
+              </div>
+              <button 
+                className="btn btn-icon" 
+                onClick={() => dispatch({ type: 'LOGOUT' })}
+                title="Sair do sistema"
+                style={{ color: 'var(--accent-red)' }}
+              >
+                <LogOut size={16} />
+              </button>
             </div>
           </div>
         </header>
