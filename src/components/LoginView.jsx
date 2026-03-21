@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
 import { motion } from 'framer-motion';
 import { Lock, Mail, Users, ArrowRight, ShieldCheck, AlertTriangle } from 'lucide-react';
 
-export function LoginView() {
-  const { dispatch } = useApp();
+export function LoginView({ onLogin }) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -51,7 +49,7 @@ export function LoginView() {
         if (existingUser) {
           const savedPass = localStorage.getItem(`pass_${email}`);
           if (savedPass === password || password === 'admin123') {
-            dispatch({ type: 'LOGIN', payload: existingUser });
+            onLogin(existingUser);
             return;
           } else {
             setError('Este e-mail já existe. Tente a senha correta ou a senha admin123 para forçar entrada.');
@@ -70,7 +68,7 @@ export function LoginView() {
         users.push(newUser);
         localStorage.setItem('desligest_users', JSON.stringify(users));
         localStorage.setItem(`pass_${email}`, password);
-        dispatch({ type: 'LOGIN', payload: newUser });
+        onLogin(newUser);
       } else {
         // Login Normal
         if (users.length === 0) {
@@ -83,7 +81,7 @@ export function LoginView() {
         const savedPass = localStorage.getItem(`pass_${email}`);
         
         if ((existingUser && savedPass === password) || (existingUser && password === 'admin123')) {
-          dispatch({ type: 'LOGIN', payload: existingUser });
+          onLogin(existingUser);
         } else {
           setError('Sua senha corporativa está incorreta.');
           setLoading(false);

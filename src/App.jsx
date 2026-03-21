@@ -11,22 +11,26 @@ import { seedDatabase } from './services/api';
 import { SettingsView } from './components/SettingsView';
 import { Dashboard } from './components/Dashboard';
 import { LoginView } from './components/LoginView';
+
+// ─── Auth fora do Provider ─────────────────────────────────────────────────
+function getStoredUser() {
+  try {
+    const s = localStorage.getItem('desligest_auth_user');
+    return s ? JSON.parse(s) : null;
+  } catch { return null; }
+}
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutList, Columns, Plus, Users, Database, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut
 } from 'lucide-react';
 
-function AppContent() {
+function AppContent({ user, onLogout }) {
   const { state, dispatch, actions } = useApp();
   const { view, selected, desligamentos, archivedDesligamentos, loading, error } = state;
   const [showNew, setShowNew] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [seeding, setSeeding] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-
-  if (!state.user) {
-    return <LoginView />;
-  }
 
   const isOnlyMissingComprovante = (d) => {
     const checklist = d.checklist || [];
@@ -240,15 +244,15 @@ function AppContent() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 8px', borderRadius: 8, background: 'var(--bg-card)' }}>
               <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-purple), var(--accent-indigo))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff', textTransform: 'uppercase' }}>
-                {state.user?.name ? state.user.name.substring(0, 2) : 'HR'}
+                {user?.name ? user.name.substring(0, 2) : 'HR'}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', marginRight: 8 }}>
-                <span style={{ fontSize: 14, fontWeight: 600 }}>{state.user?.name || 'Admin'}</span>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{state.user?.role || 'RH Corporativo'}</span>
+                <span style={{ fontSize: 14, fontWeight: 600 }}>{user?.name || 'Admin'}</span>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{user?.role || 'RH Corporativo'}</span>
               </div>
               <button 
                 className="btn btn-icon" 
-                onClick={() => dispatch({ type: 'LOGOUT' })}
+                onClick={onLogout}
                 title="Sair do sistema"
                 style={{ color: 'var(--accent-red)' }}
               >
@@ -301,9 +305,25 @@ function AppContent() {
 }
 
 export default function App() {
+  const [user, setUser] = useState(getStoredUser);
+
+  const handleLogin = (userData) => {
+    localStorage.setItem('desligest_auth_user', JSON.stringify(userData));
+    setUser(userData);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('desligest_auth_user');
+    setUser(null);
+  };
+
+  if (!user) {
+    return <LoginView onLogin={handleLogin} />;
+  }
+
   return (
     <AppProvider>
-      <AppContent />
+      <AppContent user={user} onLogout={handleLogout} />
     </AppProvider>
   );
 }
