@@ -35,60 +35,65 @@ export function LoginView() {
 
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      let users = [];
       try {
-        let users = [];
-        try {
-          const stored = localStorage.getItem('desligest_users');
-          if (stored) {
-            const parsed = JSON.parse(stored);
-            if (Array.isArray(parsed)) users = parsed;
-          }
-        } catch (e) {}
+        const stored = localStorage.getItem('desligest_users');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) users = parsed;
+        }
+      } catch (e) {}
 
-        if (isRegistering) {
-          // Criar conta
-          if (users.length > 0 && users.find(u => u.email === email)) {
-            setError('Este e-mail já está cadastrado no sistema.');
-            setLoading(false);
-            return;
-          }
-
-          const newUser = { 
-            id: Date.now(), 
-            email, 
-            name, 
-            role: users.length === 0 ? 'admin' : 'analista' 
-          };
-          
-          users.push(newUser);
-          localStorage.setItem('desligest_users', JSON.stringify(users));
-          localStorage.setItem(`pass_${email}`, password);
-          dispatch({ type: 'LOGIN', payload: newUser });
-        } else {
-          // Login
-          if (users.length === 0) {
-            setError('Nenhuma conta encontrada. Criar uma conta primeiro.');
-            setLoading(false);
-            return;
-          }
-
-          const existingUser = users.find(u => u.email === email);
+      if (isRegistering) {
+        // Se a pessoa tentar criar a conta mas ela já existe
+        const existingUser = users.find(u => u.email === email);
+        if (existingUser) {
           const savedPass = localStorage.getItem(`pass_${email}`);
-          
-          if ((existingUser && savedPass === password) || (existingUser && password === 'admin123')) {
+          if (savedPass === password || password === 'admin123') {
             dispatch({ type: 'LOGIN', payload: existingUser });
+            return;
           } else {
-            setError('Sua senha corporativa está incorreta.');
+            setError('Este e-mail já existe. Tente a senha correta ou a senha admin123 para forçar entrada.');
             setLoading(false);
+            return;
           }
         }
-      } catch (err) {
-        console.error("Auth error:", err);
-        setError("Erro interno ao validar dados. " + err.message);
-        setLoading(false);
+
+        const newUser = { 
+          id: Date.now(), 
+          email, 
+          name, 
+          role: users.length === 0 ? 'admin' : 'analista' 
+        };
+        
+        users.push(newUser);
+        localStorage.setItem('desligest_users', JSON.stringify(users));
+        localStorage.setItem(`pass_${email}`, password);
+        dispatch({ type: 'LOGIN', payload: newUser });
+      } else {
+        // Login Normal
+        if (users.length === 0) {
+          setError('Nenhuma conta encontrada. Crie uma acesso primeiro.');
+          setLoading(false);
+          return;
+        }
+
+        const existingUser = users.find(u => u.email === email);
+        const savedPass = localStorage.getItem(`pass_${email}`);
+        
+        if ((existingUser && savedPass === password) || (existingUser && password === 'admin123')) {
+          dispatch({ type: 'LOGIN', payload: existingUser });
+        } else {
+          setError('Sua senha corporativa está incorreta.');
+          setLoading(false);
+        }
       }
-    }, 800);
+    } catch (err) {
+      console.error("Auth error:", err);
+      setError("Erro interno. " + err.message);
+      setLoading(false);
+    }
   };
 
   return (
