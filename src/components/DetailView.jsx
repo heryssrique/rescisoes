@@ -6,7 +6,7 @@ import { ModalEditarDesligamento } from './Modals';
 import {
   ArrowLeft, Edit2, Trash2, Calendar, User, Briefcase,
   CheckSquare, Clock, AlertTriangle, MessageSquare, Plus, Loader,
-  Archive, RotateCcw
+  Archive, RotateCcw, CheckCircle2, Circle, MinusCircle
 } from 'lucide-react';
 import { CHECKLIST_TEMPLATE, STATUS_FLOW } from '../data/initialData';
 import { format } from 'date-fns';
@@ -276,38 +276,40 @@ export function DetailView({ id }) {
                 </span>
               </div>
               {items.map(item => (
-                <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <label className={`checklist-item ${item.done ? 'done' : ''} ${item.notApplicable ? 'na' : ''}`} style={{ flex: 1, marginBottom: 0 }}>
-                    <input
-                      type="checkbox"
-                      checked={item.done}
-                      disabled={item.notApplicable}
-                      onChange={() => handleToggle(item.id)}
-                    />
-                    <span className="checklist-label">
-                      {item.label}
-                      {item.notApplicable && <span style={{ marginLeft: 6, fontSize: 10, opacity: 0.6, fontStyle: 'italic' }}>(N/A)</span>}
-                    </span>
-                    {item.doneAt && <span className="checklist-meta">{formatDateTime(item.doneAt)}</span>}
-                  </label>
+                <div key={item.id} className={`todo-item ${item.done ? 'done' : ''} ${item.notApplicable ? 'na' : ''}`}>
                   <button 
-                    className={`btn-na ${item.notApplicable ? 'active' : ''}`}
-                    onClick={(e) => { e.preventDefault(); handleToggleNaoAplicavel(item.id); }}
-                    title={item.notApplicable ? "Remover N/A" : "Marcar como não aplicável"}
-                    style={{ 
-                      padding: '4px 8px', 
-                      fontSize: 10, 
-                      borderRadius: 4, 
-                      border: '1px solid var(--border)',
-                      background: item.notApplicable ? 'var(--bg-card-hover)' : 'transparent',
-                      color: item.notApplicable ? 'var(--accent-blue-light)' : 'var(--text-muted)',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease'
-                    }}
+                    className="todo-toggle"
+                    disabled={item.notApplicable}
+                    onClick={() => handleToggle(item.id)}
                   >
-                    N/A
+                    {item.notApplicable ? (
+                      <MinusCircle size={20} className="icon-na" />
+                    ) : item.done ? (
+                      <CheckCircle2 size={20} className="icon-done" />
+                    ) : (
+                      <Circle size={20} className="icon-pending" />
+                    )}
                   </button>
+
+                  <div className="todo-content" onClick={() => !item.notApplicable && handleToggle(item.id)}>
+                    <div className="todo-label">
+                      {item.label}
+                      {item.notApplicable && <span className="todo-badge-na">Não Aplicável</span>}
+                    </div>
+                    {item.doneAt && !item.notApplicable && (
+                      <div className="todo-meta">Concluído: {formatDateTime(item.doneAt)}</div>
+                    )}
+                  </div>
+
+                  <div className="todo-actions">
+                    <button 
+                      className={`todo-btn-na ${item.notApplicable ? 'active' : ''}`}
+                      onClick={(e) => { e.preventDefault(); handleToggleNaoAplicavel(item.id); }}
+                      title={item.notApplicable ? "Remover N/A" : "Marcar como não aplicável"}
+                    >
+                      N/A
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
