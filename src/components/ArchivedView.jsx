@@ -88,9 +88,10 @@ function TermCard({ d, onOpen, onUnarchive }) {
   );
 }
 
-export function ArchivedView() {
+export function ArchivedView({ data: injectedData }) {
   const { state, dispatch, actions } = useApp();
-  const { archivedDesligamentos, loading } = state;
+  const archivedDesligamentos = injectedData || state.archivedDesligamentos;
+  const { loading } = state;
   const [search, setSearch] = useState('');
   const [filterMotivo, setFilterMotivo] = useState('todos');
 

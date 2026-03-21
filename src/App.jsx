@@ -21,23 +21,27 @@ function AppContent() {
   const [showImport, setShowImport] = useState(false);
   const [seeding, setSeeding] = useState(false);
 
-  const idsToRemove = ['d4', 'd5', 'h6', 'h7'];
   const isOnlyMissingComprovante = (d) => {
-    const checklist = (d.checklist || []).filter(c => !idsToRemove.includes(c.id));
-    if (checklist.length === 0) return false;
-    const p2 = checklist.find(c => c.id === 'p2');
-    if (!p2 || p2.done || p2.notApplicable) return false;
-    const others = checklist.filter(c => c.id !== 'p2' && c.id !== 'p3');
-    if (others.length === 0) return false;
-    return others.every(c => c.done || c.notApplicable);
+    const checklist = d.checklist || [];
+    const p1 = checklist.find(c => c.id === 'p1'); // Depósito
+    const p2 = checklist.find(c => c.id === 'p2'); // Comprovante arquivado
+    
+    // Check se já pagou (status pago ou p1 feito) mas sem comprovante (p2 vazio)
+    const paid = (p1 && p1.done) || d.status === 'pago';
+    const noReceipt = p2 && !p2.done && !p2.notApplicable;
+    
+    return paid && noReceipt;
   };
 
-  const pendentesComprovante = desligamentos.filter(d => isOnlyMissingComprovante(d));
+  const allDesligamentos = [...desligamentos, ...(archivedDesligamentos || [])];
+  const pendentesComprovante = allDesligamentos.filter(d => isOnlyMissingComprovante(d));
+  
   const mainDesligamentos = desligamentos.filter(d => !isOnlyMissingComprovante(d));
+  const mainArquivados = (archivedDesligamentos || []).filter(d => !isOnlyMissingComprovante(d));
 
   const activeCount = mainDesligamentos.length;
   const pendenteCount = pendentesComprovante.length;
-  const archivedCount = archivedDesligamentos?.length || 0;
+  const archivedCount = mainArquivados.length;
 
   async function handleSeed() {
     if (!window.confirm('Isso irá apagar todos os dados e inserir os dados de exemplo. Confirma?')) return;
@@ -85,7 +89,7 @@ function AppContent() {
     kanban: 'Visão por etapa do processo',
     pendentes: 'Processos com pagamento pendente de arquivo',
     arquivados: 'Histórico de processos finalizados',
-    detalhe: selected ? (desligamentos.find(d => d.id === selected)?.nome || archivedDesligamentos.find(d => d.id === selected)?.nome) : '',
+    detalhe: selected ? (allDesligamentos.find(d => d.id === selected)?.nome) : '',
   };
 
   return (
@@ -148,7 +152,7 @@ function AppContent() {
 
         <div className="sidebar-footer">
           <div style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center' }}>
-            {activeCount + archivedCount} processo{(activeCount + archivedCount) !== 1 ? 's' : ''} registrado{(activeCount + archivedCount) !== 1 ? 's' : ''}
+            {activeCount + archivedCount + pendenteCount} processo{(activeCount + archivedCount + pendenteCount) !== 1 ? 's' : ''} registrado{(activeCount + archivedCount + pendenteCount) !== 1 ? 's' : ''}
           </div>
         </div>
       </nav>
@@ -215,7 +219,7 @@ function AppContent() {
               {view === 'lista' && <ListView data={mainDesligamentos} />}
               {view === 'pendentes' && <ListView data={pendentesComprovante} />}
               {view === 'kanban' && <KanbanView data={mainDesligamentos} />}
-              {view === 'arquivados' && <ArchivedView />}
+              {view === 'arquivados' && <ArchivedView data={mainArquivados} />}
               {view === 'detalhe' && selected && <DetailView id={selected} />}
             </motion.div>
           </AnimatePresence>
