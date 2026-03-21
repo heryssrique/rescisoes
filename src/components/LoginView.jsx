@@ -110,8 +110,8 @@ function LoginForm({ onLogin }) {
         </p>
 
         {!showFallback ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {/* Google Login */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {/* Google Login — Destaque Total */}
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               {GOOGLE_CLIENT_ID === 'SEU_CLIENT_ID_AQUI' ? (
                 <div style={{ padding: 20, background: 'rgba(251,191,36,0.08)', borderRadius: 12, border: '1px solid rgba(251,191,36,0.3)', width: '100%' }}>
@@ -137,16 +137,21 @@ function LoginForm({ onLogin }) {
               )}
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '4px 0' }}>
-              <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>ou use e-mail e senha</span>
-              <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+            {/* Trust badges */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 8 }}>
+              {['🔒 Login Seguro', '✅ Conta Corporativa', '⚡ Acesso Instantâneo'].map(t => (
+                <span key={t} style={{ fontSize: 11, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>{t}</span>
+              ))}
             </div>
 
-            <button type="button" className="btn" onClick={() => setShowFallback(true)} style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 13 }}>
-              <Mail size={15} /> Entrar com e-mail e senha
-            </button>
+            {/* Link discreto para e-mail/senha no rodapé */}
+            <div style={{ marginTop: 24, textAlign: 'center' }}>
+              <button type="button" onClick={() => setShowFallback(true)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 11, cursor: 'pointer', opacity: 0.6, textDecoration: 'underline' }}>
+                Não tenho conta Google
+              </button>
+            </div>
           </div>
+
         ) : (
           <motion.div key="fallback" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
