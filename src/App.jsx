@@ -11,7 +11,7 @@ import { seedDatabase } from './services/api';
 import { Dashboard } from './components/Dashboard';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LayoutList, Columns, Plus, Users, Database, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon
+  LayoutList, Columns, Plus, Users, Database, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose
 } from 'lucide-react';
 
 function AppContent() {
@@ -20,6 +20,7 @@ function AppContent() {
   const [showNew, setShowNew] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [seeding, setSeeding] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const isOnlyMissingComprovante = (d) => {
     const checklist = d.checklist || [];
@@ -95,15 +96,27 @@ function AppContent() {
   return (
     <div className="app-layout">
       {/* Sidebar */}
-      <nav className="sidebar" aria-label="Navegação principal">
-        <div className="sidebar-logo">
-          <div className="logo-mark">
+      <nav className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`} aria-label="Navegação principal">
+        <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="logo-mark" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div className="logo-icon">
               <Users size={18} color="white" />
             </div>
-            <span className="logo-text">DesliGest</span>
+            {!isSidebarCollapsed && (
+              <div>
+                <div className="logo-text">DesliGest</div>
+                <div className="logo-sub" style={{ paddingLeft: 0 }}>Gestão RH</div>
+              </div>
+            )}
           </div>
-          <div className="logo-sub">Gestão de Desligamentos</div>
+          <button 
+            className="btn btn-icon" 
+            style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            title={isSidebarCollapsed ? "Expandir Menu" : "Recolher Menu"}
+          >
+            <PanelLeftClose size={18} style={{ transform: isSidebarCollapsed ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }} />
+          </button>
         </div>
 
         <div className="sidebar-nav">
@@ -113,46 +126,58 @@ function AppContent() {
               key={item.id}
               id={`nav-${item.id}`}
               className={`nav-item ${view === item.id ? 'active' : ''}`}
+              style={{ justifyContent: isSidebarCollapsed ? 'center' : 'flex-start', padding: isSidebarCollapsed ? '12px' : '11px 16px' }}
               onClick={() => dispatch({ type: 'SET_VIEW', view: item.id })}
+              title={isSidebarCollapsed ? item.label : undefined}
             >
-              {item.icon}
-              {item.label}
-              {item.badge > 0 && <span className="badge">{item.badge}</span>}
+              <div style={{ position: 'relative', display: 'flex' }}>
+                {item.icon}
+                {isSidebarCollapsed && item.badge > 0 && <span style={{ position: 'absolute', top: -6, right: -8, background: 'var(--accent-blue)', fontSize: 9, padding: '2px 4px', borderRadius: 8, color: 'white' }}>{item.badge}</span>}
+              </div>
+              {!isSidebarCollapsed && <span>{item.label}</span>}
+              {!isSidebarCollapsed && item.badge > 0 && <span className="badge">{item.badge}</span>}
             </button>
           ))}
 
-          <div className="nav-section-label" style={{ marginTop: 16 }}>Ações</div>
+          <div className="nav-section-label" style={{ marginTop: 16 }}>
+            {isSidebarCollapsed ? '...' : 'Ações'}
+          </div>
           <button
             id="nav-novo"
             className="nav-item"
+            style={{ justifyContent: isSidebarCollapsed ? 'center' : 'flex-start', padding: isSidebarCollapsed ? '12px' : '11px 16px' }}
             onClick={() => setShowNew(true)}
+            title="Novo Desligamento"
           >
             <Plus size={15} />
-            Novo Desligamento
+            {!isSidebarCollapsed && <span>Novo Desligamento</span>}
           </button>
           <button
             id="nav-import"
             className="nav-item"
+            style={{ justifyContent: isSidebarCollapsed ? 'center' : 'flex-start', padding: isSidebarCollapsed ? '12px' : '11px 16px' }}
             onClick={() => setShowImport(true)}
+            title="Importar Planilha"
           >
             <FileSpreadsheet size={15} />
-            Importar Planilha
+            {!isSidebarCollapsed && <span>Importar Planilha</span>}
           </button>
           <button
             id="nav-seed"
             className="nav-item"
+            style={{ justifyContent: isSidebarCollapsed ? 'center' : 'flex-start', padding: isSidebarCollapsed ? '12px' : '11px 16px' }}
             onClick={handleSeed}
             disabled={seeding}
             title="Popular banco com dados de exemplo"
           >
             {seeding ? <Loader size={15} style={{ animation: 'spin 1s linear infinite' }} /> : <Database size={15} />}
-            {seeding ? 'Populando...' : 'Dados de Exemplo'}
+            {!isSidebarCollapsed && <span>{seeding ? 'Populando...' : 'Dados de Exemplo'}</span>}
           </button>
         </div>
 
         <div className="sidebar-footer">
           <div style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center' }}>
-            {activeCount + archivedCount + pendenteCount} processo{(activeCount + archivedCount + pendenteCount) !== 1 ? 's' : ''} registrado{(activeCount + archivedCount + pendenteCount) !== 1 ? 's' : ''}
+            {isSidebarCollapsed ? `${activeCount + archivedCount + pendenteCount}` : `${activeCount + archivedCount + pendenteCount} processo${(activeCount + archivedCount + pendenteCount) !== 1 ? 's' : ''} registrado${(activeCount + archivedCount + pendenteCount) !== 1 ? 's' : ''}`}
           </div>
         </div>
       </nav>
