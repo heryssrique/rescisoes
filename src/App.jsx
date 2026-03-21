@@ -183,7 +183,7 @@ function AppContent() {
         )}
 
         {/* Content */}
-        <div className="page-wrapper" style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div className="page-wrapper" style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <AnimatePresence mode="wait">
             <motion.div
               key={view + (selected || '')}
@@ -191,7 +191,7 @@ function AppContent() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 1.02, y: -10 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
-              style={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+              style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
             >
               {view === 'dashboard' && <Dashboard />}
               {view === 'lista' && <ListView />}
