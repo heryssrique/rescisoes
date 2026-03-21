@@ -186,11 +186,11 @@ export function LoginView() {
 
           <div style={{ marginTop: 32, textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>
             {isRegistering ? (
-              <p>Já possui credencial? <button onClick={() => { setIsRegistering(false); setError(''); }} style={{ background: 'none', border: 'none', color: 'var(--accent-purple)', fontWeight: 600, cursor: 'pointer' }}>Fazer Login</button></p>
+              <p>Já possui credencial? <button type="button" onClick={() => { setIsRegistering(false); setError(''); }} style={{ background: 'none', border: 'none', color: 'var(--accent-purple)', fontWeight: 600, cursor: 'pointer' }}>Fazer Login</button></p>
             ) : (
-              <p>Não possui acesso? <button onClick={() => { setIsRegistering(true); setError(''); }} style={{ background: 'none', border: 'none', color: 'var(--accent-purple)', fontWeight: 600, cursor: 'pointer' }}>Solicitar Cadastro</button></p>
+              <p>Não possui acesso? <button type="button" onClick={() => { setIsRegistering(true); setError(''); }} style={{ background: 'none', border: 'none', color: 'var(--accent-purple)', fontWeight: 600, cursor: 'pointer' }}>Solicitar Cadastro</button></p>
             )}
-            <p style={{ marginTop: 24, opacity: 0.5, fontSize: 11 }}>© {new Date().getFullYear()} DesliGest. Uso Interno.</p>
+            <p style={{ marginTop: 24, opacity: 0.5, fontSize: 11 }}>© {new Date().getFullYear()} DesliGest. (Build 12: Sync Auth)</p>
           </div>
         </motion.div>
       </div>
