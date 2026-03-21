@@ -36,48 +36,57 @@ export function LoginView() {
     setLoading(true);
 
     setTimeout(() => {
-      let users = [];
       try {
-        const stored = localStorage.getItem('desligest_users');
-        if (stored) users = JSON.parse(stored);
-      } catch (e) {}
+        let users = [];
+        try {
+          const stored = localStorage.getItem('desligest_users');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed)) users = parsed;
+          }
+        } catch (e) {}
 
-      if (isRegistering) {
-        // Criar conta
-        if (users.find(u => u.email === email)) {
-          setError('Este e-mail já está cadastrado no sistema.');
-          setLoading(false);
-          return;
-        }
+        if (isRegistering) {
+          // Criar conta
+          if (users.length > 0 && users.find(u => u.email === email)) {
+            setError('Este e-mail já está cadastrado no sistema.');
+            setLoading(false);
+            return;
+          }
 
-        const newUser = { 
-          id: Date.now(), 
-          email, 
-          name, 
-          role: users.length === 0 ? 'admin' : 'analista' 
-        };
-        
-        users.push(newUser);
-        localStorage.setItem('desligest_users', JSON.stringify(users));
-        localStorage.setItem(`pass_${email}`, password);
-        dispatch({ type: 'LOGIN', payload: newUser });
-      } else {
-        // Login
-        if (users.length === 0) {
-          setError('Nenhuma conta encontrada. Criar uma conta primeiro.');
-          setLoading(false);
-          return;
-        }
-
-        const existingUser = users.find(u => u.email === email);
-        const savedPass = localStorage.getItem(`pass_${email}`);
-        
-        if ((existingUser && savedPass === password) || (existingUser && password === 'admin123')) {
-          dispatch({ type: 'LOGIN', payload: existingUser });
+          const newUser = { 
+            id: Date.now(), 
+            email, 
+            name, 
+            role: users.length === 0 ? 'admin' : 'analista' 
+          };
+          
+          users.push(newUser);
+          localStorage.setItem('desligest_users', JSON.stringify(users));
+          localStorage.setItem(`pass_${email}`, password);
+          dispatch({ type: 'LOGIN', payload: newUser });
         } else {
-          setError('Sua senha corporativa está incorreta.');
-          setLoading(false);
+          // Login
+          if (users.length === 0) {
+            setError('Nenhuma conta encontrada. Criar uma conta primeiro.');
+            setLoading(false);
+            return;
+          }
+
+          const existingUser = users.find(u => u.email === email);
+          const savedPass = localStorage.getItem(`pass_${email}`);
+          
+          if ((existingUser && savedPass === password) || (existingUser && password === 'admin123')) {
+            dispatch({ type: 'LOGIN', payload: existingUser });
+          } else {
+            setError('Sua senha corporativa está incorreta.');
+            setLoading(false);
+          }
         }
+      } catch (err) {
+        console.error("Auth error:", err);
+        setError("Erro interno ao validar dados. " + err.message);
+        setLoading(false);
       }
     }, 800);
   };
@@ -156,7 +165,12 @@ export function LoginView() {
               </motion.div>
             )}
 
-            <button type="submit" className="btn btn-primary" style={{ height: 48, marginTop: 8, display: 'flex', justifyContent: 'center', fontSize: 15, fontWeight: 600, background: 'var(--text-primary)', color: 'var(--bg-default)' }} disabled={loading}>
+            <button 
+              type="submit" 
+              className="btn btn-primary" 
+              style={{ height: 48, marginTop: 8, display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: 15, fontWeight: 600, width: '100%' }} 
+              disabled={loading}
+            >
               {loading ? (
                 <div style={{ width: 20, height: 20, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
               ) : (
