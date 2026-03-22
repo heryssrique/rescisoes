@@ -1,6 +1,6 @@
 import React from 'react';
 import { STATUS_FLOW, MOTIVOS, COLIGADAS } from '../data/initialData';
-import { differenceInDays, parseISO } from 'date-fns';
+import { differenceInDays, parseISO, startOfDay } from 'date-fns';
 
 export function StatusBadge({ status }) {
   const labels = {
@@ -89,7 +89,7 @@ export function ProgressSteps({ status }) {
 
 export function DaysUntilPayment({ dataPagamento }) {
   if (!dataPagamento) return null;
-  const days = differenceInDays(parseISO(dataPagamento), new Date());
+  const days = differenceInDays(parseISO(dataPagamento), startOfDay(new Date()));
   let txt = '';
   if (days < 0) {
     txt = `Vencido há ${Math.abs(days)}d`;

@@ -4,7 +4,7 @@ import { StatusBadge, MotivoBadge, ColigadaBadge, ProgressSteps, DaysUntilPaymen
 import { formatDate } from '../utils/formatters';
 import { MOTIVOS } from '../data/initialData';
 import { Search, ChevronRight, Calendar, User, AlertCircle, Archive, ChevronDown, ChevronUp, Clock, CheckSquare, Square, Trash2, Filter, X } from 'lucide-react';
-import { differenceInDays, parseISO, isWithinInterval } from 'date-fns';
+import { differenceInDays, parseISO, isWithinInterval, startOfDay } from 'date-fns';
 import { getPaymentDate } from '../utils/dateUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -12,7 +12,7 @@ const ARCHIVED_STATUSES = ['pago', 'cancelado'];
 
 function getUrgencyClass(dataPagamento, status) {
   if (ARCHIVED_STATUSES.includes(status) || !dataPagamento) return '';
-  const days = differenceInDays(parseISO(dataPagamento), new Date());
+  const days = differenceInDays(parseISO(dataPagamento), startOfDay(new Date()));
   if (days < 0) return 'urgency-crit';
   if (days <= 3) return 'urgency-high';
   if (days <= 7) return 'urgency-med';
@@ -35,7 +35,7 @@ function groupByPaymentDate(desligamentos) {
 
 function DateGroupTag({ dataPagamento }) {
   if (!dataPagamento) return null;
-  const days = differenceInDays(parseISO(dataPagamento), new Date());
+  const days = differenceInDays(parseISO(dataPagamento), startOfDay(new Date()));
   if (days < 0) return <span className="date-group-tag vencido">Vencido há {Math.abs(days)}d</span>;
   if (days === 0) return <span className="date-group-tag vencendo">Hoje!</span>;
   if (days <= 5) return <span className="date-group-tag vencendo">Em {days}d</span>;
@@ -168,13 +168,13 @@ export function ListView({ data: injectedData }) {
 
   const aVencer = currentList.filter(d => {
     if (!d.dataPagamento) return false;
-    const days = differenceInDays(parseISO(d.dataPagamento), new Date());
+    const days = differenceInDays(parseISO(d.dataPagamento), startOfDay(new Date()));
     return days >= 0 && days <= 5;
   }).length;
 
   const vencidos = currentList.filter(d => {
     if (!d.dataPagamento) return false;
-    const days = differenceInDays(parseISO(d.dataPagamento), new Date());
+    const days = differenceInDays(parseISO(d.dataPagamento), startOfDay(new Date()));
     return days < 0;
   }).length;
 
