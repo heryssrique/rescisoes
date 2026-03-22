@@ -82,9 +82,10 @@ export function Dashboard({ data: injectedData }) {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 24 }}>
-        <div className="card" style={{ height: 400 }}>
+        <div className="card" style={{ height: 400, display: 'flex', flexDirection: 'column' }}>
           <h3 style={{ marginBottom: 20, fontSize: 14 }}>Volume Mensal</h3>
-          <ResponsiveContainer width="100%" height="85%">
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <LineChart data={mesChartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={11} />
@@ -95,12 +96,14 @@ export function Dashboard({ data: injectedData }) {
               />
               <Line type="monotone" dataKey="value" stroke="var(--accent-blue)" strokeWidth={3} dot={{ r: 6, fill: 'var(--accent-blue)' }} />
             </LineChart>
-          </ResponsiveContainer>
+            </ResponsiveContainer>
+          </div>
         </div>
 
-        <div className="card" style={{ height: 400 }}>
+        <div className="card" style={{ height: 400, display: 'flex', flexDirection: 'column' }}>
           <h3 style={{ marginBottom: 20, fontSize: 14 }}>Motivos de Desligamento</h3>
-          <ResponsiveContainer width="100%" height="85%">
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <PieChart>
               <Pie
                 data={motivoChartData}
@@ -117,14 +120,16 @@ export function Dashboard({ data: injectedData }) {
                 contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 12 }}
               />
             </PieChart>
-          </ResponsiveContainer>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 350px', gap: 24 }}>
-        <div className="card" style={{ height: 350 }}>
+        <div className="card" style={{ height: 350, display: 'flex', flexDirection: 'column' }}>
           <h3 style={{ marginBottom: 20, fontSize: 14 }}>Status dos Processos</h3>
-          <ResponsiveContainer width="100%" height="85%">
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <BarChart data={statusChartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={11} />
@@ -134,7 +139,8 @@ export function Dashboard({ data: injectedData }) {
               />
               <Bar dataKey="value" fill="var(--accent-indigo)" radius={[4, 4, 0, 0]} />
             </BarChart>
-          </ResponsiveContainer>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         <div className="card" style={{ height: 350 }}>
