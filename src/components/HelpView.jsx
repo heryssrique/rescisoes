@@ -45,7 +45,7 @@ export function HelpView() {
   ];
 
   return (
-    <div className="help-view fade-in" style={{ padding: '24px', maxWidth: 900, margin: '0 auto', width: '100%' }}>
+    <div className="help-view fade-in" style={{ padding: '24px', maxWidth: 900, margin: '0 auto', width: '100%', height: '100%', overflowY: 'auto' }}>
       <header style={{ marginBottom: 32, textAlign: 'center' }}>
         <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>Central de Ajuda DesliGest</h1>
         <p style={{ color: 'var(--text-muted)' }}>Mapeamento oficial de funcionalidades e guia de uso corporativo do sistema.</p>
