@@ -164,6 +164,15 @@ export function ListView({ data: injectedData }) {
   const [showFilters, setShowFilters] = useState(false);
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
+  let coligadosObj = {};
+  try {
+    const saved = localStorage.getItem('desligest_coligadas');
+    if (saved) coligadosObj = JSON.parse(saved);
+  } catch (e) { }
+  if (Object.keys(coligadosObj).length === 0) {
+    coligadosObj = { '1': { nome: 'Concreta' }, '4': { nome: 'JPL Gomes' }, '11': { nome: 'JC Gomes' } };
+  }
+
   const activeCount = currentList.length;
 
   const aVencer = currentList.filter(d => {
@@ -312,6 +321,13 @@ export function ListView({ data: injectedData }) {
             onChange={e => setSearch(e.target.value)}
           />
         </div>
+
+        <select id="filter-coligada" className="filter-select" value={state.globalColigadaFilter || 'todas'} onChange={e => dispatch({ type: 'SET_GLOBAL_COLIGADA_FILTER', payload: e.target.value })}>
+          <option value="todas">Todas as Empresas</option>
+          {Object.entries(coligadosObj).map(([id, col]) => (
+            <option key={id} value={id}>{id} - {col.nome}</option>
+          ))}
+        </select>
 
         <select id="filter-status" className="filter-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
           <option value="ativos">Processos Ativos</option>

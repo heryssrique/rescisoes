@@ -95,6 +95,15 @@ export function ArchivedView({ data: injectedData }) {
   const [search, setSearch] = useState('');
   const [filterMotivo, setFilterMotivo] = useState('todos');
 
+  let coligadosObj = {};
+  try {
+    const saved = localStorage.getItem('desligest_coligadas');
+    if (saved) coligadosObj = JSON.parse(saved);
+  } catch (e) { }
+  if (Object.keys(coligadosObj).length === 0) {
+    coligadosObj = { '1': { nome: 'Concreta' }, '4': { nome: 'JPL Gomes' }, '11': { nome: 'JC Gomes' } };
+  }
+
   useEffect(() => {
     actions.fetchArchived();
   }, []);
@@ -138,6 +147,13 @@ export function ArchivedView({ data: injectedData }) {
             onChange={handleSearch}
           />
         </div>
+
+        <select id="filter-coligada-archived" className="filter-select" value={state.globalColigadaFilter || 'todas'} onChange={e => dispatch({ type: 'SET_GLOBAL_COLIGADA_FILTER', payload: e.target.value })}>
+          <option value="todas">Todas as Empresas</option>
+          {Object.entries(coligadosObj).map(([id, col]) => (
+            <option key={id} value={id}>{id} - {col.nome}</option>
+          ))}
+        </select>
 
         <select id="filter-motivo-archived" className="filter-select" value={filterMotivo} onChange={e => setFilterMotivo(e.target.value)}>
           <option value="todos">Todos os motivos</option>

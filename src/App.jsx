@@ -213,29 +213,6 @@ function AppContent() {
             </button>
           )}
 
-          {view !== 'detalhe' && view !== 'configuracoes' && view !== 'ajuda' && (
-            <select 
-              value={globalColigadaFilter || 'todas'} 
-              onChange={(e) => dispatch({ type: 'SET_GLOBAL_COLIGADA_FILTER', payload: e.target.value })}
-              style={{
-                padding: '8px 12px',
-                borderRadius: '8px',
-                border: '1px solid var(--border)',
-                background: 'var(--bg-card)',
-                color: 'var(--text-primary)',
-                fontSize: 14,
-                fontWeight: 500,
-                outline: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              <option value="todas">Todas as Empresas</option>
-              {Object.entries(coligadosObj).map(([id, col]) => (
-                <option key={id} value={id}>{id} - {col.nome}</option>
-              ))}
-            </select>
-          )}
-
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <NotificationCenter />
 
