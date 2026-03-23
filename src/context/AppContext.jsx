@@ -314,7 +314,7 @@ export function AppProvider({ children }) {
         if (!n.read && !notifiedSessionIds.current.has(n.id)) {
           new Notification('Alerta de Prazo', {
             body: n.message,
-            icon: '/favicon.ico'
+            icon: '/vite.svg'
           });
           notifiedSessionIds.current.add(n.id);
         }
