@@ -17,8 +17,8 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/deslig
 // ── Middlewares ────────────────────────────────────────────────────────────
 app.use(cors({
   origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
