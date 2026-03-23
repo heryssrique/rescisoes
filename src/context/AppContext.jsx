@@ -108,6 +108,10 @@ function reducer(state, action) {
         archivedDesligamentos: (state.archivedDesligamentos || []).filter(d => !action.ids.includes(d.id)),
       };
 
+    case 'SET_USER':
+      return { ...state, user: action.payload };
+    case 'LOGOUT':
+      return { ...state, user: null, desligamentos: [], archivedDesligamentos: [] };
     // UI
     case 'SET_VIEW':
       return { ...state, view: action.view };
@@ -145,17 +149,11 @@ function reducer(state, action) {
   }
 }
 
-const getStoredUser = () => {
-  try {
-    const saved = localStorage.getItem('desligest_auth_user');
-    return saved ? JSON.parse(saved) : null;
-  } catch { return null; }
-};
-
 // ─── Provider ─────────────────────────────────────────────────────────────
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, {
-    user: getStoredUser(),
+    user: null,
+    isAuthChecked: false,
     desligamentos: [],
     archivedDesligamentos: [],
     view: 'lista',
@@ -220,7 +218,25 @@ export function AppProvider({ children }) {
     }
   }, []);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  const checkAuthStatus = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const user = await api.checkAuth();
+        dispatch({ type: 'SET_USER', payload: user });
+      } catch (err) {
+        localStorage.removeItem('token');
+      }
+    }
+  }, []);
+
+  useEffect(() => { checkAuthStatus(); }, [checkAuthStatus]);
+
+  useEffect(() => {
+    if (state.user) {
+      fetchAll();
+    }
+  }, [state.user, fetchAll]);
 
   useEffect(() => {
     // Persiste no localStorage sempre que houver novos dados para garantir o modo offline
@@ -514,6 +530,24 @@ export function AppProvider({ children }) {
     await updateDesligamento(updated);
   }
 
+  // ── Auth Actions ────────────────────────────────────────────────────────
+  async function login(email, password) {
+    const res = await api.login(email, password);
+    localStorage.setItem('token', res.token);
+    dispatch({ type: 'SET_USER', payload: res.user });
+  }
+
+  async function register(name, email, password) {
+    const res = await api.register(name, email, password);
+    localStorage.setItem('token', res.token);
+    dispatch({ type: 'SET_USER', payload: res.user });
+  }
+
+  function logout() {
+    localStorage.removeItem('token');
+    dispatch({ type: 'LOGOUT' });
+  }
+
   // Mantém compatibilidade com o dispatch direto p/ navegação de UI
   const uiDispatch = (action) => {
     if (['SET_VIEW', 'SET_SELECTED', 'CLEAR_ERROR'].includes(action.type)) {
@@ -540,6 +574,9 @@ export function AppProvider({ children }) {
       requestNotificationPermission,
       addHistorico,
       changeStatus,
+      login,
+      register,
+      logout,
       importDesligamentos: async (data) => {
         try {
           const res = await api.importDesligamentos(data);

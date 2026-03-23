@@ -12,6 +12,12 @@ async function request(method, endpoint, body) {
     method,
     headers: { 'Content-Type': 'application/json' },
   };
+  
+  const token = localStorage.getItem('token');
+  if (token) {
+    options.headers['Authorization'] = `Bearer ${token}`;
+  }
+
   if (body !== undefined) {
     options.body = JSON.stringify(body);
   }
@@ -107,4 +113,15 @@ export function bulkDelete(ids) {
 /** Popula o banco com dados de exemplo (apenas dev). */
 export function seedDatabase() {
   return request('POST', '/desligamentos/seed');
+}
+
+// ─── Auth ─────────────────────────────────────────────────────────────────
+export function login(email, password) {
+  return request('POST', '/auth/login', { email, password });
+}
+export function register(name, email, password) {
+  return request('POST', '/auth/register', { name, email, password });
+}
+export function checkAuth() {
+  return request('GET', '/auth/me');
 }

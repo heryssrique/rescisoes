@@ -9,7 +9,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 const desligamentosRouter = require('./routes/desligamentos');
-
+const authRouter = require('./routes/auth');
 const app = express();
 const PORT = process.env.PORT || 3001;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/desligest';
@@ -30,8 +30,8 @@ app.use((req, _res, next) => {
 });
 
 // ── Rotas ─────────────────────────────────────────────────────────────────
+app.use('/api/auth', authRouter);
 app.use('/api/desligamentos', desligamentosRouter);
-
 app.get('/api/health', (_req, res) => {
   res.json({
     status: 'ok',

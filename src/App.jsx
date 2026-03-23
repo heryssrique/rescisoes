@@ -7,30 +7,26 @@ import { DetailView } from './components/DetailView';
 import { ModalNovoDesligamento } from './components/Modals';
 import { ModalImportarPlanilha } from './components/ImportModal';
 import { NotificationCenter } from './components/NotificationCenter';
-import { seedDatabase } from './services/api';
 import { SettingsView } from './components/SettingsView';
 import { Dashboard } from './components/Dashboard';
-import { LoginView } from './components/LoginView';
+import { AuthView } from './components/AuthView';
 
-// ─── Auth fora do Provider ─────────────────────────────────────────────────
-function getStoredUser() {
-  try {
-    const s = localStorage.getItem('desligest_auth_user');
-    return s ? JSON.parse(s) : null;
-  } catch { return null; }
-}
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LayoutList, Columns, Plus, Users, Database, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut
+  LayoutList, Columns, Plus, Users, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut
 } from 'lucide-react';
 
-function AppContent({ user, onLogout }) {
+function AppContent() {
   const { state, dispatch, actions } = useApp();
-  const { view, selected, desligamentos, archivedDesligamentos, loading, error } = state;
+  const { user, view, selected, desligamentos, archivedDesligamentos, loading, error } = state;
+
   const [showNew, setShowNew] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [seeding, setSeeding] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  if (!user) {
+    return <AuthView />;
+  }
 
   const isOnlyMissingComprovante = (d) => {
     const checklist = d.checklist || [];
@@ -72,19 +68,6 @@ function AppContent({ user, onLogout }) {
   if (Object.keys(coligadosObj).length === 0) {
     // Basic fallback if empty
     coligadosObj = { '1': { nome: 'Concreta' }, '4': { nome: 'JPL Gomes' }, '11': { nome: 'JC Gomes' } };
-  }
-
-  async function handleSeed() {
-    if (!window.confirm('Isso irá apagar todos os dados e inserir os dados de exemplo. Confirma?')) return;
-    setSeeding(true);
-    try {
-      await seedDatabase();
-      await actions.fetchAll();
-    } catch (e) {
-      alert('Erro no seed: ' + e.message);
-    } finally {
-      setSeeding(false);
-    }
   }
 
   // Loading skeleton
@@ -195,17 +178,6 @@ function AppContent({ user, onLogout }) {
             <FileSpreadsheet size={15} />
             {!isSidebarCollapsed && <span>Importar Planilha</span>}
           </button>
-          <button
-            id="nav-seed"
-            className="nav-item"
-            style={{ justifyContent: isSidebarCollapsed ? 'center' : 'flex-start', padding: isSidebarCollapsed ? '12px' : '11px 16px' }}
-            onClick={handleSeed}
-            disabled={seeding}
-            title="Popular banco com dados de exemplo"
-          >
-            {seeding ? <Loader size={15} style={{ animation: 'spin 1s linear infinite' }} /> : <Database size={15} />}
-            {!isSidebarCollapsed && <span>{seeding ? 'Populando...' : 'Dados de Exemplo'}</span>}
-          </button>
         </div>
 
         <div className="sidebar-footer">
@@ -252,7 +224,7 @@ function AppContent({ user, onLogout }) {
               </div>
               <button 
                 className="btn btn-icon" 
-                onClick={onLogout}
+                onClick={actions.logout}
                 title="Sair do sistema"
                 style={{ color: 'var(--accent-red)' }}
               >
@@ -305,25 +277,9 @@ function AppContent({ user, onLogout }) {
 }
 
 export default function App() {
-  const [user, setUser] = useState(getStoredUser);
-
-  const handleLogin = (userData) => {
-    localStorage.setItem('desligest_auth_user', JSON.stringify(userData));
-    setUser(userData);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('desligest_auth_user');
-    setUser(null);
-  };
-
-  if (!user) {
-    return <LoginView onLogin={handleLogin} />;
-  }
-
   return (
     <AppProvider>
-      <AppContent user={user} onLogout={handleLogout} />
+      <AppContent />
     </AppProvider>
   );
 }
