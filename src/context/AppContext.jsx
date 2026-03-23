@@ -550,7 +550,7 @@ export function AppProvider({ children }) {
 
   // Mantém compatibilidade com o dispatch direto p/ navegação de UI
   const uiDispatch = (action) => {
-    if (['SET_VIEW', 'SET_SELECTED', 'CLEAR_ERROR'].includes(action.type)) {
+    if (['SET_VIEW', 'SET_SELECTED', 'CLEAR_ERROR', 'SET_GLOBAL_COLIGADA_FILTER'].includes(action.type)) {
       dispatch(action);
     }
   };
