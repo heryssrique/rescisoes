@@ -3,10 +3,9 @@ import { useApp } from '../context/AppContext';
 import { StatusBadge, MotivoBadge, ColigadaBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress, AvisoBadge } from './Shared';
 import { formatDate } from '../utils/formatters';
 import { MOTIVOS } from '../data/initialData';
-import { Search, ChevronRight, Calendar, User, AlertCircle, Archive, ChevronDown, ChevronUp, Clock, CheckSquare, Square, Trash2, Filter, X, FileDown } from 'lucide-react';
+import { Search, ChevronRight, Calendar, User, AlertCircle, Archive, ChevronDown, ChevronUp, Clock, CheckSquare, Square, Trash2, Filter, X } from 'lucide-react';
 import { differenceInDays, parseISO, isWithinInterval, startOfDay } from 'date-fns';
 import { getPaymentDate } from '../utils/dateUtils';
-import * as XLSX from 'xlsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ARCHIVED_STATUSES = ['pago', 'cancelado'];
@@ -284,28 +283,6 @@ export function ListView({ data: injectedData }) {
     }
   }
 
-  function handleExportExcel() {
-    const dataToExport = activeFiltered.map(d => ({
-      Nome: d.nome || '',
-      Cargo: d.cargo || '',
-      Departamento: d.departamento || '',
-      Matrícula: d.matricula || '',
-      Coligada: d.coligada || '',
-      Status: d.status || '',
-      Motivo: MOTIVOS.find(m => m.value === d.motivo)?.label || d.motivo || '',
-      'Aviso Prévio': d.avisoPrevio || '',
-      'Admissão': formatDate(d.dataAdmissao) || '',
-      'Comunicado': formatDate(d.dataComunicado) || '',
-      'Desligamento': formatDate(d.dataDesligamento) || '',
-      'Pagamento': formatDate(d.dataPagamento) || '',
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(dataToExport);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Desligamentos");
-    XLSX.writeFile(wb, "Relatorio_Desligamentos.xlsx");
-  }
-
   return (
     <div className="page-content">
       {/* Stats */}
@@ -384,15 +361,6 @@ export function ListView({ data: injectedData }) {
           style={{ height: '38px', whiteSpace: 'nowrap' }}
         >
           <Filter size={14} /> Filtros
-        </button>
-
-        <button 
-          className="btn btn-primary btn-sm"
-          onClick={handleExportExcel}
-          style={{ height: '38px', whiteSpace: 'nowrap' }}
-          title="Exportar Relatório para Excel"
-        >
-          <FileDown size={14} /> Exportar
         </button>
 
         {/* Botão Selecionar Todos no final do toolbar */}

@@ -3,9 +3,8 @@ import { useApp } from '../context/AppContext';
 import { StatusBadge, MotivoBadge, ColigadaBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress } from './Shared';
 import { formatDate } from '../utils/formatters';
 import { MOTIVOS } from '../data/initialData';
-import { Search, ChevronRight, Calendar, User, Archive, ChevronDown, ChevronUp, Clock, RotateCcw, FileDown } from 'lucide-react';
+import { Search, ChevronRight, Calendar, User, Archive, ChevronDown, ChevronUp, Clock, RotateCcw } from 'lucide-react';
 import { getPaymentDate } from '../utils/dateUtils';
-import * as XLSX from 'xlsx';
 
 function groupByPaymentDate(desligamentos) {
   const groups = {};
@@ -135,28 +134,6 @@ export function ArchivedView({ data: injectedData }) {
     }
   }
 
-  function handleExportExcel() {
-    const dataToExport = filtered.map(d => ({
-      Nome: d.nome || '',
-      Cargo: d.cargo || '',
-      Departamento: d.departamento || '',
-      Matrícula: d.matricula || '',
-      Coligada: d.coligada || '',
-      Status: d.status || '',
-      Motivo: MOTIVOS.find(m => m.value === d.motivo)?.label || d.motivo || '',
-      'Aviso Prévio': d.avisoPrevio || '',
-      'Admissão': formatDate(d.dataAdmissao) || '',
-      'Comunicado': formatDate(d.dataComunicado) || '',
-      'Desligamento': formatDate(d.dataDesligamento) || '',
-      'Pagamento': formatDate(d.dataPagamento) || '',
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(dataToExport);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Desligamentos_Arquivados");
-    XLSX.writeFile(wb, "Relatorio_Arquivados.xlsx");
-  }
-
   return (
     <div className="page-content">
       <div className="toolbar">
@@ -183,15 +160,6 @@ export function ArchivedView({ data: injectedData }) {
             <option key={m.value} value={m.value}>{m.label}</option>
           ))}
         </select>
-
-        <button 
-          className="btn btn-primary btn-sm"
-          onClick={handleExportExcel}
-          style={{ height: '38px', whiteSpace: 'nowrap' }}
-          title="Exportar Relatório para Excel"
-        >
-          <FileDown size={14} /> Exportar
-        </button>
       </div>
 
       {loading ? (

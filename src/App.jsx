@@ -11,10 +11,11 @@ import { SettingsView } from './components/SettingsView';
 import { Dashboard } from './components/Dashboard';
 import { AuthView } from './components/AuthView';
 import { HelpView } from './components/HelpView';
+import { ReportsView } from './components/ReportsView';
 
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LayoutList, Columns, Plus, Users, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut, HelpCircle
+  LayoutList, Columns, Plus, Users, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut, HelpCircle, FileText
 } from 'lucide-react';
 
 function AppContent() {
@@ -86,6 +87,7 @@ function AppContent() {
     { id: 'kanban', label: 'Quadro Kanban', icon: <Columns size={15} /> },
     { id: 'pendentes', label: 'Pend. Comprovante', icon: <AlertTriangle size={15} />, badge: pendenteCount },
     { id: 'arquivados', label: 'Arquivados', icon: <Archive size={15} />, badge: archivedCount },
+    { id: 'relatorios', label: 'Relatórios', icon: <FileText size={15} /> },
     { id: 'dashboard', label: 'Estatísticas', icon: <PieChartIcon size={15} /> },
     { id: 'configuracoes', label: 'Configurações', icon: <Settings size={15} /> },
     { id: 'ajuda', label: 'Central de Ajuda', icon: <HelpCircle size={15} /> },
@@ -97,6 +99,7 @@ function AppContent() {
     kanban: 'Quadro Kanban',
     pendentes: 'Aguardando Comprovante',
     arquivados: 'Processos Arquivados',
+    relatorios: 'Central de Relatórios',
     configuracoes: 'Configurações do Sistema',
     ajuda: 'Central de Ajuda',
     detalhe: 'Detalhe do Processo',
@@ -108,6 +111,7 @@ function AppContent() {
     kanban: 'Visão por etapa do processo',
     pendentes: 'Processos com pagamento pendente de arquivo',
     arquivados: 'Histórico de processos finalizados',
+    relatorios: 'Exportar dados para auditoria e gerência',
     configuracoes: 'Administração de dados e preferências',
     ajuda: 'Guia de uso e funcionalidades',
     detalhe: selected ? (allDesligamentos.find(d => d.id === selected)?.nome) : '',
@@ -266,6 +270,7 @@ function AppContent() {
               {view === 'pendentes' && <ListView data={pendentesComprovante} />}
               {view === 'kanban' && <KanbanView data={mainDesligamentos} />}
               { view === 'arquivados' && <ArchivedView data={mainArquivados} /> }
+              { view === 'relatorios' && <ReportsView ativos={mainDesligamentos} arquivados={mainArquivados} /> }
               { view === 'configuracoes' && <SettingsView /> }
               { view === 'ajuda' && <HelpView /> }
               { view === 'detalhe' && selected && <DetailView id={selected} /> }
