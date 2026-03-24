@@ -6,7 +6,7 @@ import { ModalEditarDesligamento } from './Modals';
 import {
   ArrowLeft, Edit2, Trash2, Calendar, User, Briefcase,
   CheckSquare, Clock, AlertTriangle, MessageSquare, Plus, Loader,
-  Archive, RotateCcw, CheckCircle2, Circle, MinusCircle
+  Archive, RotateCcw, CheckCircle2, Circle, MinusCircle, FileText
 } from 'lucide-react';
 import { CHECKLIST_TEMPLATE, STATUS_FLOW } from '../data/initialData';
 import { format } from 'date-fns';
@@ -89,6 +89,51 @@ export function DetailView({ id }) {
     }
   }
 
+  function handleGenerateReport() {
+    let report = `RELATÓRIO DE DESLIGAMENTO\n`;
+    report += `=========================\n\n`;
+    report += `Colaborador: ${d.nome}\n`;
+    report += `Cargo: ${d.cargo}\n`;
+    if (d.departamento) report += `Departamento: ${d.departamento}\n`;
+    if (d.matricula) report += `Matrícula: ${d.matricula}\n`;
+    report += `Data Admissão: ${formatDate(d.dataAdmissao)}\n`;
+    report += `Data do Comunicado: ${formatDate(d.dataComunicado)}\n`;
+    report += `Data Desligamento: ${formatDate(d.dataDesligamento)}\n`;
+    const statusObj = STATUS_FLOW.find(s => s.key === d.status);
+    report += `Status: ${statusObj ? statusObj.short : d.status}\n\n`;
+
+    report += `CHECKLIST\n`;
+    report += `---------\n\n`;
+
+    Object.entries(checklistByEtapa).forEach(([etapa, items]) => {
+      report += `${etapaLabels[etapa].toUpperCase()}\n`;
+      items.forEach(item => {
+        let statusStr = '[ ]';
+        if (item.notApplicable) {
+          statusStr = '[N/A]';
+        } else if (item.done) {
+          statusStr = '[X]';
+        }
+        report += `${statusStr} ${item.label}`;
+        if (item.doneAt && !item.notApplicable) {
+          report += ` (Concluído em: ${formatDateTime(item.doneAt)})`;
+        }
+        report += `\n`;
+      });
+      report += `\n`;
+    });
+
+    const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Relatorio_Checklist_${d.nome.replace(/\\s+/g, '_')}_${format(new Date(), 'yyyyMMdd')}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   // Group checklist by etapa
   const idsToRemove = ['d4', 'd5', 'h6', 'h7'];
   const checklist = (d.checklist || []).filter(c => !idsToRemove.includes(c.id));
@@ -147,6 +192,9 @@ export function DetailView({ id }) {
               )}
               <button className="btn btn-secondary btn-sm" onClick={() => setShowEdit(true)} id="btn-editar">
                 <Edit2 size={13} /> Editar
+              </button>
+              <button className="btn btn-primary btn-sm" onClick={handleGenerateReport} id="btn-relatorio">
+                <FileText size={13} /> Relatório
               </button>
             </>
           ) : (
