@@ -133,7 +133,7 @@ function TermCard({ d, onOpen, onArchive, isSelected, onSelect }) {
         </div>
         <div className="term-meta-item">
           <div className="term-meta-label">Aviso Prévio</div>
-          <div className="term-meta-value"><AvisoBadge aviso={d.avisoPrevio} dias={d.diasAvisoTrabalhado} /></div>
+          <div className="term-meta-value"><AvisoBadge aviso={d.avisoPrevio} dias={d.diasAvisoTrabalhado} dataAdmissao={d.dataAdmissao} dataComunicado={d.dataComunicado} /></div>
         </div>
         {d.responsavel && (
           <div className="term-meta-item">

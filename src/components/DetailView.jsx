@@ -280,7 +280,7 @@ export function DetailView({ id }) {
         <div className="info-item">
           <div className="info-item-label">Aviso Prévio</div>
           <div className="info-item-value">
-            <AvisoBadge aviso={d.avisoPrevio} dias={d.diasAvisoTrabalhado} />
+            <AvisoBadge aviso={d.avisoPrevio} dias={d.diasAvisoTrabalhado} dataAdmissao={d.dataAdmissao} dataComunicado={d.dataComunicado} />
           </div>
         </div>
         <div className="info-item" style={{ gridColumn: '1/-1' }}>

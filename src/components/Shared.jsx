@@ -1,6 +1,6 @@
 import React from 'react';
 import { STATUS_FLOW, MOTIVOS, COLIGADAS } from '../data/initialData';
-import { differenceInDays, parseISO, startOfDay } from 'date-fns';
+import { differenceInDays, parseISO, startOfDay, differenceInYears } from 'date-fns';
 
 export function StatusBadge({ status }) {
   const labels = {
@@ -25,7 +25,7 @@ export function MotivoBadge({ motivo }) {
   return <span className={`motivo-tag ${m.class}`}>{m.label}</span>;
 }
 
-export function AvisoBadge({ aviso, dias }) {
+export function AvisoBadge({ aviso, dias, dataAdmissao, dataComunicado }) {
   const labels = {
     trabalhado: 'Trabalhado',
     indenizado: 'Indenizado',
@@ -34,10 +34,32 @@ export function AvisoBadge({ aviso, dias }) {
   };
   if (!aviso) return null;
   const label = labels[aviso] || aviso;
+
+  let totalDias = 0;
+  let indenizados = 0;
+
+  if (dataAdmissao && dataComunicado) {
+    try {
+      const anosTrabalhados = differenceInYears(parseISO(dataComunicado), parseISO(dataAdmissao));
+      const diasAdicionais = Math.min(Math.max(0, anosTrabalhados) * 3, 60);
+      totalDias = 30 + diasAdicionais;
+      if (aviso === 'indenizado') {
+        indenizados = totalDias;
+      } else if (aviso === 'trabalhado') {
+        const diasTrabalhados = parseInt(dias) || 30;
+        indenizados = Math.max(0, totalDias - diasTrabalhados);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
   return (
     <span className={`aviso-tag aviso-${aviso}`}>
       {label}
       {aviso === 'trabalhado' && dias && ` (${dias}d)`}
+      {aviso === 'trabalhado' && indenizados > 0 && ` + ${indenizados}d a pagar`}
+      {aviso === 'indenizado' && indenizados > 0 && ` (${indenizados}d)`}
     </span>
   );
 }
