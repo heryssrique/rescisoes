@@ -15,7 +15,7 @@ import { ReportsView } from './components/ReportsView';
 
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LayoutList, Columns, Plus, Users, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut, HelpCircle, FileText
+  LayoutList, Columns, Plus, Users, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut, HelpCircle, FileText, Sun, Moon
 } from 'lucide-react';
 
 function AppContent() {
@@ -226,7 +226,17 @@ function AppContent() {
             </button>
           )}
 
+
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button 
+              className="btn btn-icon" 
+              onClick={actions.toggleTheme}
+              title={state.theme === 'dark' ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro'}
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+            >
+              {state.theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+
             <NotificationCenter />
 
             <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />

@@ -132,6 +132,11 @@ function reducer(state, action) {
 
     case 'SET_AUTH_CHECKED':
       return { ...state, isAuthChecked: true };
+    case 'TOGGLE_THEME': {
+      const newTheme = state.theme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('desligest_theme', newTheme);
+      return { ...state, theme: newTheme };
+    }
 
     // Notificações
     case 'SET_NOTIFICATIONS':
@@ -157,6 +162,7 @@ export function AppProvider({ children }) {
     archivedDesligamentos: [],
     view: 'lista',
     selected: null,
+    theme: localStorage.getItem('desligest_theme') || 'dark',
     globalColigadaFilter: 'todas',
     loading: true,
     error: null,
@@ -165,6 +171,10 @@ export function AppProvider({ children }) {
     notifications: [],
     readNotificationIds: JSON.parse(localStorage.getItem('readNotificationIds') || '[]'),
   });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', state.theme);
+  }, [state.theme]);
 
   // ── Carrega lista ao montar ──────────────────────────────────────────────
   const fetchAll = useCallback(async () => {
@@ -587,6 +597,7 @@ export function AppProvider({ children }) {
           throw err;
         }
       },
+      toggleTheme: () => dispatch({ type: 'TOGGLE_THEME' }),
     },
   };
 

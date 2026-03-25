@@ -28,7 +28,8 @@ export function AuthView() {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh',
-      background: 'var(--bg-main)', color: 'var(--text-main)', padding: 24
+      background: 'var(--bg-primary)', color: 'var(--text-primary)', padding: 24,
+      backgroundImage: 'var(--bg-gradient)'
     }}>
       <div style={{
         width: '100%', maxWidth: 400, background: 'var(--bg-card)', 
