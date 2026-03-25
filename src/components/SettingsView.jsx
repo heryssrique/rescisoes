@@ -1,10 +1,67 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Bell, Database, Download, FileSpreadsheet, AlertTriangle, ShieldAlert, Users, Plus, X, Save, FileText, ListChecks, Settings } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Bell, Database, Download, FileSpreadsheet, AlertTriangle, ShieldAlert, Users, Plus, X, Save, FileText, ListChecks, Settings, GripVertical } from 'lucide-react';
+import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import { format } from 'date-fns';
 import { DEFAULT_COLIGADAS, DEFAULT_MOTIVOS, DEFAULT_CHECKLIST_TEMPLATE } from '../data/initialData';
 
+function ChecklistItem({ item, idx, updateChecklist, removeChecklistItem }) {
+  const controls = useDragControls();
+  
+  return (
+    <Reorder.Item 
+      key={item.id} 
+      value={item}
+      dragListener={false}
+      dragControls={controls}
+      style={{ 
+        display: 'flex', 
+        gap: 12, 
+        alignItems: 'center', 
+        padding: '10px 12px', 
+        background: 'var(--bg-card)',
+        borderRadius: '8px',
+        border: '1px solid var(--border)',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+        userSelect: 'none'
+      }}
+    >
+      <div 
+        style={{ cursor: 'grab', color: 'var(--text-muted)', padding: '4px' }}
+        onPointerDown={(e) => controls.start(e)}
+      >
+        <GripVertical size={18} />
+      </div>
+      <div style={{ flex: 2 }}>
+        <input 
+          className="form-input" 
+          placeholder="Descreva a tarefa..." 
+          value={item.label} 
+          onChange={e => updateChecklist(idx, 'label', e.target.value)} 
+          style={{ padding: '10px 14px', fontSize: 14, background: 'var(--bg-secondary)', border: 'none', width: '100%' }} 
+        />
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Fase:</span>
+        <select 
+          className="form-input" 
+          value={item.etapa} 
+          onChange={e => updateChecklist(idx, 'etapa', e.target.value)} 
+          style={{ padding: '8px 12px', fontSize: 13, background: 'var(--bg-card)' }}
+        >
+          <option value="comunicado">1. Comunicado</option>
+          <option value="documentacao">2. Documentação</option>
+          <option value="homologacao">3. Homologação</option>
+          <option value="aguardando">4. Ag. Pagamento</option>
+          <option value="pago">5. Processo Fechado</option>
+        </select>
+      </div>
+      <button className="btn btn-icon" onClick={() => removeChecklistItem(idx)} style={{ color: '#ef4444' }}>
+        <X size={16} />
+      </button>
+    </Reorder.Item>
+  );
+}
 export function SettingsView() {
   const { state, actions } = useApp();
   const { desligamentos, archivedDesligamentos } = state;
@@ -292,28 +349,22 @@ export function SettingsView() {
                   </p>
                 </div>
                 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
+                <Reorder.Group 
+                  axis="y" 
+                  values={checklistList} 
+                  onReorder={setChecklistList}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}
+                >
                   {checklistList.map((item, idx) => (
-                    <div key={idx} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
-                      <div style={{ flex: 2 }}>
-                        <input className="form-input" placeholder="Descreva a tarefa..." value={item.label} onChange={e => updateChecklist(idx, 'label', e.target.value)} style={{ padding: '10px 14px', fontSize: 14, background: 'var(--bg-secondary)', border: 'none' }} />
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
-                        <span style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Pertence à fase:</span>
-                        <select className="form-input" value={item.etapa} onChange={e => updateChecklist(idx, 'etapa', e.target.value)} style={{ padding: '8px 12px', fontSize: 13, background: 'var(--bg-card)' }}>
-                          <option value="comunicado">1. Comunicado</option>
-                          <option value="documentacao">2. Documentação</option>
-                          <option value="homologacao">3. Homologação</option>
-                          <option value="aguardando">4. Ag. Pagamento</option>
-                          <option value="pago">5. Processo Fechado</option>
-                        </select>
-                      </div>
-                      <button className="btn btn-icon" onClick={() => removeChecklistItem(idx)} style={{ color: '#ef4444' }}>
-                        <X size={16} />
-                      </button>
-                    </div>
+                    <ChecklistItem 
+                      key={item.id} 
+                      item={item} 
+                      idx={idx} 
+                      updateChecklist={updateChecklist} 
+                      removeChecklistItem={removeChecklistItem} 
+                    />
                   ))}
-                </div>
+                </Reorder.Group>
                 
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: 24 }}>
                   <button className="btn" onClick={addChecklistItem} style={{ background: 'transparent', border: '1px dashed var(--border)', color: 'var(--text-secondary)' }}>
