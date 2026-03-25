@@ -26,6 +26,15 @@ function AppContent() {
   const [showImport, setShowImport] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
+  if (!state.isAuthChecked) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 12, color: 'var(--text-muted)' }}>
+        <Loader size={24} style={{ animation: 'spin 1s linear infinite' }} />
+        <span style={{ fontSize: 15 }}>Autenticando...</span>
+      </div>
+    );
+  }
+
   if (!user) {
     return <AuthView />;
   }

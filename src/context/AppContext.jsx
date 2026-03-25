@@ -111,7 +111,9 @@ function reducer(state, action) {
     case 'SET_USER':
       return { ...state, user: action.payload };
     case 'LOGOUT':
+      localStorage.removeItem('desligest_auth_user');
       return { ...state, user: null, desligamentos: [], archivedDesligamentos: [] };
+
     // UI
     case 'SET_VIEW':
       return { ...state, view: action.view };
@@ -127,12 +129,9 @@ function reducer(state, action) {
       return { ...state, error: null };
 
     // Auth
-    case 'LOGIN':
-      localStorage.setItem('desligest_auth_user', JSON.stringify(action.payload));
-      return { ...state, user: action.payload };
-    case 'LOGOUT':
-      localStorage.removeItem('desligest_auth_user');
-      return { ...state, user: null };
+
+    case 'SET_AUTH_CHECKED':
+      return { ...state, isAuthChecked: true };
 
     // Notificações
     case 'SET_NOTIFICATIONS':
@@ -228,6 +227,7 @@ export function AppProvider({ children }) {
         localStorage.removeItem('token');
       }
     }
+    dispatch({ type: 'SET_AUTH_CHECKED' });
   }, []);
 
   useEffect(() => { checkAuthStatus(); }, [checkAuthStatus]);
