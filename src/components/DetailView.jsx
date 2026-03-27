@@ -6,7 +6,7 @@ import { ModalEditarDesligamento } from './Modals';
 import {
   ArrowLeft, Edit2, Trash2, Calendar, User, Briefcase,
   CheckSquare, Clock, AlertTriangle, MessageSquare, Plus, Loader,
-  Archive, RotateCcw, CheckCircle2, Circle, MinusCircle, FileText
+  Archive, RotateCcw, CheckCircle2, Circle, MinusCircle, FileText, Paperclip, X
 } from 'lucide-react';
 import { CHECKLIST_TEMPLATE, STATUS_FLOW } from '../data/initialData';
 import { format } from 'date-fns';
@@ -152,6 +152,44 @@ export function DetailView({ id }) {
     homologacao: 'Homologação',
     aguardando: 'Pagamento',
     pago: 'Conclusão',
+  };
+
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    const newAnexos = files.map(f => ({
+      id: Date.now() + Math.random(),
+      nome: f.name,
+      tamanho: (f.size / 1024).toFixed(1) + ' KB',
+      data: new Date().toISOString()
+    }));
+
+    const updated = {
+      ...d,
+      anexos: [...(d.anexos || []), ...newAnexos]
+    };
+    
+    actions.updateDesligamento(updated);
+    actions.addHistorico(d.id, {
+      data: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
+      acao: 'Anexo adicionado: ' + files.map(f => f.name).join(', '),
+      nota: ''
+    });
+  };
+
+  const removeAnexo = (anexoId) => {
+    if (!confirm('Excluir este anexo?')) return;
+    const updated = {
+      ...d,
+      anexos: (d.anexos || []).filter(a => a.id !== anexoId)
+    };
+    actions.updateDesligamento(updated);
+    actions.addHistorico(d.id, {
+      data: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
+      acao: 'Anexo removido',
+      nota: ''
+    });
   };
 
   return (
@@ -311,6 +349,10 @@ export function DetailView({ id }) {
           <Clock size={13} style={{ display: 'inline', marginRight: 5 }} />
           Histórico
         </button>
+        <button className={`tab ${activeTab === 'anexos' ? 'active' : ''}`} onClick={() => setActiveTab('anexos')}>
+          <Paperclip size={13} style={{ display: 'inline', marginRight: 5 }} />
+          Anexos
+        </button>
       </div>
 
       {activeTab === 'checklist' && (
@@ -374,6 +416,45 @@ export function DetailView({ id }) {
         </div>
       )}
 
+      {activeTab === 'anexos' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <h4 style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Documentos do Processo</h4>
+            <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer' }}>
+              <Plus size={14} /> Adicionar
+              <input type="file" multiple style={{ display: 'none' }} onChange={handleFileUpload} />
+            </label>
+          </div>
+          {(d.anexos || []).length > 0 ? (
+            d.anexos.map(anexo => (
+              <div key={anexo.id} style={{ 
+                display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
+                background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)'
+              }}>
+                <div style={{ padding: 8, background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent-blue)', borderRadius: 8 }}>
+                  <FileText size={16} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {anexo.nome}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{anexo.tamanho} • {format(parseISO(anexo.data), 'dd/MM HH:mm')}</div>
+                </div>
+                <button onClick={() => removeAnexo(anexo.id)} style={{ color: 'var(--accent-red)', opacity: 0.6, background: 'none', border: 'none', cursor: 'pointer' }}>
+                  <X size={16} />
+                </button>
+              </div>
+            ))
+          ) : (
+            <div style={{ textAlign: 'center', padding: '40px 0', border: '2px dashed var(--border)', borderRadius: 12 }}>
+              <Paperclip size={24} style={{ opacity: 0.2, marginBottom: 8 }} />
+              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Arraste ou clique para anexar arquivos</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Histórico tab content ... */}
       {activeTab === 'historico' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>

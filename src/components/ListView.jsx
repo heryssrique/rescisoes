@@ -156,6 +156,7 @@ export function ListView({ data: injectedData }) {
   const currentList = injectedData || state.desligamentos;
 
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('ativos');
   const [filterMotivo, setFilterMotivo] = useState('todos');
   const [filterPrazo, setFilterPrazo] = useState('todos');
@@ -163,6 +164,14 @@ export function ListView({ data: injectedData }) {
   const [selectedIds, setSelectedIds] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
+
+  // Debounce search
+  React.useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [search]);
 
   let coligadosObj = {};
   try {
@@ -196,11 +205,11 @@ export function ListView({ data: injectedData }) {
 
   const applyFilter = (list) =>
     list.filter(d => {
-      const matchSearch = !search ||
-        d.nome?.toLowerCase().includes(search.toLowerCase()) ||
-        d.cargo?.toLowerCase().includes(search.toLowerCase()) ||
-        d.departamento?.toLowerCase().includes(search.toLowerCase()) ||
-        d.matricula?.toLowerCase().includes(search.toLowerCase());
+      const matchSearch = !debouncedSearch ||
+        d.nome?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        d.cargo?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        d.departamento?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        d.matricula?.toLowerCase().includes(debouncedSearch.toLowerCase());
 
       const matchStatus = filterStatus === 'ativos' || filterStatus === 'todos' || d.status === filterStatus;
       const matchMotivo = filterMotivo === 'todos' || d.motivo === filterMotivo;
@@ -221,7 +230,7 @@ export function ListView({ data: injectedData }) {
       return matchSearch && matchStatus && matchMotivo && matchPrazo && matchDate;
     });
 
-  const activeFiltered = useMemo(() => applyFilter(currentList), [currentList, search, filterStatus, filterMotivo, filterPrazo, dateRange]);
+  const activeFiltered = useMemo(() => applyFilter(currentList), [currentList, debouncedSearch, filterStatus, filterMotivo, filterPrazo, dateRange]);
 
   const makeGroups = (list) => {
     if (sortBy === 'pagamento') return groupByPaymentDate(list);
