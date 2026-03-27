@@ -274,8 +274,9 @@ export function AppProvider({ children }) {
     const newNotifications = [];
 
     desligamentos.forEach(d => {
-      // Ignorar processos já pagos ou cancelados
-      if (d.status === 'pago' || d.status === 'cancelado' || !d.dataPagamento) return;
+      // Ignorar processos já pagos, cancelados ou com depósito realizado (p1)
+      const isPaidChecklist = d.checklist?.some(c => c.id === 'p1' && c.done);
+      if (d.status === 'pago' || d.status === 'cancelado' || isPaidChecklist || !d.dataPagamento) return;
 
       const [year, month, day] = d.dataPagamento.split('-').map(Number);
       const paymentDate = new Date(year, month - 1, day);
