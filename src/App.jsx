@@ -18,6 +18,40 @@ import {
   LayoutList, Columns, Plus, Users, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut, HelpCircle, FileText, Sun, Moon
 } from 'lucide-react';
 
+const LoadingScreen = ({ message }) => (
+  <div className="loading-screen">
+    <div className="animated-bg">
+      <div className="bg-blob bg-blob-1"></div>
+      <div className="bg-blob bg-blob-2"></div>
+      <div className="bg-blob bg-blob-3"></div>
+    </div>
+    
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="loading-content"
+    >
+      <div style={{ position: 'relative' }}>
+        <div className="loader-glow" />
+        <Loader size={44} style={{ color: 'var(--accent-blue)', animation: 'spin 1.5s linear infinite' }} />
+      </div>
+      
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+        <motion.span 
+          animate={{ opacity: [0.4, 1, 0.4] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: -0.5 }}
+        >
+          {message}
+        </motion.span>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>
+          Preparando seu ambiente seguro...
+        </span>
+      </div>
+    </motion.div>
+  </div>
+);
+
 const isOnlyMissingComprovante = (d) => {
   const checklist = d.checklist || [];
   const p1 = checklist.find(c => c.id === 'p1'); // Depósito
@@ -75,12 +109,7 @@ function AppContent() {
 
   // Early returns
   if (!state.isAuthChecked) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 12, color: 'var(--text-muted)' }}>
-        <Loader size={24} style={{ animation: 'spin 1s linear infinite' }} />
-        <span style={{ fontSize: 15 }}>Autenticando...</span>
-      </div>
-    );
+    return <LoadingScreen message="Autenticando..." />;
   }
 
   if (!user) {
@@ -100,12 +129,7 @@ function AppContent() {
 
   // Loading skeleton
   if (loading && !desligamentos.length && !archivedDesligamentos.length) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 12, color: 'var(--text-muted)' }}>
-        <Loader size={24} style={{ animation: 'spin 1s linear infinite' }} />
-        <span style={{ fontSize: 15 }}>Conectando ao banco de dados...</span>
-      </div>
-    );
+    return <LoadingScreen message="Conectando ao banco de dados..." />;
   }
 
   const navItems = [
