@@ -4,70 +4,70 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+const { auth } = require('../middleware/auth');
+const validate = require('../middleware/validate');
+const { loginSchema, registerSchema } = require('../schemas/authSchema');
+const { ApiError } = require('../middleware/errorMiddleware');
+
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_desligest';
 
 // Register User
-router.post('/register', async (req, res) => {
+router.post('/register', validate(registerSchema), async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
     
-    // Check if user exists
     let user = await User.findOne({ email });
     if (user) {
-      return res.status(400).json({ error: 'Usuário já existe. Faça login.' });
+      throw new ApiError(400, 'Usuário já existe. Faça login.');
     }
 
     user = new User({ name, email, password });
     await user.save();
 
-    // Generate token
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
     
-    res.status(201).json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+    res.status(201).json({ 
+      token, 
+      user: { id: user._id, name: user.name, email: user.email, role: user.role } 
+    });
   } catch (err) {
-    console.error('Registration error:', err);
-    res.status(500).json({ error: 'Erro no servidor', detail: err.message });
+    next(err);
   }
 });
 
 // Login User
-router.post('/login', async (req, res) => {
+router.post('/login', validate(loginSchema), async (req, res, next) => {
   try {
     const { email, password } = req.body;
     
-    // Check email
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ error: 'E-mail ou senha incorretos' });
+      throw new ApiError(400, 'E-mail ou senha incorretos');
     }
 
-    // Check pass
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ error: 'E-mail ou senha incorretos' });
+      throw new ApiError(400, 'E-mail ou senha incorretos');
     }
 
-    // Generate token
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
     
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+    res.json({ 
+      token, 
+      user: { id: user._id, name: user.name, email: user.email, role: user.role } 
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Erro no servidor', detail: err.message });
+    next(err);
   }
 });
 
-// Get current user (Requires valid token)
-router.get('/me', async (req, res) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
-  if (!token) return res.status(401).json({ error: 'Acesso negado. Token não encontrado.' });
-
+// Get current user
+router.get('/me', auth, async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const user = await User.findById(decoded.id).select('-password');
-    if (!user) throw new Error();
+    const user = await User.findById(req.user.id).select('-password');
     res.json(user);
   } catch (err) {
-    res.status(401).json({ error: 'Sessão inválida ou expirada.' });
+    next(err);
   }
 });
 

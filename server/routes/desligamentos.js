@@ -1,26 +1,24 @@
 const express = require('express');
 const router = express.Router();
 const Desligamento = require('../models/Desligamento');
+const { auth, authorize } = require('../middleware/auth');
+const validate = require('../middleware/validate');
+const { desligamentoCreateSchema } = require('../schemas/desligamentoSchema');
+const { ApiError } = require('../middleware/errorMiddleware');
 
-// ─── GET /api/desligamentos ─────────────────────────────────────────────────
-// Lista todos, com filtros opcionais via query string:
-//   ?status=comunicado  →  filtra por status
-//   ?motivo=demissao    →  filtra por motivo
-//   ?q=nome             →  busca por texto (nome, cargo, departamento, matrícula)
-//   ?sort=dataPagamento →  campo de ordenação (padrão: dataPagamento asc)
-router.get('/', async (req, res) => {
+// ── GET /api/desligamentos (with Pagination) ───────────────────────────────
+router.get('/', async (req, res, next) => {
   try {
-    const { status, motivo, q, sort = 'dataPagamento', arquivado } = req.query;
+    const { status, motivo, q, sort = 'dataPagamento', arquivado, page = 1, limit = 50 } = req.query;
     const filter = {};
 
-    // Filtro para arquivados: se não fornecido, busca apenas não arquivados
     const isArquivado = arquivado === 'true';
     filter.arquivado = isArquivado ? true : { $ne: true };
 
     if (status && status !== 'todos') filter.status = status;
     if (motivo && motivo !== 'todos') filter.motivo = motivo;
+    
     if (q) {
-      // Busca simples com regex (case-insensitive) em múltiplos campos
       const regex = new RegExp(q, 'i');
       filter.$or = [
         { nome: regex },
@@ -30,53 +28,64 @@ router.get('/', async (req, res) => {
       ];
     }
 
-    const desligamentos = await Desligamento.find(filter).sort({ [sort]: 1 });
-    res.json(desligamentos);
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    const [desligamentos, total] = await Promise.all([
+      Desligamento.find(filter)
+        .sort({ [sort]: 1 })
+        .skip(skip)
+        .limit(parseInt(limit)),
+      Desligamento.countDocuments(filter)
+    ]);
+
+    res.json({
+      results: desligamentos.length,
+      total,
+      page: parseInt(page),
+      totalPages: Math.ceil(total / parseInt(limit)),
+      data: desligamentos
+    });
   } catch (err) {
-    console.error('[GET /desligamentos]', err);
-    res.status(500).json({ error: 'Erro ao buscar desligamentos', detail: err.message });
+    next(err);
   }
 });
 
-// ─── GET /api/desligamentos/:id ────────────────────────────────────────────
-router.get('/:id', async (req, res) => {
+// ── GET /api/desligamentos/:id ────────────────────────────────────────────
+router.get('/:id', async (req, res, next) => {
   try {
     const doc = await Desligamento.findById(req.params.id);
-    if (!doc) return res.status(404).json({ error: 'Não encontrado' });
+    if (!doc) throw new ApiError(404, 'Processo não encontrado');
     res.json(doc);
   } catch (err) {
-    res.status(400).json({ error: 'ID inválido ou erro na busca', detail: err.message });
+    next(err);
   }
 });
 
-// ─── POST /api/desligamentos ────────────────────────────────────────────────
-router.post('/', async (req, res) => {
+// ── POST /api/desligamentos ────────────────────────────────────────────────
+router.post('/', auth, validate(desligamentoCreateSchema), async (req, res, next) => {
   try {
-    const doc = await Desligamento.create(req.body);
+    const doc = await Desligamento.create({
+      ...req.body,
+      responsavel: req.user.name // Auto-assign responsible if not provided
+    });
     res.status(201).json(doc);
   } catch (err) {
-    if (err.name === 'ValidationError') {
-      return res.status(422).json({ error: 'Dados inválidos', detail: err.message });
-    }
-    console.error('[POST /desligamentos]', err);
-    res.status(500).json({ error: 'Erro ao criar desligamento', detail: err.message });
+    next(err);
   }
 });
 
-// ─── PUT /api/desligamentos/:id ─────────────────────────────────────────────
-// Atualiza qualquer campo (incluindo checklist e status) e gera log de auditoria
-router.put('/:id', async (req, res) => {
+// ── PUT /api/desligamentos/:id ─────────────────────────────────────────────
+router.put('/:id', auth, async (req, res, next) => {
   try {
     const existing = await Desligamento.findById(req.params.id);
-    if (!existing) return res.status(404).json({ error: 'Não encontrado' });
+    if (!existing) throw new ApiError(404, 'Processo não encontrado');
 
     const updates = req.body;
     const historyEntries = [];
-    const ignoreFields = ['historico', 'checklist', 'updatedAt', 'createdAt', '__v', '_id'];
+    const ignoreFields = ['historico', 'checklist', 'updatedAt', 'createdAt', '__v', '_id', 'anexos'];
 
-    // Comparar campos para auditoria
     for (const key in updates) {
-      if (ignoreFields.includes(key)) continue;
+      if (ignoreFields.includes(key) || updates[key] === undefined) continue;
 
       const oldVal = String(existing[key] || '');
       const newVal = String(updates[key] || '');
@@ -84,13 +93,12 @@ router.put('/:id', async (req, res) => {
       if (oldVal !== newVal) {
         historyEntries.push({
           data: new Date().toISOString(),
-          acao: `Campo '${key}' alterado`,
+          acao: `Campo '${key}' alterado por ${req.user.name}`,
           nota: `De: "${oldVal}" Para: "${newVal}"`
         });
       }
     }
 
-    // Se houver mudanças, adiciona ao histórico
     if (historyEntries.length > 0) {
       if (!updates.historico) updates.historico = existing.historico || [];
       updates.historico.push(...historyEntries);
@@ -104,133 +112,85 @@ router.put('/:id', async (req, res) => {
     
     res.json(doc);
   } catch (err) {
-    if (err.name === 'ValidationError') {
-      return res.status(422).json({ error: 'Dados inválidos', detail: err.message });
-    }
-    console.error('[PUT /desligamentos/:id]', err);
-    res.status(400).json({ error: 'Erro ao atualizar', detail: err.message });
+    next(err);
   }
 });
 
-// Toggle "Não Aplicável" para um item do checklist
-router.patch('/:id/checklist/:itemId/nao-aplicavel', async (req, res) => {
+// ── PATCH /api/desligamentos/:id/checklist/:itemId ─────────────────────────
+router.patch('/:id/checklist/:itemId', auth, async (req, res, next) => {
   try {
     const doc = await Desligamento.findById(req.params.id);
-    if (!doc) return res.status(404).json({ error: 'Não encontrado' });
+    if (!doc) throw new ApiError(404, 'Processo não encontrado');
 
     const item = doc.checklist.find(c => c.id === req.params.itemId);
-    if (!item) return res.status(404).json({ error: 'Item de checklist não encontrado' });
-
-    item.notApplicable = !item.notApplicable;
-    
-    // Se for N/A, limpa o done
-    if (item.notApplicable) {
-      item.done = false;
-      item.doneAt = null;
-    }
-
-    await doc.save();
-    res.json(doc);
-  } catch (err) {
-    res.status(400).json({ error: 'Erro no toggle "N/A"', detail: err.message });
-  }
-});
-
-// ─── PATCH /api/desligamentos/:id/checklist/:itemId ─────────────────────────
-// Toggle de um item específico do checklist sem substituir o array inteiro
-router.patch('/:id/checklist/:itemId', async (req, res) => {
-  try {
-    const doc = await Desligamento.findById(req.params.id);
-    if (!doc) return res.status(404).json({ error: 'Não encontrado' });
-
-    const item = doc.checklist.find(c => c.id === req.params.itemId);
-    if (!item) return res.status(404).json({ error: 'Item de checklist não encontrado' });
+    if (!item) throw new ApiError(404, 'Item de checklist não encontrado');
 
     item.done = !item.done;
     item.doneAt = item.done ? new Date().toISOString() : null;
-    
-    // Se marcar como concluído, garante que não está como N/A
     if (item.done) item.notApplicable = false;
     
     await doc.save();
     res.json(doc);
   } catch (err) {
-    res.status(400).json({ error: 'Erro no toggle do checklist', detail: err.message });
+    next(err);
   }
 });
 
-// ─── PATCH /api/desligamentos/:id/historico ─────────────────────────────────
-// Adiciona uma entrada ao histórico sem substituir o array
-router.patch('/:id/historico', async (req, res) => {
+// ── PATCH /api/desligamentos/:id/historico ─────────────────────────────────
+router.patch('/:id/historico', auth, async (req, res, next) => {
   try {
     const doc = await Desligamento.findByIdAndUpdate(
       req.params.id,
-      { $push: { historico: req.body } },
+      { $push: { historico: { ...req.body, data: new Date().toISOString() } } },
       { new: true, runValidators: true }
     );
-    if (!doc) return res.status(404).json({ error: 'Não encontrado' });
+    if (!doc) throw new ApiError(404, 'Processo não encontrado');
     res.json(doc);
   } catch (err) {
-    res.status(400).json({ error: 'Erro ao adicionar histórico', detail: err.message });
+    next(err);
   }
 });
 
-// ─── DELETE /api/desligamentos/:id ─────────────────────────────────────────
-router.delete('/:id', async (req, res) => {
+// ── DELETE /api/desligamentos/:id ─────────────────────────────────────────
+router.delete('/:id', auth, authorize('admin'), async (req, res, next) => {
   try {
     const doc = await Desligamento.findByIdAndDelete(req.params.id);
-    if (!doc) return res.status(404).json({ error: 'Não encontrado' });
+    if (!doc) throw new ApiError(404, 'Processo não encontrado');
     res.json({ success: true, id: req.params.id });
   } catch (err) {
-    res.status(400).json({ error: 'Erro ao excluir', detail: err.message });
+    next(err);
   }
 });
 
-// ─── POST /api/desligamentos/bulk-archive ──────────────────────────────────
-router.post('/bulk-archive', async (req, res) => {
+// ── Bulk Actions ──────────────────────────────────────────────────────────
+
+router.post('/bulk-archive', auth, async (req, res, next) => {
   try {
     const { ids } = req.body;
-    if (!Array.isArray(ids)) return res.status(400).json({ error: 'Lista de IDs inválida' });
-
-    const now = new Date().toISOString();
-    const historyEntry = {
-      data: now,
-      acao: 'Arquivado em lote',
-      nota: '',
-    };
-
-    // Atualiza apenas os que estão em status finalizado/cancelado
     const result = await Desligamento.updateMany(
-      { 
-        _id: { $in: ids }, 
-        status: { $in: ['pago', 'cancelado'] } 
-      },
+      { _id: { $in: ids }, status: { $in: ['pago', 'cancelado'] } },
       { 
         $set: { arquivado: true },
-        $push: { historico: historyEntry }
+        $push: { historico: { data: new Date().toISOString(), acao: `Arquivado em lote por ${req.user.name}`, nota: '' } }
       }
     );
-
-    // Retorna os documentos atualizados
-    const docs = await Desligamento.find({ _id: { $in: ids }, arquivado: true });
-    res.json({ message: `${result.modifiedCount} registros arquivados`, docs });
+    res.json({ message: `${result.modifiedCount} registros arquivados`, ids });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao arquivar processos em lote', detail: err.message });
+    next(err);
   }
 });
 
-// ─── POST /api/desligamentos/bulk-delete ────────────────────────────────────
-router.post('/bulk-delete', async (req, res) => {
+router.post('/bulk-delete', auth, authorize('admin'), async (req, res, next) => {
   try {
     const { ids } = req.body;
-    if (!Array.isArray(ids)) return res.status(400).json({ error: 'Lista de IDs inválida' });
-
     const result = await Desligamento.deleteMany({ _id: { $in: ids } });
     res.json({ message: `${result.deletedCount} registros excluídos`, ids });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao excluir processos em lote', detail: err.message });
+    next(err);
   }
 });
+
+module.exports = router;
 
 // ─── POST /api/desligamentos/seed ──────────────────────────────────────────
 // Popula o banco com dados de exemplo (só usar em dev)
