@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { ListView } from './components/ListView';
 import { KanbanView } from './components/KanbanView';
@@ -18,6 +18,20 @@ import {
   LayoutList, Columns, Plus, Users, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut, HelpCircle, FileText, Sun, Moon
 } from 'lucide-react';
 
+const isOnlyMissingComprovante = (d) => {
+  const checklist = d.checklist || [];
+  const p1 = checklist.find(c => c.id === 'p1'); // Depósito
+  const p2 = checklist.find(c => c.id === 'p2'); // Comprovante arquivado
+  const paid = (p1 && p1.done) || d.status === 'pago';
+  const noReceipt = p2 && !p2.done && !p2.notApplicable;
+  return paid && noReceipt;
+};
+
+const applyColigadaFilter = (list, coligadaFilter) => {
+  if (coligadaFilter === 'todas' || !coligadaFilter) return list;
+  return (list || []).filter(d => d.coligada === coligadaFilter);
+};
+
 function AppContent() {
   const { state, dispatch, actions } = useApp();
   const { user, view, selected, desligamentos, archivedDesligamentos, loading, error, globalColigadaFilter } = state;
@@ -25,6 +39,22 @@ function AppContent() {
   const [showNew, setShowNew] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  const filteredDesligamentos = useMemo(() => applyColigadaFilter(desligamentos || [], globalColigadaFilter), [desligamentos, globalColigadaFilter]);
+  const filteredArchived = useMemo(() => applyColigadaFilter(archivedDesligamentos || [], globalColigadaFilter), [archivedDesligamentos, globalColigadaFilter]);
+  
+  const allDesligamentos = useMemo(() => [
+    ...(desligamentos || []), 
+    ...(archivedDesligamentos || [])
+  ], [desligamentos, archivedDesligamentos]);
+
+  const filteredAll = useMemo(() => applyColigadaFilter(allDesligamentos, globalColigadaFilter), [allDesligamentos, globalColigadaFilter]);
+
+  const { pendentesComprovante, mainDesligamentos, mainArquivados } = useMemo(() => ({
+    pendentesComprovante: filteredAll.filter(d => isOnlyMissingComprovante(d)),
+    mainDesligamentos: filteredDesligamentos.filter(d => !isOnlyMissingComprovante(d)),
+    mainArquivados: filteredArchived.filter(d => !isOnlyMissingComprovante(d)),
+  }), [filteredAll, filteredDesligamentos, filteredArchived]);
 
   if (!state.isAuthChecked) {
     return (
@@ -39,36 +69,23 @@ function AppContent() {
     return <AuthView />;
   }
 
-  const isOnlyMissingComprovante = (d) => {
-    const checklist = d.checklist || [];
-    const p1 = checklist.find(c => c.id === 'p1'); // Depósito
-    const p2 = checklist.find(c => c.id === 'p2'); // Comprovante arquivado
-
-    // Check se já pagou (status pago ou p1 feito) mas sem comprovante (p2 vazio)
-    const paid = (p1 && p1.done) || d.status === 'pago';
-    const noReceipt = p2 && !p2.done && !p2.notApplicable;
-
-    return paid && noReceipt;
-  };
-
-  const applyColigadaFilter = (list) => {
-    if (state.globalColigadaFilter === 'todas' || !state.globalColigadaFilter) return list;
-    return list.filter(d => d.coligada === state.globalColigadaFilter);
-  };
-
-  const allDesligamentos = [...desligamentos, ...(archivedDesligamentos || [])];
-
-  const filteredDesligamentos = applyColigadaFilter(desligamentos);
-  const filteredArchived = applyColigadaFilter(archivedDesligamentos || []);
-  const filteredAll = applyColigadaFilter(allDesligamentos);
-
-  const pendentesComprovante = filteredAll.filter(d => isOnlyMissingComprovante(d));
-  const mainDesligamentos = filteredDesligamentos.filter(d => !isOnlyMissingComprovante(d));
-  const mainArquivados = filteredArchived.filter(d => !isOnlyMissingComprovante(d));
-
   const activeCount = mainDesligamentos.length;
   const pendenteCount = pendentesComprovante.length;
   const archivedCount = mainArquivados.length;
+
+  // Early returns
+  if (!state.isAuthChecked) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 12, color: 'var(--text-muted)' }}>
+        <Loader size={24} style={{ animation: 'spin 1s linear infinite' }} />
+        <span style={{ fontSize: 15 }}>Autenticando...</span>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthView />;
+  }
 
   // We need to fetch COLIGADAS here to render the topbar filter
   let coligadosObj = {};

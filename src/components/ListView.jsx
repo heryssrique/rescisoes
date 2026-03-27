@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import { useApp } from '../context/AppContext';
 import { StatusBadge, MotivoBadge, ColigadaBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress, AvisoBadge } from './Shared';
 import { formatDate } from '../utils/formatters';
@@ -42,7 +42,7 @@ function DateGroupTag({ dataPagamento }) {
   return null;
 }
 
-function TermCard({ d, onOpen, onArchive, isSelected, onSelect }) {
+const TermCard = memo(({ d, onOpen, onArchive, isSelected, onSelect }) => {
   const isArchivable = d.status === 'pago' || d.status === 'cancelado';
   return (
     <motion.article
@@ -149,7 +149,7 @@ function TermCard({ d, onOpen, onArchive, isSelected, onSelect }) {
       <ProgressSteps status={d.status} />
     </motion.article>
   );
-}
+});
 
 export function ListView({ data: injectedData }) {
   const { state, dispatch, actions } = useApp();
@@ -235,22 +235,22 @@ export function ListView({ data: injectedData }) {
 
   const activeGrouped = useMemo(() => makeGroups(activeFiltered), [activeFiltered, sortBy]);
 
-  function openDetail(id) {
+  const openDetail = useCallback((id) => {
     dispatch({ type: 'SET_SELECTED', id });
     dispatch({ type: 'SET_VIEW', view: 'detalhe' });
-  }
+  }, [dispatch]);
 
-  async function handleArchive(id) {
+  const handleArchive = useCallback(async (id) => {
     if (confirm('Mover este processo para o arquivo?')) {
       await actions.archiveDesligamento(id);
     }
-  }
+  }, [actions]);
 
-  function toggleSelection(id) {
+  const toggleSelection = useCallback((id) => {
     setSelectedIds(prev => 
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     );
-  }
+  }, []);
 
   function toggleSelectAll() {
     if (selectedIds.length === activeFiltered.length) {

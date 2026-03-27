@@ -40,12 +40,14 @@ export function Dashboard({ data: injectedData }) {
     return data;
   }, [desligamentos]);
 
-  const motivoChartData = Object.entries(stats.peloMotivo).map(([name, value]) => ({ name, value }));
-  const statusChartData = Object.entries(stats.peloStatus).map(([name, value]) => ({ name, value }));
-  const empresaChartData = Object.entries(stats.pelaEmpresa).map(([name, value]) => ({ name, value }));
-  const mesChartData = Object.entries(stats.porMes)
-    .sort()
-    .map(([name, value]) => ({ name, value }));
+  const { motivoChartData, statusChartData, empresaChartData, mesChartData } = useMemo(() => ({
+    motivoChartData: Object.entries(stats.peloMotivo).map(([name, value]) => ({ name, value })),
+    statusChartData: Object.entries(stats.peloStatus).map(([name, value]) => ({ name, value })),
+    empresaChartData: Object.entries(stats.pelaEmpresa).map(([name, value]) => ({ name, value })),
+    mesChartData: Object.entries(stats.porMes)
+      .sort()
+      .map(([name, value]) => ({ name, value }))
+  }), [stats]);
 
   return (
     <motion.div 

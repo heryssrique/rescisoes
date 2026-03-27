@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo } from 'react';
 import * as api from '../services/api';
 import { format } from 'date-fns';
 
@@ -566,7 +566,7 @@ export function AppProvider({ children }) {
     }
   };
 
-  const value = {
+  const value = useMemo(() => ({
     state,
     dispatch: uiDispatch,
     actions: {
@@ -600,7 +600,7 @@ export function AppProvider({ children }) {
       },
       toggleTheme: () => dispatch({ type: 'TOGGLE_THEME' }),
     },
-  };
+  }), [state, uiDispatch, fetchAll, fetchArchived, addDesligamento, updateDesligamento, archiveDesligamento, unarchiveDesligamento, deleteDesligamento, bulkArchive, bulkDelete, toggleChecklist, toggleNaoAplicavel, markNotificationRead, requestNotificationPermission, addHistorico, changeStatus, login, register, logout]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

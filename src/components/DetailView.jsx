@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { StatusBadge, MotivoBadge, ColigadaBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress, AvisoBadge } from './Shared';
 import { formatDate, formatDateTime } from '../utils/formatters';
@@ -136,15 +136,15 @@ export function DetailView({ id }) {
 
   // Group checklist by etapa
   const idsToRemove = ['d4', 'd5', 'h6', 'h7'];
-  const checklist = (d.checklist || []).filter(c => !idsToRemove.includes(c.id));
+  const checklist = useMemo(() => (d.checklist || []).filter(c => !idsToRemove.includes(c.id)), [d.checklist]);
   
-  const checklistByEtapa = {
+  const checklistByEtapa = useMemo(() => ({
     comunicado: checklist.filter(c => c.etapa === 'comunicado'),
     documentacao: checklist.filter(c => c.etapa === 'documentacao'),
     homologacao: checklist.filter(c => c.etapa === 'homologacao'),
     aguardando: checklist.filter(c => c.etapa === 'aguardando'),
     pago: checklist.filter(c => c.etapa === 'pago'),
-  };
+  }), [checklist]);
 
   const etapaLabels = {
     comunicado: 'Comunicado',
