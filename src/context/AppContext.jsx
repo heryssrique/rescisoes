@@ -22,8 +22,8 @@ function reducer(state, action) {
       const updated = action.payload;
       return {
         ...state,
-        desligamentos: state.desligamentos.map(d => d.id === updated.id ? updated : d),
-        archivedDesligamentos: state.archivedDesligamentos ? state.archivedDesligamentos.map(d => d.id === updated.id ? updated : d) : [],
+        desligamentos: (state.desligamentos || []).map(d => d.id === updated.id ? updated : d),
+        archivedDesligamentos: (state.archivedDesligamentos || []).map(d => d.id === updated.id ? updated : d),
       };
     }
     // Optimistic: inverte o item localmente SEM esperar o servidor
@@ -153,7 +153,7 @@ function reducer(state, action) {
       return { 
         ...state, 
         readNotificationIds: [...state.readNotificationIds, action.id],
-        notifications: state.notifications.map(n => n.id === action.id ? { ...n, read: true } : n)
+        notifications: (state.notifications || []).map(n => n.id === action.id ? { ...n, read: true } : n)
       };
 
     default:
@@ -184,7 +184,7 @@ export function AppProvider({ children }) {
     // Modo offline: true = usa localStorage como fallback
     offline: false,
     notifications: [],
-    readNotificationIds: JSON.parse(localStorage.getItem('readNotificationIds') || '[]'),
+    readNotificationIds: (() => { try { return JSON.parse(localStorage.getItem('readNotificationIds') || '[]') || []; } catch { return []; } })(),
   });
 
   useEffect(() => {
@@ -196,7 +196,8 @@ export function AppProvider({ children }) {
     dispatch({ type: 'SET_LOADING', value: true });
     try {
       const res = await api.getDesligamentos({ arquivado: false });
-      const data = res.data || res;
+      const raw = res.data ?? res;
+      const data = Array.isArray(raw) ? raw : [];
       dispatch({ type: 'SET_DESLIGAMENTOS', payload: data });
       dispatch({ type: 'SET_ERROR', message: null });
     } catch (err) {
@@ -221,7 +222,8 @@ export function AppProvider({ children }) {
     dispatch({ type: 'SET_LOADING', value: true });
     try {
       const res = await api.getDesligamentos({ arquivado: true, q: searchQuery });
-      const data = res.data || res;
+      const raw = res.data ?? res;
+      const data = Array.isArray(raw) ? raw : [];
       dispatch({ type: 'SET_ARCHIVED', payload: data });
     } catch (err) {
       if (err.message.includes('401')) {
