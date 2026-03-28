@@ -246,8 +246,9 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (state.user) {
       fetchAll();
+      fetchArchived(); // Carrega arquivados também para o Calendário e Histórico Global
     }
-  }, [state.user, fetchAll]);
+  }, [state.user, fetchAll, fetchArchived]);
 
   useEffect(() => {
     // Persiste no localStorage sempre que houver novos dados para garantir o modo offline
