@@ -9,7 +9,7 @@ const { ApiError } = require('../middleware/errorMiddleware');
 // ── GET /api/desligamentos (with Pagination) ───────────────────────────────
 router.get('/', async (req, res, next) => {
   try {
-    const { status, motivo, q, sort = 'dataPagamento', arquivado, page = 1, limit = 50 } = req.query;
+    const { status, motivo, q, sort = 'dataPagamento', arquivado, page = 1, limit = 5000 } = req.query;
     const filter = {};
 
     const isArquivado = arquivado === 'true';
