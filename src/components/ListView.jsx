@@ -182,29 +182,6 @@ export function ListView({ data: injectedData }) {
     coligadosObj = { '1': { nome: 'Concreta' }, '4': { nome: 'JPL Gomes' }, '11': { nome: 'JC Gomes' } };
   }
 
-  const filteredCount = activeFiltered.length;
-
-  const aVencer = activeFiltered.filter(d => {
-    if (ARCHIVED_STATUSES.includes(d.status) || !d.dataPagamento) return false;
-    const days = differenceInDays(parseISO(d.dataPagamento), startOfDay(new Date()));
-    return days >= 0 && days <= 5;
-  }).length;
-
-  const vencidos = activeFiltered.filter(d => {
-    if (ARCHIVED_STATUSES.includes(d.status) || !d.dataPagamento) return false;
-    const days = differenceInDays(parseISO(d.dataPagamento), startOfDay(new Date()));
-    return days < 0;
-  }).length;
-
-  const pagosNoFiltro = activeFiltered.filter(d => d.status === 'pago').length;
-
-  const statusIcons = {
-    comunicado: <Archive size={48} />,
-    documentacao: <Clock size={48} />,
-    homologacao: <Calendar size={14} />,
-    aguardando: <AlertCircle size={48} />
-  };
-
   const applyFilter = (list) =>
     list.filter(d => {
       const matchSearch = !debouncedSearch ||
@@ -233,6 +210,22 @@ export function ListView({ data: injectedData }) {
     });
 
   const activeFiltered = useMemo(() => applyFilter(currentList), [currentList, debouncedSearch, filterStatus, filterMotivo, filterPrazo, dateRange]);
+
+  const filteredCount = activeFiltered.length;
+
+  const aVencer = activeFiltered.filter(d => {
+    if (ARCHIVED_STATUSES.includes(d.status) || !d.dataPagamento) return false;
+    const days = differenceInDays(parseISO(d.dataPagamento), startOfDay(new Date()));
+    return days >= 0 && days <= 5;
+  }).length;
+
+  const vencidos = activeFiltered.filter(d => {
+    if (ARCHIVED_STATUSES.includes(d.status) || !d.dataPagamento) return false;
+    const days = differenceInDays(parseISO(d.dataPagamento), startOfDay(new Date()));
+    return days < 0;
+  }).length;
+
+  const pagosNoFiltro = activeFiltered.filter(d => d.status === 'pago').length;
 
   const makeGroups = (list) => {
     if (sortBy === 'pagamento') return groupByPaymentDate(list);
