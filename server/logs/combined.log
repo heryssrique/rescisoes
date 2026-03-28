@@ -2,3 +2,11 @@
 {"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-03-27 20:58:05"}
 {"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-03-27 20:59:03"}
 {"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-03-27 20:59:13"}
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-03-27 21:09:33"}
+{"level":"info","message":"✅ MongoDB conectado com sucesso","service":"desligest-api","timestamp":"2026-03-27 21:09:34"}
+{"level":"info","message":"✅ Tarefas agendadas (Cron) inicializadas","service":"desligest-api","timestamp":"2026-03-27 21:09:34"}
+{"level":"info","message":"🚀 API rodada na porta 3001","service":"desligest-api","timestamp":"2026-03-27 21:09:34"}
+{"level":"info","message":"   Health: http://localhost:3001/api/health","service":"desligest-api","timestamp":"2026-03-27 21:09:34"}
+{"level":"info","message":"Incoming Request: GET /api/health","service":"desligest-api","timestamp":"2026-03-27 21:13:09"}
+{"level":"info","message":"Incoming Request: POST /api/auth/register","service":"desligest-api","timestamp":"2026-03-27 21:13:55"}
+{"level":"info","message":"Incoming Request: GET /api/desligamentos?arquivado=false","service":"desligest-api","timestamp":"2026-03-27 21:13:55"}

@@ -93,12 +93,7 @@ function AppContent() {
   }), [filteredAll, filteredDesligamentos, filteredArchived]);
 
   if (!state.isAuthChecked) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 12, color: 'var(--text-muted)' }}>
-        <Loader size={24} style={{ animation: 'spin 1s linear infinite' }} />
-        <span style={{ fontSize: 15 }}>Autenticando...</span>
-      </div>
-    );
+    return <LoadingScreen message="Autenticando..." />;
   }
 
   if (!user) {
@@ -109,10 +104,7 @@ function AppContent() {
   const pendenteCount = pendentesComprovante.length;
   const archivedCount = mainArquivados.length;
 
-  // Early returns
-  if (!state.isAuthChecked) {
-    return <LoadingScreen message="Autenticando..." />;
-  }
+
 
   if (!user) {
     return <AuthView />;
