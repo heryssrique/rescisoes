@@ -6,10 +6,78 @@ import {
   parseISO 
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const isResolvido = (d) => d.status === 'pago' || d.arquivado === true;
+
+/* Card premium para processos pagos/arquivados */
+function ResolvidoCard({ event, onClick }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.85 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={{ scale: 1.04, y: -1 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: 'relative',
+        fontSize: 10,
+        padding: '4px 7px',
+        borderRadius: 5,
+        cursor: 'pointer',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        fontWeight: 700,
+        background: hovered
+          ? 'linear-gradient(90deg, rgba(16,185,129,0.18), rgba(20,184,166,0.14))'
+          : 'linear-gradient(90deg, rgba(16,185,129,0.10), rgba(20,184,166,0.07))',
+        borderLeft: '3px solid transparent',
+        borderImage: 'linear-gradient(180deg, #10b981, #14b8a6) 1',
+        color: '#34d399',
+        boxShadow: hovered
+          ? '0 0 12px rgba(16,185,129,0.3), 0 2px 6px rgba(0,0,0,0.1)'
+          : '0 1px 3px rgba(0,0,0,0.07)',
+        transition: 'box-shadow 0.2s, background 0.2s',
+      }}
+      title={`${event.nome} — ${event.arquivado ? 'Arquivado' : 'Pago'}`}
+    >
+      {/* Shimmer */}
+      <motion.div
+        animate={hovered ? { x: ['−100%', '200%'] } : { x: '-100%' }}
+        transition={{ duration: 0.7, ease: 'easeInOut' }}
+        style={{
+          position: 'absolute',
+          top: 0, left: 0, bottom: 0,
+          width: '60%',
+          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Glow pulse dot */}
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <motion.span
+          animate={{ opacity: [1, 0.4, 1], scale: [1, 1.3, 1] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          style={{
+            width: 5, height: 5, borderRadius: '50%',
+            background: '#10b981',
+            boxShadow: '0 0 6px #10b981',
+            display: 'inline-block',
+            flexShrink: 0,
+          }}
+        />
+        {event.nome}
+      </span>
+    </motion.div>
+  );
+}
 
 export function CalendarView({ data }) {
   const { dispatch } = useApp();
@@ -68,15 +136,21 @@ export function CalendarView({ data }) {
           <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0, textTransform: 'capitalize' }}>
             {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
           </h2>
-          {/* Legenda */}
-          <div style={{ display: 'flex', gap: 12, marginLeft: 8 }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text-muted)' }}>
-              <span style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--accent-blue)', display: 'inline-block' }}></span>
+
+          {/* Legenda premium */}
+          <div style={{ display: 'flex', gap: 14, marginLeft: 8 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-muted)' }}>
+              <span style={{ width: 3, height: 14, borderRadius: 2, background: 'var(--accent-blue)', display: 'inline-block' }}></span>
               Ativos ({totalAtivos})
             </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text-muted)' }}>
-              <span style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--accent-green)', display: 'inline-block' }}></span>
-              Pagos/Arquivados ({totalResolvidos})
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#34d399' }}>
+              <motion.span
+                animate={{ opacity: [1, 0.5, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                style={{ width: 3, height: 14, borderRadius: 2, background: 'linear-gradient(180deg,#10b981,#14b8a6)', display: 'inline-block' }}
+              />
+              <Sparkles size={11} style={{ color: '#10b981' }} />
+              Pagos ({totalResolvidos})
             </span>
           </div>
         </div>
@@ -139,16 +213,35 @@ export function CalendarView({ data }) {
 
             const ativos = dayEvents.filter(d => !isResolvido(d));
             const resolvidos = dayEvents.filter(d => isResolvido(d));
+            const hasResolvidos = resolvidos.length > 0;
 
             return (
               <div key={idx} style={{ 
-                background: isSelectedMonth ? 'var(--bg-card)' : 'rgba(0,0,0,0.01)', 
+                background: isSelectedMonth
+                  ? hasResolvidos
+                    ? 'linear-gradient(135deg, var(--bg-card) 70%, rgba(16,185,129,0.04))'
+                    : 'var(--bg-card)'
+                  : 'rgba(0,0,0,0.01)', 
                 padding: 8, display: 'flex', flexDirection: 'column', gap: 4,
-                position: 'relative'
+                position: 'relative',
+                transition: 'background 0.3s',
               }}>
+                {/* Glow overlay para dias com resolvidos */}
+                {hasResolvidos && isSelectedMonth && (
+                  <motion.div
+                    animate={{ opacity: [0.03, 0.08, 0.03] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                    style={{
+                      position: 'absolute', inset: 0,
+                      background: 'radial-gradient(circle at bottom right, rgba(16,185,129,0.2), transparent 70%)',
+                      pointerEvents: 'none', borderRadius: 'inherit',
+                    }}
+                  />
+                )}
+
                 <div style={{ 
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
-                  marginBottom: 2 
+                  marginBottom: 2, position: 'relative', zIndex: 1
                 }}>
                   <span style={{ 
                     fontSize: 12, fontWeight: isToday ? 800 : 500,
@@ -159,13 +252,18 @@ export function CalendarView({ data }) {
                   }}>
                     {format(day, 'd')}
                   </span>
-                  {resolvidos.length > 0 && (
-                    <CheckCircle2 size={12} color="var(--accent-green)" style={{ opacity: 0.7 }} />
+                  {hasResolvidos && (
+                    <motion.div
+                      animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
+                      transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                    >
+                      <CheckCircle2 size={12} color="#10b981" />
+                    </motion.div>
                   )}
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 3, overflowY: 'auto' }}>
-                  {/* Ativos em azul */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 3, overflowY: 'auto', position: 'relative', zIndex: 1 }}>
+                  {/* Ativos em azul — estilo padrão */}
                   {ativos.map(event => (
                     <motion.div
                       key={event.id}
@@ -183,23 +281,14 @@ export function CalendarView({ data }) {
                       {event.nome}
                     </motion.div>
                   ))}
-                  {/* Resolvidos em verde com ✓ */}
+
+                  {/* Resolvidos — card premium */}
                   {resolvidos.map(event => (
-                    <motion.div
+                    <ResolvidoCard
                       key={event.id}
-                      whileHover={{ scale: 1.02, x: 2 }}
+                      event={event}
                       onClick={() => openDetail(event.id)}
-                      style={{
-                        fontSize: 10, padding: '3px 6px', borderRadius: 4,
-                        background: 'rgba(16, 185, 129, 0.08)', borderLeft: '3px solid var(--accent-green)',
-                        color: 'var(--accent-green)', cursor: 'pointer', whiteSpace: 'nowrap',
-                        overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 600,
-                        opacity: 0.85
-                      }}
-                      title={`${event.nome} — ${event.arquivado ? 'Arquivado' : 'Pago'}`}
-                    >
-                      ✓ {event.nome}
-                    </motion.div>
+                    />
                   ))}
                 </div>
               </div>
