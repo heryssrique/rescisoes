@@ -327,7 +327,7 @@ function AppContent() {
             >
               {view === 'dashboard' && <Dashboard data={mainDesligamentos} />}
               {view === 'lista' && <ListView data={mainDesligamentos} />}
-              {view === 'calendar' && <CalendarView data={mainDesligamentos} />}
+              {view === 'calendar' && <CalendarView data={allDesligamentos} />}
               {view === 'pendentes' && <ListView data={pendentesComprovante} />}
               {view === 'kanban' && <KanbanView data={mainDesligamentos} />}
               { view === 'arquivados' && <ArchivedView data={mainArquivados} /> }

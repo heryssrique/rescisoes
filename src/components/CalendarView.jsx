@@ -6,11 +6,13 @@ import {
   parseISO 
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+const isResolvido = (d) => d.status === 'pago' || d.arquivado === true;
+
 export function CalendarView({ data }) {
-  const { actions, dispatch } = useApp();
+  const { dispatch } = useApp();
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const days = useMemo(() => {
@@ -26,9 +28,11 @@ export function CalendarView({ data }) {
     const map = {};
     (data || []).forEach(d => {
       if (!d.dataPagamento) return;
-      const dateKey = format(parseISO(d.dataPagamento), 'yyyy-MM-dd');
-      if (!map[dateKey]) map[dateKey] = [];
-      map[dateKey].push(d);
+      try {
+        const dateKey = format(parseISO(d.dataPagamento), 'yyyy-MM-dd');
+        if (!map[dateKey]) map[dateKey] = [];
+        map[dateKey].push(d);
+      } catch (_) {}
     });
     return map;
   }, [data]);
@@ -39,6 +43,9 @@ export function CalendarView({ data }) {
   }, [dispatch]);
 
   const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+  const totalAtivos = (data || []).filter(d => !isResolvido(d) && d.dataPagamento).length;
+  const totalResolvidos = (data || []).filter(d => isResolvido(d) && d.dataPagamento).length;
 
   return (
     <div className="calendar-view" style={{ 
@@ -51,7 +58,7 @@ export function CalendarView({ data }) {
         background: 'var(--bg-card)', padding: '12px 20px', borderRadius: 'var(--radius-lg)',
         border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{ 
             padding: 8, background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent-blue)', 
             borderRadius: 10, display: 'flex' 
@@ -61,6 +68,17 @@ export function CalendarView({ data }) {
           <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0, textTransform: 'capitalize' }}>
             {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
           </h2>
+          {/* Legenda */}
+          <div style={{ display: 'flex', gap: 12, marginLeft: 8 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text-muted)' }}>
+              <span style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--accent-blue)', display: 'inline-block' }}></span>
+              Ativos ({totalAtivos})
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text-muted)' }}>
+              <span style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--accent-green)', display: 'inline-block' }}></span>
+              Pagos/Arquivados ({totalResolvidos})
+            </span>
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: 8 }}>
@@ -119,6 +137,9 @@ export function CalendarView({ data }) {
             const isSelectedMonth = isSameMonth(day, currentMonth);
             const isToday = isSameDay(day, new Date());
 
+            const ativos = dayEvents.filter(d => !isResolvido(d));
+            const resolvidos = dayEvents.filter(d => isResolvido(d));
+
             return (
               <div key={idx} style={{ 
                 background: isSelectedMonth ? 'var(--bg-card)' : 'rgba(0,0,0,0.01)', 
@@ -138,10 +159,14 @@ export function CalendarView({ data }) {
                   }}>
                     {format(day, 'd')}
                   </span>
+                  {resolvidos.length > 0 && (
+                    <CheckCircle2 size={12} color="var(--accent-green)" style={{ opacity: 0.7 }} />
+                  )}
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 3, overflowY: 'auto' }}>
-                  {dayEvents.map(event => (
+                  {/* Ativos em azul */}
+                  {ativos.map(event => (
                     <motion.div
                       key={event.id}
                       whileHover={{ scale: 1.02, x: 2 }}
@@ -153,9 +178,27 @@ export function CalendarView({ data }) {
                         overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 600,
                         boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
                       }}
-                      title={`${event.nome} - ${event.coligada}`}
+                      title={`${event.nome} — Ativo`}
                     >
                       {event.nome}
+                    </motion.div>
+                  ))}
+                  {/* Resolvidos em verde com ✓ */}
+                  {resolvidos.map(event => (
+                    <motion.div
+                      key={event.id}
+                      whileHover={{ scale: 1.02, x: 2 }}
+                      onClick={() => openDetail(event.id)}
+                      style={{
+                        fontSize: 10, padding: '3px 6px', borderRadius: 4,
+                        background: 'rgba(16, 185, 129, 0.08)', borderLeft: '3px solid var(--accent-green)',
+                        color: 'var(--accent-green)', cursor: 'pointer', whiteSpace: 'nowrap',
+                        overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 600,
+                        opacity: 0.85
+                      }}
+                      title={`${event.nome} — ${event.arquivado ? 'Arquivado' : 'Pago'}`}
+                    >
+                      ✓ {event.nome}
                     </motion.div>
                   ))}
                 </div>
