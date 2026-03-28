@@ -81,13 +81,38 @@ export function Dashboard({ data: injectedData }) {
       }
     }
 
+    // Cálculo Comparativo de Motivos YoY
+    const currentMotivos = {};
+    const previousMotivos = {};
+    const todosMotivos = new Set();
+
+    desligamentos.forEach(d => {
+      if (!d.motivo || !d.dataDesligamento) return;
+      const date = new Date(d.dataDesligamento);
+      const year = date.getFullYear();
+      todosMotivos.add(d.motivo);
+
+      if (year === currentYear) {
+        currentMotivos[d.motivo] = (currentMotivos[d.motivo] || 0) + 1;
+      } else if (year === lastYear) {
+        previousMotivos[d.motivo] = (previousMotivos[d.motivo] || 0) + 1;
+      }
+    });
+
+    const motivoComparisonData = Array.from(todosMotivos).map(m => ({
+      name: m,
+      current: currentMotivos[m] || 0,
+      previous: previousMotivos[m] || 0
+    })).sort((a, b) => (b.current + b.previous) - (a.current + a.previous));
+
     return {
       motivoChartData: Object.entries(stats.peloMotivo).map(([name, value]) => ({ name, value })),
       statusChartData: Object.entries(stats.peloStatus).map(([name, value]) => ({ name, value })),
       empresaChartData: Object.entries(stats.pelaEmpresa).map(([name, value]) => ({ name, value })),
       mesChartData: data,
       growthPercent: growth,
-      yoyData: yoyMap
+      yoyData: yoyMap,
+      motivoComparisonData
     };
   }, [stats, desligamentos]);
 
@@ -226,27 +251,41 @@ export function Dashboard({ data: injectedData }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '350px 1fr', gap: 24, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 350px', gap: 24, marginBottom: 24 }}>
         <div className="card" style={{ height: 400, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <h3 style={{ marginBottom: 20, fontSize: 14 }}>Motivos de Desligamento</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <h3 style={{ margin: 0, fontSize: 14 }}>Motivos Comparados: Este Ano vs Anterior</h3>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--text-muted)' }}>
+                <span style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--accent-blue)' }} /> Atual
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--text-muted)' }}>
+                <span style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--accent-purple)', opacity: 0.5 }} /> Anterior
+              </span>
+            </div>
+          </div>
           <div style={{ flex: 1, minHeight: 150 }}>
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={150} debounce={100}>
-            <PieChart>
-              <Pie
-                data={motivoChartData}
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {motivoChartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
+            <BarChart data={motivoComparisonData} layout="vertical" margin={{ left: 20, right: 30 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={true} vertical={false} />
+              <XAxis type="number" stroke="var(--text-muted)" fontSize={11} hide />
+              <YAxis 
+                type="category" 
+                dataKey="name" 
+                stroke="var(--text-primary)" 
+                fontSize={10} 
+                width={120} 
+                tickLine={false} 
+                axisLine={false} 
+                tick={{ fontWeight: 600 }}
+              />
               <Tooltip 
                 contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 12 }}
+                cursor={{ fill: 'rgba(255,255,255,0.02)' }}
               />
-            </PieChart>
+              <Bar dataKey="current" name="Ano Atual" fill="var(--accent-blue)" radius={[0, 4, 4, 0]} barSize={12} />
+              <Bar dataKey="previous" name="Ano Anterior" fill="var(--accent-purple)" opacity={0.5} radius={[0, 4, 4, 0]} barSize={12} />
+            </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
