@@ -261,5 +261,52 @@ router.post('/bulk', async (req, res) => {
   }
 });
 
+// ── POST /api/desligamentos/migrate-archive-old (Admin only, one-time use) ─
+router.post('/migrate-archive-old', auth, authorize('admin'), async (req, res, next) => {
+  try {
+    const CUTOFF = '2026-03-01';
+    const now = new Date().toISOString().slice(0, 19);
+
+    const docs = await Desligamento.find({
+      arquivado: { $ne: true },
+      dataPagamento: { $lt: CUTOFF, $gt: '' },
+    });
+
+    if (docs.length === 0) {
+      return res.json({ message: 'Nenhum registro encontrado para arquivar.', updated: 0 });
+    }
+
+    let updated = 0;
+    for (const doc of docs) {
+      const updatedChecklist = (doc.checklist || []).map(item => {
+        if (item.id === 'p1' || item.id === 'p2') {
+          return { ...item.toObject(), done: true, doneAt: now, notApplicable: false };
+        }
+        return item;
+      });
+
+      await Desligamento.findByIdAndUpdate(doc._id, {
+        $set: { arquivado: true, status: 'pago', checklist: updatedChecklist },
+        $push: {
+          historico: {
+            data: now,
+            acao: 'Arquivado automaticamente (migração)',
+            nota: `Processo arquivado em lote — pagamento anterior a ${CUTOFF}.`
+          }
+        }
+      });
+      updated++;
+    }
+
+    res.json({
+      message: `Migração concluída com sucesso.`,
+      updated,
+      cutoffDate: CUTOFF,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
 
