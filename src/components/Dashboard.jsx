@@ -125,6 +125,9 @@ export function Dashboard({ data: injectedData }) {
     visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 240, damping: 20 } }
   };
 
+  const ativosCount = desligamentos.filter(d => d.status !== 'pago' && !d.arquivado).length;
+  const pagosCount = desligamentos.filter(d => d.status === 'pago' || d.arquivado).length;
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 16 }}
@@ -140,7 +143,7 @@ export function Dashboard({ data: injectedData }) {
       >
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)' }}>Dashboard Analítico</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Métricas e estatísticas em tempo real dos processos de desligamento.</p>
+          <p style={{ color: 'var(--text-muted)' }}>Métricas e estatísticas consolidadas (Ativos + Arquivados).</p>
         </div>
         
         {/* Indicador de Crescimento Mensal */}
@@ -170,10 +173,10 @@ export function Dashboard({ data: injectedData }) {
 
       <motion.div className="stats-grid" variants={containerVariants} initial="hidden" animate="visible">
         {[
-          { color: 'blue',   label: 'Total Ativos',      value: stats.total, icon: <Briefcase size={48} /> },
-          { color: 'green',  label: 'Concluídos (Pago)', value: stats.peloStatus['pago'] || 0, icon: <CheckCircle size={48} /> },
-          { color: 'yellow', label: 'Em Documentação',   value: stats.peloStatus['documentacao'] || 0, icon: <Calendar size={48} /> },
-          { color: 'purple', label: 'Taxa de Conclusão', value: `${stats.total > 0 ? Math.round(((stats.peloStatus['pago'] || 0) / stats.total) * 100) : 0}%`, icon: <TrendingUp size={48} /> },
+          { color: 'blue',   label: 'Total Geral',        value: stats.total, icon: <Briefcase size={48} /> },
+          { color: 'purple', label: 'Processos Ativos',   value: ativosCount, icon: <Calendar size={48} /> },
+          { color: 'green',  label: 'Finalizados (Pagos)',value: pagosCount,  icon: <CheckCircle size={48} /> },
+          { color: 'yellow', label: 'Taxa de Conclusão',  value: `${stats.total > 0 ? Math.round((pagosCount / stats.total) * 100) : 0}%`, icon: <TrendingUp size={48} /> },
         ].map(({ color, label, value, icon }) => (
           <motion.div
             key={label}

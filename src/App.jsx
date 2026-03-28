@@ -330,7 +330,7 @@ function AppContent() {
               transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
               style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
             >
-              {view === 'dashboard' && <Dashboard data={mainDesligamentos} />}
+              {view === 'dashboard' && <Dashboard data={filteredAll} />}
               {view === 'lista' && <ListView data={mainDesligamentos} />}
               {view === 'calendar' && <CalendarView data={allDesligamentos} />}
               {view === 'pendentes' && <ListView data={pendentesComprovante} />}
