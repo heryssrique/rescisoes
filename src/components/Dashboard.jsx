@@ -40,7 +40,7 @@ export function Dashboard({ data: injectedData }) {
     return data;
   }, [desligamentos]);
 
-  const { motivoChartData, statusChartData, empresaChartData, mesChartData, growthPercent, yoyData } = useMemo(() => {
+  const { motivoChartData, statusChartData, empresaChartData, mesChartData, growthPercent, yoyData, motivoComparisonData } = useMemo(() => {
     const sortedMeses = Object.entries(stats.porMes).sort();
     const data = sortedMeses.map(([name, value]) => ({ name, value }));
 
