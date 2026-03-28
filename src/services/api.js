@@ -120,6 +120,11 @@ export function seedDatabase() {
   return request('POST', '/desligamentos/seed');
 }
 
+/** Migração especial para arquivar registros antigos antes de 01/03/2026. */
+export function migrateArchiveOld() {
+  return request('POST', '/desligamentos/migrate-archive-old');
+}
+
 // ─── Auth ─────────────────────────────────────────────────────────────────
 export function login(email, password) {
   return request('POST', '/auth/login', { email, password });

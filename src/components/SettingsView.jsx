@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Bell, Database, Download, FileSpreadsheet, AlertTriangle, ShieldAlert, Users, Plus, X, Save, FileText, ListChecks, Settings, GripVertical } from 'lucide-react';
+import { Bell, Database, Download, FileSpreadsheet, AlertTriangle, ShieldAlert, Users, Plus, X, Save, FileText, ListChecks, Settings, GripVertical, Archive } from 'lucide-react';
 import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import { format } from 'date-fns';
 import { DEFAULT_COLIGADAS, DEFAULT_MOTIVOS, DEFAULT_CHECKLIST_TEMPLATE } from '../data/initialData';
@@ -145,6 +145,23 @@ export function SettingsView() {
       return;
     }
     actions.requestNotificationPermission();
+  };
+
+  const [isMigrating, setIsMigrating] = useState(false);
+  const handleMigrateOld = async () => {
+    if (!confirm('Deseja arquivar todos os processos com data de pagamento anterior a 01/03/2026?\nEsta ação também marcará o comprovante de pagamento como arquivado.')) return;
+    
+    setIsMigrating(true);
+    try {
+      const res = await api.migrateArchiveOld();
+      alert(`Sucesso! ${res.updated} processos foram arquivados.`);
+      await actions.fetchAll();
+      await actions.fetchArchived();
+    } catch (err) {
+      alert(`Erro na migração: ${err.message}`);
+    } finally {
+      setIsMigrating(false);
+    }
   };
 
   const handleSaveColigadas = () => {
@@ -416,6 +433,26 @@ export function SettingsView() {
                     </p>
                     <button className="btn" onClick={handleExportData} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', fontWeight: 600 }}>
                       Gerar Snapshot de Segurança (.json)
+                    </button>
+                  </div>
+                </div>
+
+                <div className="card" style={{ padding: 24, display: 'flex', alignItems: 'flex-start', gap: 20, borderLeft: '4px solid var(--accent-orange)' }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(249, 115, 22, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-orange)', flexShrink: 0 }}>
+                    <Archive size={24} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Migração de Dados (Corte 01/03/2026)</h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>
+                      Arquiva em lote todos os processos com data de pagamento anterior a 01/03/2026 e marca o item de "Comprovante de pagamento" como concluído.
+                    </p>
+                    <button 
+                      className="btn" 
+                      onClick={handleMigrateOld} 
+                      disabled={isMigrating}
+                      style={{ background: 'var(--accent-orange)', color: '#fff', fontWeight: 600, opacity: isMigrating ? 0.7 : 1 }}
+                    >
+                      {isMigrating ? 'Migrando...' : 'Executar Arquivamento em Lote'}
                     </button>
                   </div>
                 </div>
