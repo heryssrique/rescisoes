@@ -66,7 +66,6 @@ const MOTIVO_MAP = {
   'termino de contrato antecipado': 'termino_empresa',
   'termino de contrato antecipado empresa': 'termino_empresa',
   'termino de contrato antecipado empregado': 'termino_empregado',
-  'pedido na experiencia': 'termino_empregado',
   'aux. administrativo': 'demissao',
   'auxiliar de logistica': 'demissao',
 };

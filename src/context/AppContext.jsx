@@ -180,7 +180,8 @@ export function AppProvider({ children }) {
   const fetchAll = useCallback(async () => {
     dispatch({ type: 'SET_LOADING', value: true });
     try {
-      const data = await api.getDesligamentos({ arquivado: false });
+      const res = await api.getDesligamentos({ arquivado: false });
+      const data = res.data || res;
       dispatch({ type: 'SET_DESLIGAMENTOS', payload: data });
 
       // Se chegou dados do MongoDB, garante modo online
@@ -202,7 +203,8 @@ export function AppProvider({ children }) {
   const fetchArchived = useCallback(async (searchQuery = '') => {
     dispatch({ type: 'SET_LOADING', value: true });
     try {
-      const data = await api.getDesligamentos({ arquivado: true, q: searchQuery });
+      const res = await api.getDesligamentos({ arquivado: true, q: searchQuery });
+      const data = res.data || res;
       dispatch({ type: 'SET_ARCHIVED', payload: data });
     } catch (err) {
       console.warn('[AppContext] Falha ao buscar arquivados da API, tentando localStorage.', err.message);
