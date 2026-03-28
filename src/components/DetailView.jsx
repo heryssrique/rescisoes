@@ -76,12 +76,62 @@ export function DetailView({ id }) {
   async function handleStatusChange(newStatus) {
     try {
       if (newStatus === 'pago') {
+        // Onda 1 — explosão central grande
         confetti({
-          particleCount: 150,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']
+          particleCount: 200,
+          spread: 100,
+          startVelocity: 55,
+          origin: { x: 0.5, y: 0.55 },
+          colors: ['#3b82f6', '#6366f1', '#10b981', '#f59e0b', '#a855f7', '#14b8a6'],
+          ticks: 300,
+          gravity: 0.9,
+          scalar: 1.1,
         });
+
+        // Onda 2 — lateral esquerda com estrelas (200ms depois)
+        setTimeout(() => {
+          confetti({
+            particleCount: 80,
+            angle: 60,
+            spread: 55,
+            startVelocity: 60,
+            origin: { x: 0, y: 0.65 },
+            colors: ['#f59e0b', '#fbbf24', '#fff', '#34d399'],
+            shapes: ['star'],
+            scalar: 1.4,
+            ticks: 250,
+          });
+        }, 180);
+
+        // Onda 3 — lateral direita com estrelas (350ms depois)
+        setTimeout(() => {
+          confetti({
+            particleCount: 80,
+            angle: 120,
+            spread: 55,
+            startVelocity: 60,
+            origin: { x: 1, y: 0.65 },
+            colors: ['#3b82f6', '#6366f1', '#fff', '#f472b6'],
+            shapes: ['star'],
+            scalar: 1.4,
+            ticks: 250,
+          });
+        }, 350);
+
+        // Onda 4 — chuva suave no topo (600ms depois)
+        setTimeout(() => {
+          confetti({
+            particleCount: 60,
+            spread: 160,
+            startVelocity: 20,
+            origin: { x: 0.5, y: 0 },
+            colors: ['#10b981', '#34d399', '#6ee7b7', '#fff', '#a855f7'],
+            ticks: 400,
+            gravity: 0.5,
+            drift: 0.1,
+            scalar: 0.85,
+          });
+        }, 600);
       }
       await actions.changeStatus(d, newStatus);
     } catch {
