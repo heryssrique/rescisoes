@@ -340,11 +340,12 @@ export function ListView({ data: injectedData }) {
         </select>
 
         <select id="filter-status" className="filter-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-          <option value="ativos">Processos Ativos</option>
-          <option value="comunicado">Comunicado ({statusCounts.comunicado})</option>
-          <option value="documentacao">Documentação ({statusCounts.documentacao})</option>
-          <option value="homologacao">Homologação ({statusCounts.homologacao})</option>
-          <option value="aguardando">Ag. Pagamento ({statusCounts.aguardando})</option>
+          <option value="ativos">Processos Ativos ({currentList.filter(d => !['pago','cancelado'].includes(d.status)).length})</option>
+          <option value="comunicado">Comunicado ({currentList.filter(d => d.status === 'comunicado').length})</option>
+          <option value="documentacao">Documentação ({currentList.filter(d => d.status === 'documentacao').length})</option>
+          <option value="homologacao">Homologação ({currentList.filter(d => d.status === 'homologacao').length})</option>
+          <option value="aguardando">Ag. Pagamento ({currentList.filter(d => d.status === 'aguardando').length})</option>
+          <option value="pago">Pagos ({currentList.filter(d => d.status === 'pago').length})</option>
         </select>
 
         <select id="filter-motivo" className="filter-select" value={filterMotivo} onChange={e => setFilterMotivo(e.target.value)}>
