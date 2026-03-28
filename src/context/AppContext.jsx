@@ -10,46 +10,47 @@ const AppContext = createContext();
 // retornado da API é o que atualiza o estado local.
 
 function reducer(state, action) {
+  // Defensive guard: ensure arrays are ALWAYS defined before any .map()/.filter()
+  const s = {
+    ...state,
+    desligamentos: state.desligamentos || [],
+    archivedDesligamentos: state.archivedDesligamentos || [],
+    notifications: state.notifications || [],
+    readNotificationIds: state.readNotificationIds || [],
+  };
   switch (action.type) {
     // Dados
     case 'SET_DESLIGAMENTOS':
-      return { ...state, desligamentos: action.payload, loading: false };
+      return { ...s, desligamentos: action.payload, loading: false };
     case 'SET_ARCHIVED':
-      return { ...state, archivedDesligamentos: action.payload, loading: false };
+      return { ...s, archivedDesligamentos: action.payload, loading: false };
     case 'ADD_DESLIGAMENTO':
-      return { ...state, desligamentos: [...state.desligamentos, action.payload] };
+      return { ...s, desligamentos: [...s.desligamentos, action.payload] };
     case 'UPDATE_DESLIGAMENTO': {
       const updated = action.payload;
       return {
-        ...state,
-        desligamentos: (state.desligamentos || []).map(d => d.id === updated.id ? updated : d),
-        archivedDesligamentos: (state.archivedDesligamentos || []).map(d => d.id === updated.id ? updated : d),
+        ...s,
+        desligamentos: s.desligamentos.map(d => d.id === updated.id ? updated : d),
+        archivedDesligamentos: s.archivedDesligamentos.map(d => d.id === updated.id ? updated : d),
       };
     }
-    // Optimistic: inverte o item localmente SEM esperar o servidor
     case 'TOGGLE_CHECKLIST_OPTIMISTIC': {
       const now = new Date().toISOString();
       const updateList = (list) => list.map(d => {
         if (d.id !== action.desligamentoId) return d;
         return {
           ...d,
-          checklist: d.checklist.map(c => {
+          checklist: (d.checklist || []).map(c => {
             if (c.id !== action.itemId) return c;
             const newDone = !c.done;
-            // Se estiver concluindo, desmarca N/A se houver
-            return { 
-              ...c, 
-              done: newDone, 
-              doneAt: newDone ? now : null,
-              notApplicable: newDone ? false : c.notApplicable
-            };
+            return { ...c, done: newDone, doneAt: newDone ? now : null, notApplicable: newDone ? false : c.notApplicable };
           }),
         };
       });
       return {
-        ...state,
-        desligamentos: updateList(state.desligamentos),
-        archivedDesligamentos: state.archivedDesligamentos ? updateList(state.archivedDesligamentos) : [],
+        ...s,
+        desligamentos: updateList(s.desligamentos),
+        archivedDesligamentos: updateList(s.archivedDesligamentos),
       };
     }
     case 'TOGGLE_NAO_APLICAVEL_OPTIMISTIC': {
@@ -57,135 +58,127 @@ function reducer(state, action) {
         if (d.id !== action.desligamentoId) return d;
         return {
           ...d,
-          checklist: d.checklist.map(c => {
+          checklist: (d.checklist || []).map(c => {
             if (c.id !== action.itemId) return c;
             const newNA = !c.notApplicable;
-            return { 
-              ...c, 
-              notApplicable: newNA,
-              done: newNA ? false : c.done,
-              doneAt: newNA ? null : c.doneAt
-            };
+            return { ...c, notApplicable: newNA, done: newNA ? false : c.done, doneAt: newNA ? null : c.doneAt };
           }),
         };
       });
       return {
-        ...state,
-        desligamentos: updateList(state.desligamentos),
-        archivedDesligamentos: state.archivedDesligamentos ? updateList(state.archivedDesligamentos) : [],
+        ...s,
+        desligamentos: updateList(s.desligamentos),
+        archivedDesligamentos: updateList(s.archivedDesligamentos),
       };
     }
     case 'ARCHIVE_DESLIGAMENTO':
       return {
-        ...state,
-        desligamentos: state.desligamentos.filter(d => d.id !== action.payload.id),
-        archivedDesligamentos: [action.payload, ...(state.archivedDesligamentos || [])],
+        ...s,
+        desligamentos: s.desligamentos.filter(d => d.id !== action.payload.id),
+        archivedDesligamentos: [action.payload, ...s.archivedDesligamentos],
       };
     case 'UNARCHIVE_DESLIGAMENTO':
       return {
-        ...state,
-        archivedDesligamentos: (state.archivedDesligamentos || []).filter(d => d.id !== action.payload.id),
-        desligamentos: [action.payload, ...state.desligamentos],
+        ...s,
+        archivedDesligamentos: s.archivedDesligamentos.filter(d => d.id !== action.payload.id),
+        desligamentos: [action.payload, ...s.desligamentos],
       };
     case 'DELETE_DESLIGAMENTO':
       return {
-        ...state,
-        desligamentos: state.desligamentos.filter(d => d.id !== action.id),
-        archivedDesligamentos: (state.archivedDesligamentos || []).filter(d => d.id !== action.id),
+        ...s,
+        desligamentos: s.desligamentos.filter(d => d.id !== action.id),
+        archivedDesligamentos: s.archivedDesligamentos.filter(d => d.id !== action.id),
       };
     case 'ARCHIVE_MULTIPLE': {
-      const archivedIds = action.payload.map(d => d.id);
+      const archivedIds = (action.payload || []).map(d => d.id);
       return {
-        ...state,
-        desligamentos: state.desligamentos.filter(d => !archivedIds.includes(d.id)),
-        archivedDesligamentos: [...action.payload, ...(state.archivedDesligamentos || [])],
+        ...s,
+        desligamentos: s.desligamentos.filter(d => !archivedIds.includes(d.id)),
+        archivedDesligamentos: [...(action.payload || []), ...s.archivedDesligamentos],
       };
     }
     case 'DELETE_MULTIPLE':
       return {
-        ...state,
-        desligamentos: state.desligamentos.filter(d => !action.ids.includes(d.id)),
-        archivedDesligamentos: (state.archivedDesligamentos || []).filter(d => !action.ids.includes(d.id)),
+        ...s,
+        desligamentos: s.desligamentos.filter(d => !action.ids.includes(d.id)),
+        archivedDesligamentos: s.archivedDesligamentos.filter(d => !action.ids.includes(d.id)),
       };
-
     case 'SET_USER':
-      return { ...state, user: action.payload };
+      return { ...s, user: action.payload };
     case 'LOGOUT':
       localStorage.removeItem('desligest_auth_user');
       localStorage.removeItem('desligest_view');
       localStorage.removeItem('desligest_selected');
-      return { ...state, user: null, desligamentos: [], archivedDesligamentos: [], view: 'lista', selected: null };
-
-    // UI
+      return { ...s, user: null, desligamentos: [], archivedDesligamentos: [], view: 'lista', selected: null };
     case 'SET_VIEW':
       localStorage.setItem('desligest_view', action.view);
-      return { ...state, view: action.view };
+      return { ...s, view: action.view };
     case 'SET_SELECTED':
-      if (action.id) {
-        localStorage.setItem('desligest_selected', action.id);
-      } else {
-        localStorage.removeItem('desligest_selected');
-      }
-      return { ...state, selected: action.id };
+      if (action.id) { localStorage.setItem('desligest_selected', action.id); }
+      else { localStorage.removeItem('desligest_selected'); }
+      return { ...s, selected: action.id };
     case 'SET_GLOBAL_COLIGADA_FILTER':
-      return { ...state, globalColigadaFilter: action.payload };
+      return { ...s, globalColigadaFilter: action.payload };
     case 'SET_LOADING':
-      return { ...state, loading: action.value };
+      return { ...s, loading: action.value };
     case 'SET_ERROR':
-      return { ...state, error: action.message };
+      return { ...s, error: action.message };
     case 'CLEAR_ERROR':
-      return { ...state, error: null };
-
-    // Auth
-
+      return { ...s, error: null };
     case 'SET_AUTH_CHECKED':
-      return { ...state, isAuthChecked: true };
+      return { ...s, isAuthChecked: true };
     case 'TOGGLE_THEME': {
-      const newTheme = state.theme === 'dark' ? 'light' : 'dark';
+      const newTheme = s.theme === 'dark' ? 'light' : 'dark';
       localStorage.setItem('desligest_theme', newTheme);
-      return { ...state, theme: newTheme };
+      return { ...s, theme: newTheme };
     }
-
-    // Notificações
     case 'SET_NOTIFICATIONS':
-      return { ...state, notifications: action.payload };
+      return { ...s, notifications: action.payload };
     case 'MARK_NOTIFICATION_READ':
-      return { 
-        ...state, 
-        readNotificationIds: [...state.readNotificationIds, action.id],
-        notifications: (state.notifications || []).map(n => n.id === action.id ? { ...n, read: true } : n)
+      return {
+        ...s,
+        readNotificationIds: [...s.readNotificationIds, action.id],
+        notifications: s.notifications.map(n => n.id === action.id ? { ...n, read: true } : n)
       };
-
     default:
-      return state;
+      return s;
   }
 }
 
-const getInitialView = () => {
-  const saved = localStorage.getItem('desligest_view') || 'lista';
-  const sel = localStorage.getItem('desligest_selected');
-  if (saved === 'detalhe' && !sel) return 'lista';
-  return saved;
-};
+
+function getInitialState() {
+  try {
+    const savedView = localStorage.getItem('desligest_view') || 'lista';
+    const savedSelected = localStorage.getItem('desligest_selected') || null;
+    const view = (savedView === 'detalhe' && !savedSelected) ? 'lista' : savedView;
+    const readIds = (() => { try { return JSON.parse(localStorage.getItem('readNotificationIds') || '[]') || []; } catch { return []; } })();
+    return {
+      user: null,
+      isAuthChecked: false,
+      desligamentos: [],
+      archivedDesligamentos: [],
+      view,
+      selected: savedSelected,
+      theme: localStorage.getItem('desligest_theme') || 'dark',
+      globalColigadaFilter: 'todas',
+      loading: true,
+      error: null,
+      offline: false,
+      notifications: [],
+      readNotificationIds: readIds,
+    };
+  } catch {
+    return {
+      user: null, isAuthChecked: false, desligamentos: [], archivedDesligamentos: [],
+      view: 'lista', selected: null, theme: 'dark', globalColigadaFilter: 'todas',
+      loading: true, error: null, offline: false, notifications: [], readNotificationIds: [],
+    };
+  }
+}
 
 // ─── Provider ─────────────────────────────────────────────────────────────
 export function AppProvider({ children }) {
-  const [state, dispatch] = useReducer(reducer, {
-    user: null,
-    isAuthChecked: false,
-    desligamentos: [],
-    archivedDesligamentos: [],
-    view: getInitialView(),
-    selected: localStorage.getItem('desligest_selected') || null,
-    theme: localStorage.getItem('desligest_theme') || 'dark',
-    globalColigadaFilter: 'todas',
-    loading: true,
-    error: null,
-    // Modo offline: true = usa localStorage como fallback
-    offline: false,
-    notifications: [],
-    readNotificationIds: (() => { try { return JSON.parse(localStorage.getItem('readNotificationIds') || '[]') || []; } catch { return []; } })(),
-  });
+  const [state, dispatch] = useReducer(reducer, null, getInitialState);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', state.theme);
