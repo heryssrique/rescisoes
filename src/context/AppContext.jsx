@@ -235,6 +235,7 @@ export function AppProvider({ children }) {
         dispatch({ type: 'SET_USER', payload: user });
       } catch (err) {
         localStorage.removeItem('token');
+        dispatch({ type: 'SET_USER', payload: null });
       }
     }
     dispatch({ type: 'SET_AUTH_CHECKED' });
