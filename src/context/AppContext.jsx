@@ -112,12 +112,20 @@ function reducer(state, action) {
       return { ...state, user: action.payload };
     case 'LOGOUT':
       localStorage.removeItem('desligest_auth_user');
-      return { ...state, user: null, desligamentos: [], archivedDesligamentos: [] };
+      localStorage.removeItem('desligest_view');
+      localStorage.removeItem('desligest_selected');
+      return { ...state, user: null, desligamentos: [], archivedDesligamentos: [], view: 'lista', selected: null };
 
     // UI
     case 'SET_VIEW':
+      localStorage.setItem('desligest_view', action.view);
       return { ...state, view: action.view };
     case 'SET_SELECTED':
+      if (action.id) {
+        localStorage.setItem('desligest_selected', action.id);
+      } else {
+        localStorage.removeItem('desligest_selected');
+      }
       return { ...state, selected: action.id };
     case 'SET_GLOBAL_COLIGADA_FILTER':
       return { ...state, globalColigadaFilter: action.payload };
@@ -153,6 +161,13 @@ function reducer(state, action) {
   }
 }
 
+const getInitialView = () => {
+  const saved = localStorage.getItem('desligest_view') || 'lista';
+  const sel = localStorage.getItem('desligest_selected');
+  if (saved === 'detalhe' && !sel) return 'lista';
+  return saved;
+};
+
 // ─── Provider ─────────────────────────────────────────────────────────────
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, {
@@ -160,8 +175,8 @@ export function AppProvider({ children }) {
     isAuthChecked: false,
     desligamentos: [],
     archivedDesligamentos: [],
-    view: 'lista',
-    selected: null,
+    view: getInitialView(),
+    selected: localStorage.getItem('desligest_selected') || null,
     theme: localStorage.getItem('desligest_theme') || 'dark',
     globalColigadaFilter: 'todas',
     loading: true,
