@@ -9,7 +9,11 @@ services:
     envVars:
       - key: MONGODB_URI
         sync: false
+      - key: JWT_SECRET
+        sync: false
       - key: FRONTEND_ORIGIN
+        sync: false
+      - key: ADMIN_EMAIL
         sync: false
       - key: NODE_ENV
         value: production
