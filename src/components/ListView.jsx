@@ -183,25 +183,27 @@ export function ListView({ data: injectedData }) {
     coligadosObj = { '1': { nome: 'Concreta' }, '4': { nome: 'JPL Gomes' }, '11': { nome: 'JC Gomes' } };
   }
 
-  const activeCount = currentList.length;
+  const filteredCount = activeFiltered.length;
 
-  const aVencer = currentList.filter(d => {
-    if (!d.dataPagamento) return false;
+  const aVencer = activeFiltered.filter(d => {
+    if (ARCHIVED_STATUSES.includes(d.status) || !d.dataPagamento) return false;
     const days = differenceInDays(parseISO(d.dataPagamento), startOfDay(new Date()));
     return days >= 0 && days <= 5;
   }).length;
 
-  const vencidos = currentList.filter(d => {
-    if (!d.dataPagamento) return false;
+  const vencidos = activeFiltered.filter(d => {
+    if (ARCHIVED_STATUSES.includes(d.status) || !d.dataPagamento) return false;
     const days = differenceInDays(parseISO(d.dataPagamento), startOfDay(new Date()));
     return days < 0;
   }).length;
 
-  const statusCounts = {
-    comunicado: currentList.filter(d => d.status === 'comunicado').length,
-    documentacao: currentList.filter(d => d.status === 'documentacao').length,
-    homologacao: currentList.filter(d => d.status === 'homologacao').length,
-    aguardando: currentList.filter(d => d.status === 'aguardando').length,
+  const pagosNoFiltro = activeFiltered.filter(d => d.status === 'pago').length;
+
+  const statusIcons = {
+    comunicado: <Archive size={48} />,
+    documentacao: <Clock size={48} />,
+    homologacao: <Calendar size={14} />,
+    aguardando: <AlertCircle size={48} />
   };
 
   const applyFilter = (list) =>
@@ -310,26 +312,25 @@ export function ListView({ data: injectedData }) {
     <div className="page-content">
       {/* Stats */}
       <div className="stats-grid">
-
         <div className="stat-card blue">
-          <div className="stat-label">Em Andamento</div>
-          <div className="stat-value">{activeCount}</div>
-          <div className="stat-icon"><User size={48} /></div>
+          <div className="stat-label">Resultados (Filtro)</div>
+          <div className="stat-value">{filteredCount}</div>
+          <div className="stat-icon"><Search size={48} /></div>
         </div>
         <div className="stat-card yellow">
-          <div className="stat-label">A Vencer (5d)</div>
+          <div className="stat-label">A Vencer (em breve)</div>
           <div className="stat-value">{aVencer}</div>
-          <div className="stat-icon"><Calendar size={48} /></div>
+          <div className="stat-icon"><Clock size={48} /></div>
         </div>
         <div className="stat-card red">
-          <div className="stat-label">Vencidos</div>
+          <div className="stat-label">Em Atraso</div>
           <div className="stat-value">{vencidos}</div>
           <div className="stat-icon"><AlertCircle size={48} /></div>
         </div>
-        <div className="stat-card purple">
-          <div className="stat-label">Total Ativos</div>
-          <div className="stat-value">{currentList.length}</div>
-          <div className="stat-icon"><User size={48} /></div>
+        <div className="stat-card green">
+          <div className="stat-label">Pagos (Filtro)</div>
+          <div className="stat-value">{pagosNoFiltro}</div>
+          <div className="stat-icon"><CheckCircle size={48} /></div>
         </div>
       </div>
 
