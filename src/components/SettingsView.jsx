@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { Bell, Database, Download, FileSpreadsheet, AlertTriangle, ShieldAlert, Users, Plus, X, Save, FileText, ListChecks, Settings, GripVertical, Archive } from 'lucide-react';
 import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import { format } from 'date-fns';
+import * as api from '../services/api';
 import { DEFAULT_COLIGADAS, DEFAULT_MOTIVOS, DEFAULT_CHECKLIST_TEMPLATE } from '../data/initialData';
 
 function ChecklistItem({ item, idx, updateChecklist, removeChecklistItem }) {
