@@ -15,6 +15,10 @@ const { initCron } = require('./services/cronService');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Render/Heroku Proxy trust for rate limits
+app.set('trust proxy', 1);
+
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/desligest';
 
 // ── Rate Limiting ──────────────────────────────────────────────────────────

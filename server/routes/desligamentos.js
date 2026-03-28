@@ -107,7 +107,7 @@ router.put('/:id', auth, async (req, res, next) => {
     const doc = await Desligamento.findByIdAndUpdate(
       req.params.id,
       updates,
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     );
     
     res.json(doc);
@@ -142,7 +142,7 @@ router.patch('/:id/historico', auth, async (req, res, next) => {
     const doc = await Desligamento.findByIdAndUpdate(
       req.params.id,
       { $push: { historico: { ...req.body, data: new Date().toISOString() } } },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     );
     if (!doc) throw new ApiError(404, 'Processo não encontrado');
     res.json(doc);
