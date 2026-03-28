@@ -40,9 +40,34 @@ export function Dashboard({ data: injectedData }) {
     return data;
   }, [desligamentos]);
 
-  const { motivoChartData, statusChartData, empresaChartData, mesChartData, growthPercent } = useMemo(() => {
+  const { motivoChartData, statusChartData, empresaChartData, mesChartData, growthPercent, yoyData } = useMemo(() => {
     const sortedMeses = Object.entries(stats.porMes).sort();
     const data = sortedMeses.map(([name, value]) => ({ name, value }));
+
+    // Cálculo YoY (Year over Year) — Compara meses do ano atual vs ano anterior
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const lastYear = currentYear - 1;
+    const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+    const yoyMap = monthNames.map((name, i) => ({
+      month: name,
+      currentYear: 0,
+      lastYear: 0
+    }));
+
+    desligamentos.forEach(d => {
+      if (!d.dataDesligamento) return;
+      const date = new Date(d.dataDesligamento);
+      const year = date.getFullYear();
+      const month = date.getMonth(); // 0-11
+      
+      if (year === currentYear) {
+        yoyMap[month].currentYear++;
+      } else if (year === lastYear) {
+        yoyMap[month].lastYear++;
+      }
+    });
     
     // Cálculo do Crescimento vs Mês Anterior
     let growth = 0;
@@ -61,9 +86,10 @@ export function Dashboard({ data: injectedData }) {
       statusChartData: Object.entries(stats.peloStatus).map(([name, value]) => ({ name, value })),
       empresaChartData: Object.entries(stats.pelaEmpresa).map(([name, value]) => ({ name, value })),
       mesChartData: data,
-      growthPercent: growth
+      growthPercent: growth,
+      yoyData: yoyMap
     };
-  }, [stats]);
+  }, [stats, desligamentos]);
 
   const containerVariants = {
     hidden: {},
@@ -172,6 +198,36 @@ export function Dashboard({ data: injectedData }) {
         </div>
 
         <div className="card" style={{ height: 400, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <h3 style={{ margin: 0, fontSize: 14 }}>Sazonalidade: Ano Atual vs Anterior</h3>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--text-muted)' }}>
+                <span style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--accent-blue)' }} /> {new Date().getFullYear()}
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--text-muted)' }}>
+                <span style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--accent-purple)', opacity: 0.5 }} /> {new Date().getFullYear() - 1}
+              </span>
+            </div>
+          </div>
+          <div style={{ flex: 1, minHeight: 150 }}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={150} debounce={100}>
+            <LineChart data={yoyData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="month" stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} />
+              <Tooltip 
+                contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 12 }}
+              />
+              <Line type="monotone" dataKey="currentYear" name="Este Ano" stroke="var(--accent-blue)" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} />
+              <Line type="monotone" dataKey="lastYear" name="Ano Passado" stroke="var(--accent-purple)" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3 }} opacity={0.6} />
+            </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '350px 1fr', gap: 24, marginBottom: 24 }}>
+        <div className="card" style={{ height: 400, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <h3 style={{ marginBottom: 20, fontSize: 14 }}>Motivos de Desligamento</h3>
           <div style={{ flex: 1, minHeight: 150 }}>
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={150} debounce={100}>
@@ -194,30 +250,11 @@ export function Dashboard({ data: injectedData }) {
             </ResponsiveContainer>
           </div>
         </div>
-      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 350px', gap: 24 }}>
-        <div className="card" style={{ height: 350, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <h3 style={{ marginBottom: 20, fontSize: 14 }}>Status dos Processos</h3>
-          <div style={{ flex: 1, minHeight: 150 }}>
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={150} debounce={100}>
-            <BarChart data={statusChartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={11} />
-              <YAxis stroke="var(--text-muted)" fontSize={11} />
-              <Tooltip 
-                contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 12 }}
-              />
-              <Bar dataKey="value" fill="var(--accent-indigo)" radius={[4, 4, 0, 0]} />
-            </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="card" style={{ height: 350 }}>
+        <div className="card" style={{ height: 400 }}>
           <h3 style={{ marginBottom: 20, fontSize: 14 }}>Distribuição por Empresa</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {empresaChartData.sort((a,b) => b.value - a.value).map((emp, i) => (
+            {empresaChartData.sort((a,b) => b.value - a.value).slice(0, 6).map((emp, i) => (
               <div key={emp.name} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ width: 40, fontWeight: 800, color: 'var(--text-muted)', fontSize: 16 }}>{i+1}º</div>
                 <div style={{ flex: 1 }}>
@@ -236,6 +273,26 @@ export function Dashboard({ data: injectedData }) {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 24 }}>
+        <div className="card" style={{ height: 350, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <h3 style={{ marginBottom: 20, fontSize: 14 }}>Volume por Etapa de Status</h3>
+          <div style={{ flex: 1, minHeight: 150 }}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={150} debounce={100}>
+            <BarChart data={statusChartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} />
+              <Tooltip 
+                contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 12 }}
+                cursor={{ fill: 'rgba(255,255,255,0.02)' }}
+              />
+              <Bar dataKey="value" fill="var(--accent-indigo)" radius={[4, 4, 0, 0]} barSize={60} />
+            </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
