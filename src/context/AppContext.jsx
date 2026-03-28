@@ -183,17 +183,19 @@ export function AppProvider({ children }) {
       const res = await api.getDesligamentos({ arquivado: false });
       const data = res.data || res;
       dispatch({ type: 'SET_DESLIGAMENTOS', payload: data });
-
-      // Se chegou dados do MongoDB, garante modo online
       dispatch({ type: 'SET_ERROR', message: null });
     } catch (err) {
+      if (err.message.includes('401')) {
+        localStorage.removeItem('token');
+        dispatch({ type: 'SET_USER', payload: null });
+        return;
+      }
       console.warn('[AppContext] API indisponível, usando localStorage como fallback.', err.message);
-      // Fallback: carrega do localStorage se a API falhar
       const saved = loadFromStorage();
       dispatch({ type: 'SET_DESLIGAMENTOS', payload: saved.filter(d => !d.arquivado) });
       dispatch({
         type: 'SET_ERROR',
-        message: '⚠️ API offline — dados carregados do cache local. Conecte o servidor para salvar alterações no banco.',
+        message: '⚠️ API offline — dados carregados do cache local.',
       });
     } finally {
       dispatch({ type: 'SET_LOADING', value: false });
@@ -207,23 +209,19 @@ export function AppProvider({ children }) {
       const data = res.data || res;
       dispatch({ type: 'SET_ARCHIVED', payload: data });
     } catch (err) {
-      console.warn('[AppContext] Falha ao buscar arquivados da API, tentando localStorage.', err.message);
+      if (err.message.includes('401')) {
+        localStorage.removeItem('token');
+        dispatch({ type: 'SET_USER', payload: null });
+        return;
+      }
+      console.warn('[AppContext] Falha ao buscar arquivados da API.', err.message);
       const saved = loadFromStorage();
       const filtered = saved.filter(d => d.arquivado);
-      
-      // Aplicar busca simples local se houver query
       const searchTerm = searchQuery.toLowerCase();
       const results = searchQuery 
-        ? filtered.filter(d => 
-            d.nome?.toLowerCase().includes(searchTerm) ||
-            d.cargo?.toLowerCase().includes(searchTerm) ||
-            d.matricula?.toLowerCase().includes(searchTerm) ||
-            d.departamento?.toLowerCase().includes(searchTerm)
-          ) 
+        ? filtered.filter(d => d.nome?.toLowerCase().includes(searchTerm)) 
         : filtered;
-
       dispatch({ type: 'SET_ARCHIVED', payload: results });
-      dispatch({ type: 'SET_ERROR', message: '⚠️ Servidor offline — carregando arquivados do cache local.' });
     } finally {
       dispatch({ type: 'SET_LOADING', value: false });
     }

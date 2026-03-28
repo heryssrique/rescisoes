@@ -10,3 +10,5 @@
 {"level":"info","message":"Incoming Request: GET /api/health","service":"desligest-api","timestamp":"2026-03-27 21:13:09"}
 {"level":"info","message":"Incoming Request: POST /api/auth/register","service":"desligest-api","timestamp":"2026-03-27 21:13:55"}
 {"level":"info","message":"Incoming Request: GET /api/desligamentos?arquivado=false","service":"desligest-api","timestamp":"2026-03-27 21:13:55"}
+{"level":"info","message":"Incoming Request: POST /api/auth/register","service":"desligest-api","timestamp":"2026-03-27 21:17:11"}
+{"level":"info","message":"Incoming Request: GET /api/desligamentos?arquivado=false","service":"desligest-api","timestamp":"2026-03-27 21:17:11"}
