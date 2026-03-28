@@ -49,39 +49,59 @@ export function Dashboard({ data: injectedData }) {
       .map(([name, value]) => ({ name, value }))
   }), [stats]);
 
+  const containerVariants = {
+    hidden: {},
+    visible: { transition: { staggerChildren: 0.09 } }
+  };
+  const cardVariants = {
+    hidden: { opacity: 0, y: 28, scale: 0.94 },
+    visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 240, damping: 20 } }
+  };
+
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       className="page-content"
     >
-      <div style={{ marginBottom: 30 }}>
+      <motion.div 
+        initial={{ opacity: 0, x: -12 }} 
+        animate={{ opacity: 1, x: 0 }} 
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        style={{ marginBottom: 30 }}
+      >
         <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)' }}>Dashboard Analítico</h1>
         <p style={{ color: 'var(--text-muted)' }}>Métricas e estatísticas em tempo real dos processos de desligamento.</p>
-      </div>
+      </motion.div>
 
-      <div className="stats-grid">
-        <div className="stat-card blue">
-          <div className="stat-label">Total Ativos</div>
-          <div className="stat-value">{stats.total}</div>
-          <div className="stat-icon"><Briefcase size={48} /></div>
-        </div>
-        <div className="stat-card green">
-          <div className="stat-label">Concluídos (Pago)</div>
-          <div className="stat-value">{stats.peloStatus['pago'] || 0}</div>
-          <div className="stat-icon"><CheckCircle size={48} /></div>
-        </div>
-        <div className="stat-card yellow">
-          <div className="stat-label">Em Documentação</div>
-          <div className="stat-value">{stats.peloStatus['documentacao'] || 0}</div>
-          <div className="stat-icon"><Calendar size={48} /></div>
-        </div>
-        <div className="stat-card purple">
-          <div className="stat-label">Taxa de Conclusão</div>
-          <div className="stat-value">{stats.total > 0 ? Math.round(((stats.peloStatus['pago'] || 0) / stats.total) * 100) : 0}%</div>
-          <div className="stat-icon"><TrendingUp size={48} /></div>
-        </div>
-      </div>
+      <motion.div className="stats-grid" variants={containerVariants} initial="hidden" animate="visible">
+        {[
+          { color: 'blue',   label: 'Total Ativos',      value: stats.total, icon: <Briefcase size={48} /> },
+          { color: 'green',  label: 'Concluídos (Pago)', value: stats.peloStatus['pago'] || 0, icon: <CheckCircle size={48} /> },
+          { color: 'yellow', label: 'Em Documentação',   value: stats.peloStatus['documentacao'] || 0, icon: <Calendar size={48} /> },
+          { color: 'purple', label: 'Taxa de Conclusão', value: `${stats.total > 0 ? Math.round(((stats.peloStatus['pago'] || 0) / stats.total) * 100) : 0}%`, icon: <TrendingUp size={48} /> },
+        ].map(({ color, label, value, icon }) => (
+          <motion.div
+            key={label}
+            className={`stat-card ${color}`}
+            variants={cardVariants}
+            whileHover={{ y: -5, boxShadow: '0 16px 40px -8px rgba(0,0,0,0.3)', transition: { duration: 0.18 } }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <div className="stat-label">{label}</div>
+            <motion.div 
+              className="stat-value"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.35, duration: 0.35, type: 'spring', stiffness: 300 }}
+            >
+              {value}
+            </motion.div>
+            <div className="stat-icon">{icon}</div>
+          </motion.div>
+        ))}
+      </motion.div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 24 }}>
         <div className="card" style={{ height: 400, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>

@@ -1937,3 +1937,107 @@ select.form-input {
   0%, 100% { transform: scale(1); opacity: 0.3; }
   50% { transform: scale(2.5); opacity: 0.1; }
 }
+
+/* ─── Premium Micro-Animations ────────────────────── */
+
+/* Badge pulse — itens de atenção */
+.badge {
+  animation: badgePulse 3s ease-in-out infinite;
+}
+@keyframes badgePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.5); }
+  50%       { box-shadow: 0 0 0 5px rgba(59,130,246,0); }
+}
+
+/* Nav item ativo — linha de luz deslizante */
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 20%; bottom: 20%;
+  width: 3px;
+  background: linear-gradient(180deg, transparent, var(--accent-blue), transparent);
+  border-radius: 3px 0 0 3px;
+  animation: navGlow 2s ease-in-out infinite;
+}
+.nav-item { position: relative; }
+@keyframes navGlow {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; box-shadow: 0 0 8px var(--accent-blue-glow); }
+}
+
+/* Botão primário — shimmer ao hover */
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; bottom: 0;
+  width: 60%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+  transition: none;
+  pointer-events: none;
+}
+.btn-primary:hover::after {
+  animation: btnShimmer 0.6s ease-in-out forwards;
+}
+@keyframes btnShimmer {
+  from { left: -60%; }
+  to   { left: 120%; }
+}
+
+/* Stat card — número aparece com brilho */
+.stat-value {
+  position: relative;
+}
+.stat-value::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  animation: statShimmer 4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes statShimmer {
+  0%, 100% { transform: translateX(-100%); }
+  50%       { transform: translateX(100%); }
+}
+
+/* Topbar — linha aurora animada no topo */
+.topbar::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--accent-blue) 30%,
+    var(--accent-purple) 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: auroraLine 6s linear infinite;
+  opacity: 0.4;
+}
+.topbar { position: relative; overflow: visible; }
+@keyframes auroraLine {
+  0%   { background-position: 0% 0%;   }
+  100% { background-position: 200% 0%; }
+}
+
+/* Term-card — urgency bar animada */
+.urgency-bar.urgency-crit {
+  animation: urgencyFlash 1.2s ease-in-out infinite;
+}
+@keyframes urgencyFlash {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; box-shadow: 2px 0 8px rgba(239,68,68,0.6); }
+}
+
+/* Spin animation for loader */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+

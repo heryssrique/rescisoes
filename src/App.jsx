@@ -195,14 +195,19 @@ function AppContent() {
 
         <div className="sidebar-nav">
           <div className="nav-section-label">Navegação</div>
-          {navItems.map(item => (
-            <button
+          {navItems.map((item, i) => (
+            <motion.button
               key={item.id}
               id={`nav-${item.id}`}
               className={`nav-item ${view === item.id ? 'active' : ''}`}
               style={{ justifyContent: isSidebarCollapsed ? 'center' : 'flex-start', padding: isSidebarCollapsed ? '12px' : '11px 16px' }}
               onClick={() => dispatch({ type: 'SET_VIEW', view: item.id })}
               title={isSidebarCollapsed ? item.label : undefined}
+              initial={{ opacity: 0, x: -16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.04, duration: 0.3, ease: 'easeOut' }}
+              whileHover={{ x: 4 }}
+              whileTap={{ scale: 0.97 }}
             >
               <div style={{ position: 'relative', display: 'flex' }}>
                 {item.icon}
@@ -210,7 +215,7 @@ function AppContent() {
               </div>
               {!isSidebarCollapsed && <span>{item.label}</span>}
               {!isSidebarCollapsed && item.badge > 0 && <span className="badge">{item.badge}</span>}
-            </button>
+            </motion.button>
           ))}
 
           <div className="nav-section-label" style={{ marginTop: 16 }}>
@@ -319,10 +324,10 @@ function AppContent() {
           <AnimatePresence mode="wait">
             <motion.div
               key={view + (selected || '')}
-              initial={{ opacity: 0, scale: 0.98, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 1.02, y: -10 }}
-              transition={{ duration: 0.25, ease: 'easeOut' }}
+              initial={{ opacity: 0, y: 18, filter: 'blur(4px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -14, filter: 'blur(4px)' }}
+              transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
               style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
             >
               {view === 'dashboard' && <Dashboard data={mainDesligamentos} />}
