@@ -40,14 +40,30 @@ export function Dashboard({ data: injectedData }) {
     return data;
   }, [desligamentos]);
 
-  const { motivoChartData, statusChartData, empresaChartData, mesChartData } = useMemo(() => ({
-    motivoChartData: Object.entries(stats.peloMotivo).map(([name, value]) => ({ name, value })),
-    statusChartData: Object.entries(stats.peloStatus).map(([name, value]) => ({ name, value })),
-    empresaChartData: Object.entries(stats.pelaEmpresa).map(([name, value]) => ({ name, value })),
-    mesChartData: Object.entries(stats.porMes)
-      .sort()
-      .map(([name, value]) => ({ name, value }))
-  }), [stats]);
+  const { motivoChartData, statusChartData, empresaChartData, mesChartData, growthPercent } = useMemo(() => {
+    const sortedMeses = Object.entries(stats.porMes).sort();
+    const data = sortedMeses.map(([name, value]) => ({ name, value }));
+    
+    // Cálculo do Crescimento vs Mês Anterior
+    let growth = 0;
+    if (data.length >= 2) {
+      const current = data[data.length - 1].value;
+      const previous = data[data.length - 2].value;
+      if (previous > 0) {
+        growth = ((current - previous) / previous) * 100;
+      } else if (current > 0) {
+        growth = 100;
+      }
+    }
+
+    return {
+      motivoChartData: Object.entries(stats.peloMotivo).map(([name, value]) => ({ name, value })),
+      statusChartData: Object.entries(stats.peloStatus).map(([name, value]) => ({ name, value })),
+      empresaChartData: Object.entries(stats.pelaEmpresa).map(([name, value]) => ({ name, value })),
+      mesChartData: data,
+      growthPercent: growth
+    };
+  }, [stats]);
 
   const containerVariants = {
     hidden: {},
@@ -69,10 +85,36 @@ export function Dashboard({ data: injectedData }) {
         initial={{ opacity: 0, x: -12 }} 
         animate={{ opacity: 1, x: 0 }} 
         transition={{ duration: 0.4, ease: 'easeOut' }}
-        style={{ marginBottom: 30 }}
+        style={{ marginBottom: 30, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}
       >
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)' }}>Dashboard Analítico</h1>
-        <p style={{ color: 'var(--text-muted)' }}>Métricas e estatísticas em tempo real dos processos de desligamento.</p>
+        <div>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)' }}>Dashboard Analítico</h1>
+          <p style={{ color: 'var(--text-muted)' }}>Métricas e estatísticas em tempo real dos processos de desligamento.</p>
+        </div>
+        
+        {/* Indicador de Crescimento Mensal */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          style={{ 
+            background: 'var(--bg-card)', padding: '8px 16px', borderRadius: 12, border: '1px solid var(--border)',
+            display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+            <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>vs Mês Anterior</span>
+            <span style={{ fontSize: 18, fontWeight: 900, color: growthPercent >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>
+              {growthPercent >= 0 ? '+' : ''}{growthPercent.toFixed(1)}%
+            </span>
+          </div>
+          <div style={{ 
+            padding: 8, borderRadius: 10, 
+            background: growthPercent >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+            color: growthPercent >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'
+          }}>
+            <TrendingUp size={20} style={{ transform: growthPercent < 0 ? 'rotate(180deg)' : 'none' }} />
+          </div>
+        </motion.div>
       </motion.div>
 
       <motion.div className="stats-grid" variants={containerVariants} initial="hidden" animate="visible">
@@ -105,19 +147,26 @@ export function Dashboard({ data: injectedData }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 24 }}>
         <div className="card" style={{ height: 400, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <h3 style={{ marginBottom: 20, fontSize: 14 }}>Volume Mensal</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <h3 style={{ margin: 0, fontSize: 14 }}>Volume Mensal Comparativo</h3>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Tendência de desligamentos</span>
+          </div>
           <div style={{ flex: 1, minHeight: 150 }}>
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={150} debounce={100}>
-            <LineChart data={mesChartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={11} />
-              <YAxis stroke="var(--text-muted)" fontSize={11} />
+            <BarChart data={mesChartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} />
               <Tooltip 
                 contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 12 }}
-                itemStyle={{ color: 'var(--accent-blue-light)' }}
+                cursor={{ fill: 'rgba(255,255,255,0.03)' }}
               />
-              <Line type="monotone" dataKey="value" stroke="var(--accent-blue)" strokeWidth={3} dot={{ r: 6, fill: 'var(--accent-blue)' }} />
-            </LineChart>
+              <Bar dataKey="value" fill="var(--accent-blue)" radius={[4, 4, 0, 0]} barSize={40}>
+                {mesChartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={index === mesChartData.length - 1 ? 'var(--accent-blue)' : 'rgba(59, 130, 246, 0.4)'} />
+                ))}
+              </Bar>
+            </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
