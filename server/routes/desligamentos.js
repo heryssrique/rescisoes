@@ -261,8 +261,8 @@ router.post('/bulk', async (req, res) => {
   }
 });
 
-// ── POST /api/desligamentos/migrate-archive-old (Admin only, one-time use) ─
-router.post('/migrate-archive-old', auth, authorize('admin'), async (req, res, next) => {
+// ── POST /api/desligamentos/migrate-archive-old (One-time use) ───────────
+router.post('/migrate-archive-old', auth, authorize('admin', 'hr'), async (req, res, next) => {
   try {
     const CUTOFF = '2026-03-01';
     const now = new Date().toISOString().slice(0, 19);
