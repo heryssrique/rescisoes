@@ -86,11 +86,26 @@ function AppContent() {
 
   const filteredAll = useMemo(() => applyColigadaFilter(allDesligamentos, globalColigadaFilter), [allDesligamentos, globalColigadaFilter]);
 
-  const { pendentesComprovante, mainDesligamentos, mainArquivados } = useMemo(() => ({
-    pendentesComprovante: filteredAll.filter(d => isOnlyMissingComprovante(d)),
-    mainDesligamentos: filteredDesligamentos.filter(d => !isOnlyMissingComprovante(d)),
-    mainArquivados: filteredArchived.filter(d => !isOnlyMissingComprovante(d)),
-  }), [filteredAll, filteredDesligamentos, filteredArchived]);
+  const { pendentesComprovante, mainDesligamentos, mainArquivados, globalVencidos } = useMemo(() => {
+    const pend = filteredAll.filter(d => isOnlyMissingComprovante(d));
+    const main = filteredDesligamentos.filter(d => !isOnlyMissingComprovante(d));
+    const arch = filteredArchived.filter(d => !isOnlyMissingComprovante(d));
+    
+    const overdue = main.filter(d => {
+      if (d.status === 'pago' || d.status === 'cancelado' || !d.dataPagamento) return false;
+      try {
+        const days = differenceInDays(parseISO(d.dataPagamento), startOfDay(new Date()));
+        return days < 0;
+      } catch (e) { return false; }
+    }).length;
+
+    return { 
+      pendentesComprovante: pend, 
+      mainDesligamentos: main, 
+      mainArquivados: arch,
+      globalVencidos: overdue 
+    };
+  }, [filteredAll, filteredDesligamentos, filteredArchived]);
 
   if (!state.isAuthChecked) {
     return <LoadingScreen message="Autenticando..." />;
@@ -100,9 +115,9 @@ function AppContent() {
     return <AuthView />;
   }
 
-  const activeCount = mainDesligamentos.length;
+  const activeCount = mainDesligamentos.filter(d => d.status !== 'pago').length;
   const pendenteCount = pendentesComprovante.length;
-  const archivedCount = mainArquivados.length;
+  const archivedCount = mainArquivados.length + mainDesligamentos.filter(d => d.status === 'pago').length;
 
 
 
@@ -127,9 +142,9 @@ function AppContent() {
   }
 
   const navItems = [
-    { id: 'lista', label: 'Lista de Processos', icon: <LayoutList size={15} />, badge: activeCount },
+    { id: 'lista', label: 'Lista de Processos', icon: <LayoutList size={15} />, badge: activeCount, badgeColor: globalVencidos > 0 ? 'var(--accent-red)' : '' },
     { id: 'kanban', label: 'Quadro Kanban', icon: <Columns size={15} /> },
-    { id: 'calendar', label: 'Calendário', icon: <Calendar size={15} /> },
+    { id: 'calendar', label: 'Calendário', icon: <Calendar size={15} />, badge: globalVencidos > 0 ? globalVencidos : null, badgeColor: 'var(--accent-red)' },
     { id: 'pendentes', label: 'Pend. Comprovante', icon: <AlertTriangle size={15} />, badge: pendenteCount },
     { id: 'arquivados', label: 'Arquivados', icon: <Archive size={15} />, badge: archivedCount },
     { id: 'relatorios', label: 'Relatórios', icon: <FileText size={15} /> },
