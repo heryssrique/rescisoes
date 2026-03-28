@@ -110,6 +110,11 @@ export function bulkDelete(ids) {
   return request('POST', '/desligamentos/bulk-delete', { ids });
 }
 
+/** Atualiza o status de múltiplos processos. */
+export function bulkUpdateStatus(ids, status) {
+  return request('POST', '/desligamentos/bulk-status', { ids, status });
+}
+
 /** Popula o banco com dados de exemplo (apenas dev). */
 export function seedDatabase() {
   return request('POST', '/desligamentos/seed');

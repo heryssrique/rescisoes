@@ -3,10 +3,11 @@ import { useApp } from '../context/AppContext';
 import { StatusBadge, MotivoBadge, ColigadaBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress, AvisoBadge } from './Shared';
 import { formatDate } from '../utils/formatters';
 import { MOTIVOS } from '../data/initialData';
-import { Search, ChevronRight, Calendar, User, AlertCircle, Archive, ChevronDown, ChevronUp, Clock, CheckSquare, Square, Trash2, Filter, X } from 'lucide-react';
+import { Search, ChevronRight, Calendar, User, AlertCircle, Archive, ChevronDown, ChevronUp, Clock, CheckSquare, Square, Trash2, Filter, X, CheckCircle } from 'lucide-react';
 import { differenceInDays, parseISO, isWithinInterval, startOfDay } from 'date-fns';
 import { getPaymentDate } from '../utils/dateUtils';
 import { motion, AnimatePresence } from 'framer-motion';
+import confetti from 'canvas-confetti';
 
 const ARCHIVED_STATUSES = ['pago', 'cancelado'];
 
@@ -285,6 +286,19 @@ export function ListView({ data: injectedData }) {
     }
   }
 
+  async function handleBulkPay() {
+    if (confirm(`Deseja marcar os ${selectedIds.length} processos como PAGOS?`)) {
+      await actions.bulkUpdateStatus(selectedIds, 'pago');
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#10b981', '#3b82f6', '#ffffff']
+      });
+      setSelectedIds([]);
+    }
+  }
+
   async function handleBulkDelete() {
     if (confirm(`⚠️ EXCLUSÃO PERMANENTE: Deseja apagar os ${selectedIds.length} processos selecionados?`)) {
       await actions.bulkDelete(selectedIds);
@@ -445,13 +459,23 @@ export function ListView({ data: injectedData }) {
               <CheckSquare size={16} />
               {selectedIds.length} {selectedIds.length === 1 ? 'item selecionado' : 'itens selecionados'}
             </span>
-            <div className="bulk-buttons">
+            <div className="bulk-buttons" style={{ display: 'flex', gap: 10 }}>
+              <button 
+                type="button"
+                className="btn btn-success btn-sm" 
+                onClick={handleBulkPay} 
+                title="Marcar como Pago"
+                style={{ cursor: 'pointer', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <CheckCircle size={14} />
+                Pagar
+              </button>
               <button 
                 type="button"
                 className="btn btn-secondary btn-sm" 
                 onClick={handleBulkArchive} 
                 title="Arquivar selecionados"
-                style={{ cursor: 'pointer', padding: '8px 16px' }}
+                style={{ cursor: 'pointer', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 6 }}
               >
                 <Archive size={14} />
                 Arquivar
@@ -461,7 +485,7 @@ export function ListView({ data: injectedData }) {
                 className="btn btn-danger btn-sm" 
                 onClick={handleBulkDelete} 
                 title="Excluir selecionados"
-                style={{ cursor: 'pointer', padding: '8px 16px' }}
+                style={{ cursor: 'pointer', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 6 }}
               >
                 <Trash2 size={14} />
                 Excluir

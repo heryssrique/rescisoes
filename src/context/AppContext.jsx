@@ -485,11 +485,20 @@ export function AppProvider({ children }) {
   async function bulkDelete(ids) {
     try {
       await api.bulkDelete(ids);
-      dispatch({ type: 'DELETE_MULTIPLE', ids });
+      ids.forEach(id => dispatch({ type: 'DELETE_DESLIGAMENTO', id }));
     } catch (err) {
-      console.warn('[AppContext] API offline — excluindo em lote localmente.', err.message);
-      dispatch({ type: 'DELETE_MULTIPLE', ids });
-      dispatch({ type: 'SET_ERROR', message: '⚠️ Servidor offline — itens excluídos apenas localmente.' });
+      dispatch({ type: 'SET_ERROR', message: `Erro na exclusão em lote: ${err.message}` });
+    }
+  }
+
+  async function bulkUpdateStatus(ids, status) {
+    try {
+      await api.bulkUpdateStatus(ids, status);
+      // Recarrega tudo para garantir sincronia correta do estado complexo (checklist/history)
+      await fetchAll();
+      await fetchArchived();
+    } catch (err) {
+      dispatch({ type: 'SET_ERROR', message: `Erro na atualização em lote: ${err.message}` });
     }
   }
 
@@ -596,6 +605,7 @@ export function AppProvider({ children }) {
       deleteDesligamento,
       bulkArchive,
       bulkDelete,
+      bulkUpdateStatus,
       toggleChecklist,
       toggleNaoAplicavel,
       markNotificationRead,

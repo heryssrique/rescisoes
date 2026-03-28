@@ -180,6 +180,22 @@ router.post('/bulk-archive', auth, async (req, res, next) => {
   }
 });
 
+router.post('/bulk-status', auth, async (req, res, next) => {
+  try {
+    const { ids, status } = req.body;
+    const result = await Desligamento.updateMany(
+      { _id: { $in: ids } },
+      { 
+        $set: { status },
+        $push: { historico: { data: new Date().toISOString(), acao: `Status alterado em lote para '${status}' por ${req.user.name}`, nota: '' } }
+      }
+    );
+    res.json({ message: `${result.modifiedCount} registros atualizados`, ids });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post('/bulk-delete', auth, authorize('admin'), async (req, res, next) => {
   try {
     const { ids } = req.body;
