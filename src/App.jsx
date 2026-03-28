@@ -66,7 +66,7 @@ const isOnlyMissingComprovante = (d) => {
 
 const applyColigadaFilter = (list, coligadaFilter) => {
   if (coligadaFilter === 'todas' || !coligadaFilter) return list;
-  return (list || []).filter(d => d.coligada === coligadaFilter);
+  return (list || []).filter(d => String(d.coligada) === String(coligadaFilter));
 };
 
 function AppContent() {
@@ -77,22 +77,17 @@ function AppContent() {
   const [showImport, setShowImport] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  const filteredDesligamentos = useMemo(() => applyColigadaFilter(desligamentos || [], globalColigadaFilter), [desligamentos, globalColigadaFilter]);
-  const filteredArchived = useMemo(() => applyColigadaFilter(archivedDesligamentos || [], globalColigadaFilter), [archivedDesligamentos, globalColigadaFilter]);
-  
-  const allDesligamentos = useMemo(() => [
-    ...(desligamentos || []), 
-    ...(archivedDesligamentos || [])
-  ], [desligamentos, archivedDesligamentos]);
+  // Consolidated Data Processing
+  const processedData = useMemo(() => {
+    const activeRaw = applyColigadaFilter(desligamentos || [], globalColigadaFilter);
+    const archivedRaw = applyColigadaFilter(archivedDesligamentos || [], globalColigadaFilter);
+    const allRaw = [...activeRaw, ...archivedRaw];
 
-  const filteredAll = useMemo(() => applyColigadaFilter(allDesligamentos, globalColigadaFilter), [allDesligamentos, globalColigadaFilter]);
+    const pendentesComprovante = allRaw.filter(d => isOnlyMissingComprovante(d));
+    const mainDesligamentos = activeRaw.filter(d => !isOnlyMissingComprovante(d));
+    const mainArquivados = archivedRaw.filter(d => !isOnlyMissingComprovante(d));
 
-  const { pendentesComprovante, mainDesligamentos, mainArquivados, globalVencidos } = useMemo(() => {
-    const pend = filteredAll.filter(d => isOnlyMissingComprovante(d));
-    const main = filteredDesligamentos.filter(d => !isOnlyMissingComprovante(d));
-    const arch = filteredArchived.filter(d => !isOnlyMissingComprovante(d));
-    
-    const overdue = main.filter(d => {
+    const globalVencidos = mainDesligamentos.filter(d => {
       if (d.status === 'pago' || d.status === 'cancelado' || !d.dataPagamento) return false;
       try {
         const days = differenceInDays(parseISO(d.dataPagamento), startOfDay(new Date()));
@@ -100,13 +95,23 @@ function AppContent() {
       } catch (e) { return false; }
     }).length;
 
-    return { 
-      pendentesComprovante: pend, 
-      mainDesligamentos: main, 
-      mainArquivados: arch,
-      globalVencidos: overdue 
+    const activeBadge = mainDesligamentos.filter(d => d.status !== 'pago').length;
+    const pendingBadge = pendentesComprovante.length;
+    const archivedBadge = mainArquivados.length + mainDesligamentos.filter(d => d.status === 'pago').length;
+
+    return {
+      all: allRaw,
+      mainDesligamentos,
+      mainArquivados,
+      pendentesComprovante,
+      globalVencidos,
+      counts: {
+        active: activeBadge,
+        pending: pendingBadge,
+        archived: archivedBadge
+      }
     };
-  }, [filteredAll, filteredDesligamentos, filteredArchived]);
+  }, [desligamentos, archivedDesligamentos, globalColigadaFilter]);
 
   if (!state.isAuthChecked) {
     return <LoadingScreen message="Autenticando..." />;
@@ -116,38 +121,18 @@ function AppContent() {
     return <AuthView />;
   }
 
-  const activeCount = mainDesligamentos.filter(d => d.status !== 'pago').length;
-  const pendenteCount = pendentesComprovante.length;
-  const archivedCount = mainArquivados.length + mainDesligamentos.filter(d => d.status === 'pago').length;
-
-
-
-  if (!user) {
-    return <AuthView />;
-  }
-
-  // We need to fetch COLIGADAS here to render the topbar filter
-  let coligadosObj = {};
-  try {
-    const saved = localStorage.getItem('desligest_coligadas');
-    if (saved) coligadosObj = JSON.parse(saved);
-  } catch (e) { }
-  if (Object.keys(coligadosObj).length === 0) {
-    // Basic fallback if empty
-    coligadosObj = { '1': { nome: 'Concreta' }, '4': { nome: 'JPL Gomes' }, '11': { nome: 'JC Gomes' } };
-  }
-
   // Loading skeleton
   if (loading && !desligamentos.length && !archivedDesligamentos.length) {
     return <LoadingScreen message="Conectando ao banco de dados..." />;
   }
 
+  // Sidebar Menu Config
   const navItems = [
-    { id: 'lista', label: 'Lista de Processos', icon: <LayoutList size={15} />, badge: activeCount, badgeColor: globalVencidos > 0 ? 'var(--accent-red)' : '' },
+    { id: 'lista', label: 'Lista de Processos', icon: <LayoutList size={15} />, badge: processedData.counts.active, badgeColor: processedData.globalVencidos > 0 ? 'var(--accent-red)' : '' },
     { id: 'kanban', label: 'Quadro Kanban', icon: <Columns size={15} /> },
-    { id: 'calendar', label: 'Calendário', icon: <Calendar size={15} />, badge: globalVencidos > 0 ? globalVencidos : null, badgeColor: 'var(--accent-red)' },
-    { id: 'pendentes', label: 'Pend. Comprovante', icon: <AlertTriangle size={15} />, badge: pendenteCount },
-    { id: 'arquivados', label: 'Arquivados', icon: <Archive size={15} />, badge: archivedCount },
+    { id: 'calendar', label: 'Calendário', icon: <Calendar size={15} />, badge: processedData.globalVencidos > 0 ? processedData.globalVencidos : null, badgeColor: 'var(--accent-red)' },
+    { id: 'pendentes', label: 'Pend. Comprovante', icon: <AlertTriangle size={15} />, badge: processedData.counts.pending },
+    { id: 'arquivados', label: 'Arquivados', icon: <Archive size={15} />, badge: processedData.counts.archived },
     { id: 'relatorios', label: 'Relatórios', icon: <FileText size={15} /> },
     { id: 'audit', label: 'Histórico Global', icon: <History size={15} /> },
     { id: 'dashboard', label: 'Estatísticas', icon: <PieChartIcon size={15} /> },
@@ -169,7 +154,8 @@ function AppContent() {
     detalhe: 'Detalhe do Processo',
   };
 
-  const viewSubtitles = {
+  const selectedName = selected ? (processedData.all.find(d => d.id === selected)?.nome) : '';
+  const viewSubtitle = {
     dashboard: 'Visão geral por motivos e empresas',
     lista: 'Organizados por data de pagamento',
     kanban: 'Visão por etapa do processo',
@@ -180,8 +166,17 @@ function AppContent() {
     audit: 'Monitoramento de alterações em tempo real',
     configuracoes: 'Administração de dados e preferências',
     ajuda: 'Guia de uso e funcionalidades',
-    detalhe: selected ? (allDesligamentos.find(d => d.id === selected)?.nome) : '',
+    detalhe: selectedName,
   };
+
+  let coligadosObj = {};
+  try {
+    const saved = localStorage.getItem('desligest_coligadas');
+    if (saved) coligadosObj = JSON.parse(saved);
+  } catch (e) { }
+  if (Object.keys(coligadosObj).length === 0) {
+    coligadosObj = { '1': { nome: 'Concreta' }, '4': { nome: 'JPL Gomes' }, '11': { nome: 'JC Gomes' } };
+  }
 
   return (
     <div className="app-layout">
@@ -227,10 +222,10 @@ function AppContent() {
             >
               <div style={{ position: 'relative', display: 'flex' }}>
                 {item.icon}
-                {isSidebarCollapsed && item.badge > 0 && <span style={{ position: 'absolute', top: -6, right: -8, background: 'var(--accent-blue)', fontSize: 9, padding: '2px 4px', borderRadius: 8, color: 'white' }}>{item.badge}</span>}
+                {isSidebarCollapsed && item.badge > 0 && <span style={{ position: 'absolute', top: -6, right: -8, background: item.badgeColor || 'var(--accent-blue)', fontSize: 9, padding: '2px 4px', borderRadius: 8, color: 'white' }}>{item.badge}</span>}
               </div>
               {!isSidebarCollapsed && <span>{item.label}</span>}
-              {!isSidebarCollapsed && item.badge > 0 && <span className="badge">{item.badge}</span>}
+              {!isSidebarCollapsed && item.badge > 0 && <span className="badge" style={item.badgeColor ? { background: item.badgeColor } : {}}>{item.badge}</span>}
             </motion.button>
           ))}
 
@@ -261,33 +256,20 @@ function AppContent() {
 
         <div className="sidebar-footer">
           <div style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center' }}>
-            {isSidebarCollapsed ? `${activeCount + archivedCount + pendenteCount}` : `${activeCount + archivedCount + pendenteCount} processo${(activeCount + archivedCount + pendenteCount) !== 1 ? 's' : ''} registrado${(activeCount + archivedCount + pendenteCount) !== 1 ? 's' : ''}`}
+            {isSidebarCollapsed ? `${processedData.all.length}` : `${processedData.all.length} processo${processedData.all.length !== 1 ? 's' : ''} registrado${processedData.all.length !== 1 ? 's' : ''}`}
           </div>
         </div>
       </nav>
 
-      {/* Main */}
+      {/* Main Content */}
       <div className="main-content">
-        {/* Topbar */}
         <header className="topbar">
           <div style={{ flex: 1 }}>
             <span className="topbar-title">{viewTitles[view]}</span>
-            {viewSubtitles[view] && (
-              <span className="topbar-subtitle"> · {viewSubtitles[view]}</span>
+            {viewSubtitle[view] && (
+              <span className="topbar-subtitle"> · {viewSubtitle[view]}</span>
             )}
           </div>
-
-          {view !== 'detalhe' && (
-            <button
-              id="btn-novo-topbar"
-              className="btn btn-primary"
-              onClick={() => setShowNew(true)}
-            >
-              <Plus size={14} />
-              Novo Desligamento
-            </button>
-          )}
-
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button 
@@ -300,7 +282,6 @@ function AppContent() {
             </button>
 
             <NotificationCenter />
-
             <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 8px', borderRadius: 8, background: 'var(--bg-card)' }}>
@@ -311,31 +292,21 @@ function AppContent() {
                 <span style={{ fontSize: 14, fontWeight: 600 }}>{user?.name || 'Admin'}</span>
                 <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{user?.role || 'RH Corporativo'}</span>
               </div>
-              <button 
-                className="btn btn-icon" 
-                onClick={actions.logout}
-                title="Sair do sistema"
-                style={{ color: 'var(--accent-red)' }}
-              >
+              <button className="btn btn-icon" onClick={actions.logout} title="Sair do sistema" style={{ color: 'var(--accent-red)' }}>
                 <LogOut size={16} />
               </button>
             </div>
           </div>
         </header>
 
-        {/* Offline/Error banner */}
         {error && (
           <div className="alert alert-warning" style={{ margin: '12px 24px 0', borderRadius: 'var(--radius-md)' }}>
             <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
             <span>{error}</span>
-            <button
-              style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}
-              onClick={() => dispatch({ type: 'CLEAR_ERROR' })}
-            >×</button>
+            <button style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: 16, lineHeight: 1 }} onClick={() => dispatch({ type: 'CLEAR_ERROR' })}>×</button>
           </div>
         )}
 
-        {/* Content */}
         <div className="page-wrapper" style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <AnimatePresence mode="wait">
             <motion.div
@@ -346,23 +317,22 @@ function AppContent() {
               transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
               style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
             >
-              {view === 'dashboard' && <Dashboard data={filteredAll} />}
-              {view === 'lista' && <ListView data={mainDesligamentos} />}
-              {view === 'calendar' && <CalendarView data={allDesligamentos} />}
-              {view === 'pendentes' && <ListView data={pendentesComprovante} />}
-              {view === 'kanban' && <KanbanView data={mainDesligamentos} />}
-              { view === 'arquivados' && <ArchivedView data={mainArquivados} /> }
-              { view === 'relatorios' && <ReportsView ativos={mainDesligamentos} arquivados={mainArquivados} /> }
-              { view === 'audit' && <AuditLogView data={allDesligamentos} /> }
-              { view === 'configuracoes' && <SettingsView /> }
-              { view === 'ajuda' && <HelpView /> }
-              { view === 'detalhe' && selected && <DetailView id={selected} /> }
+              {view === 'dashboard' && <Dashboard data={processedData.all} />}
+              {view === 'lista' && <ListView data={processedData.mainDesligamentos} />}
+              {view === 'calendar' && <CalendarView data={processedData.all} />}
+              {view === 'pendentes' && <ListView data={processedData.pendentesComprovante} />}
+              {view === 'kanban' && <KanbanView data={processedData.mainDesligamentos} />}
+              {view === 'arquivados' && <ArchivedView data={processedData.mainArquivados} />}
+              {view === 'relatorios' && <ReportsView ativos={processedData.mainDesligamentos} arquivados={processedData.mainArquivados} />}
+              {view === 'audit' && <AuditLogView data={processedData.all} />}
+              {view === 'configuracoes' && <SettingsView />}
+              {view === 'ajuda' && <HelpView />}
+              {view === 'detalhe' && selected && <DetailView id={selected} />}
             </motion.div>
           </AnimatePresence>
         </div>
       </div>
 
-      {/* Modal */}
       {showNew && <ModalNovoDesligamento onClose={() => setShowNew(false)} />}
       {showImport && <ModalImportarPlanilha onClose={() => setShowImport(false)} />}
     </div>
