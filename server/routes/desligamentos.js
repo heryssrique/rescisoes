@@ -261,6 +261,16 @@ router.post('/bulk', async (req, res) => {
   }
 });
 
+// ── GET /api/desligamentos/migrate-diagnostics (debug) ─────────────────────
+router.get('/migrate-diagnostics', auth, async (req, res, next) => {
+  try {
+    const total = await Desligamento.countDocuments({});
+    const naoArquivados = await Desligamento.countDocuments({ arquivado: { $ne: true } });
+    const sample = await Desligamento.find({ arquivado: { $ne: true } }).limit(10).select('nome dataPagamento dataDesligamento arquivado');
+    res.json({ total, naoArquivados, sample });
+  } catch (err) { next(err); }
+});
+
 // ── POST /api/desligamentos/migrate-archive-old (One-time use) ───────────
 router.post('/migrate-archive-old', auth, async (req, res, next) => {
   try {
