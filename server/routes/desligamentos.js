@@ -264,12 +264,31 @@ router.post('/bulk', async (req, res) => {
 // ── POST /api/desligamentos/migrate-archive-old (One-time use) ───────────
 router.post('/migrate-archive-old', auth, async (req, res, next) => {
   try {
-    const CUTOFF = '2026-03-01';
-    const now = new Date().toISOString().slice(0, 19);
+    const CUTOFF_DATE = new Date('2026-03-01T00:00:00');
 
-    const docs = await Desligamento.find({
-      arquivado: { $ne: true },
-      dataPagamento: { $lt: CUTOFF, $gt: '' },
+    // Busca todos que não estão arquivados
+    const todas = await Desligamento.find({ arquivado: { $ne: true } });
+
+    // Filtra no JS c/ parser customizado pra lidar com datas vazias e formatos estranhos
+    const docs = todas.filter(doc => {
+      let dStr = doc.dataPagamento?.trim() || doc.dataDesligamento?.trim();
+      if (!dStr) return false;
+      
+      // Se tiver barra, assume que é DD/MM/YYYY ou DD/MM/YY e converte para YYYY-MM-DD
+      if (dStr.includes('/')) {
+        const [day, month, year] = dStr.split('/');
+        if (year && year.length === 2) dStr = `20${year}-${month}-${day}`;
+        else if (year) dStr = `${year}-${month}-${day}`;
+      } else if (dStr.includes('-')) {
+        // Se já vier YYYY-MM-DD, nada a fazer. Mas no Brasil costumam por DD-MM-YYYY
+        const parts = dStr.split('-');
+        if (parts[0].length === 2) {
+           dStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+      }
+      
+      const d = new Date(dStr);
+      return !isNaN(d) && d < CUTOFF_DATE;
     });
 
     if (docs.length === 0) {
@@ -291,7 +310,7 @@ router.post('/migrate-archive-old', auth, async (req, res, next) => {
           historico: {
             data: now,
             acao: 'Arquivado automaticamente (migração)',
-            nota: `Processo arquivado em lote — pagamento anterior a ${CUTOFF}.`
+            nota: `Processo arquivado em lote — pagamento anterior a 01/03/2026.`
           }
         }
       });
@@ -301,7 +320,7 @@ router.post('/migrate-archive-old', auth, async (req, res, next) => {
     res.json({
       message: `Migração concluída com sucesso.`,
       updated,
-      cutoffDate: CUTOFF,
+      cutoffDate: '2026-03-01',
     });
   } catch (err) {
     next(err);
