@@ -7,7 +7,6 @@ import { Search, ChevronRight, Calendar, User, AlertCircle, Archive, ChevronDown
 import { differenceInDays, parseISO, isWithinInterval, startOfDay } from 'date-fns';
 import { getPaymentDate } from '../utils/dateUtils';
 import { motion, AnimatePresence } from 'framer-motion';
-import confetti from 'canvas-confetti';
 
 const ARCHIVED_STATUSES = ['pago', 'cancelado'];
 
@@ -291,12 +290,6 @@ export function ListView({ data: injectedData }) {
   async function handleBulkPay() {
     if (confirm(`Deseja marcar os ${selectedIds.length} processos como PAGOS?`)) {
       await actions.bulkUpdateStatus(selectedIds, 'pago');
-      confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#10b981', '#3b82f6', '#ffffff']
-      });
       setSelectedIds([]);
     }
   }
