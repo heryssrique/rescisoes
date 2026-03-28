@@ -274,35 +274,39 @@ router.get('/migrate-diagnostics', auth, async (req, res, next) => {
 // ── POST /api/desligamentos/migrate-archive-old (One-time use) ───────────
 router.post('/migrate-archive-old', auth, async (req, res, next) => {
   try {
-    const CUTOFF_DATE = new Date('2026-03-01T00:00:00');
+    const CUTOFF_DATE = new Date('2026-03-01T00:00:00.000Z');
+    const now = new Date().toISOString().slice(0, 19);
 
-    // Busca todos que não estão arquivados
-    const todas = await Desligamento.find({ arquivado: { $ne: true } });
-
-    // Filtra no JS c/ parser customizado pra lidar com datas vazias e formatos estranhos
-    const docs = todas.filter(doc => {
-      let dStr = doc.dataPagamento?.trim() || doc.dataDesligamento?.trim();
-      if (!dStr) return false;
-      
-      // Se tiver barra, assume que é DD/MM/YYYY ou DD/MM/YY e converte para YYYY-MM-DD
-      if (dStr.includes('/')) {
-        const [day, month, year] = dStr.split('/');
-        if (year && year.length === 2) dStr = `20${year}-${month}-${day}`;
-        else if (year) dStr = `${year}-${month}-${day}`;
-      } else if (dStr.includes('-')) {
-        // Se já vier YYYY-MM-DD, nada a fazer. Mas no Brasil costumam por DD-MM-YYYY
-        const parts = dStr.split('-');
-        if (parts[0].length === 2) {
-           dStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
-        }
+    function parseDate(str) {
+      if (!str || !String(str).trim()) return null;
+      let s = String(str).trim();
+      if (/^\d{5}$/.test(s)) {
+        const d = new Date(Math.round((parseInt(s) - 25569) * 86400 * 1000));
+        return isNaN(d) ? null : d;
       }
-      
-      const d = new Date(dStr);
-      return !isNaN(d) && d < CUTOFF_DATE;
+      const parts = s.split(/[\/\-]/);
+      if (parts.length === 3) {
+        const [a, b, c] = parts;
+        if (c.length === 4) s = `${c}-${b.padStart(2,'0')}-${a.padStart(2,'0')}`;
+        else if (a.length === 4) s = `${a}-${b.padStart(2,'0')}-${c.padStart(2,'0')}`;
+        else if (c.length === 2) s = `20${c}-${b.padStart(2,'0')}-${a.padStart(2,'0')}`;
+      }
+      const d = new Date(s);
+      return isNaN(d) ? null : d;
+    }
+
+    const todas = await Desligamento.find({ arquivado: { $ne: true } });
+    const debugSample = todas.slice(0, 5).map(d => ({ nome: d.nome, dataPagamento: d.dataPagamento, dataDesligamento: d.dataDesligamento, createdAt: d.createdAt }));
+
+    const docs = todas.filter(doc => {
+      const d = parseDate(doc.dataPagamento)
+             || parseDate(doc.dataDesligamento)
+             || (doc.createdAt ? new Date(doc.createdAt) : null);
+      return d && d < CUTOFF_DATE;
     });
 
     if (docs.length === 0) {
-      return res.json({ message: 'Nenhum registro encontrado para arquivar.', updated: 0 });
+      return res.json({ message: 'Nenhum registro encontrado para arquivar.', updated: 0, totalNaoArquivados: todas.length, cutoffDate: CUTOFF_DATE.toISOString(), debugSample });
     }
 
     let updated = 0;
