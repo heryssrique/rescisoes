@@ -1,25 +1,26 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, Suspense, lazy } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
-import { ListView } from './components/ListView';
-import { KanbanView } from './components/KanbanView';
-import { ArchivedView } from './components/ArchivedView';
-import { DetailView } from './components/DetailView';
 import { ModalNovoDesligamento } from './components/Modals';
 import { ModalImportarPlanilha } from './components/ImportModal';
 import { NotificationCenter } from './components/NotificationCenter';
-import { SettingsView } from './components/SettingsView';
-import { Dashboard } from './components/Dashboard';
 import { AuthView } from './components/AuthView';
-import { HelpView } from './components/HelpView';
-import { ReportsView } from './components/ReportsView';
-import { CalendarView } from './components/CalendarView';
-import { AuditLogView } from './components/AuditLogView';
 import { differenceInDays, parseISO, startOfDay } from 'date-fns';
-
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutList, Columns, Plus, Users, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut, HelpCircle, FileText, Sun, Moon, Calendar, History
 } from 'lucide-react';
+
+// Lazy Load Views for better performance and to avoid initialization race conditions
+const Dashboard = lazy(() => import('./components/Dashboard').then(m => ({ default: m.Dashboard })));
+const ListView = lazy(() => import('./components/ListView').then(m => ({ default: m.ListView })));
+const KanbanView = lazy(() => import('./components/KanbanView').then(m => ({ default: m.KanbanView })));
+const ArchivedView = lazy(() => import('./components/ArchivedView').then(m => ({ default: m.ArchivedView })));
+const DetailView = lazy(() => import('./components/DetailView').then(m => ({ default: m.DetailView })));
+const CalendarView = lazy(() => import('./components/CalendarView').then(m => ({ default: m.CalendarView })));
+const AuditLogView = lazy(() => import('./components/AuditLogView').then(m => ({ default: m.AuditLogView })));
+const SettingsView = lazy(() => import('./components/SettingsView').then(m => ({ default: m.SettingsView })));
+const HelpView = lazy(() => import('./components/HelpView').then(m => ({ default: m.HelpView })));
+const ReportsView = lazy(() => import('./components/ReportsView').then(m => ({ default: m.ReportsView })));
 
 const LoadingScreen = ({ message }) => (
   <div className="loading-screen">
@@ -28,37 +29,26 @@ const LoadingScreen = ({ message }) => (
       <div className="bg-blob bg-blob-2"></div>
       <div className="bg-blob bg-blob-3"></div>
     </div>
-    
-    <motion.div 
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="loading-content"
-    >
-      <div style={{ position: 'relative' }}>
-        <div className="loader-glow" />
-        <Loader size={44} style={{ color: 'var(--accent-blue)', animation: 'spin 1.5s linear infinite' }} />
-      </div>
-      
+    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="loading-content">
+      <div style={{ position: 'relative' }}><div className="loader-glow" /><Loader size={44} style={{ color: 'var(--accent-blue)', animation: 'spin 1.5s linear infinite' }} /></div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-        <motion.span 
-          animate={{ opacity: [0.4, 1, 0.4] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: -0.5 }}
-        >
-          {message}
-        </motion.span>
-        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>
-          Preparando seu ambiente seguro...
-        </span>
+        <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 2, repeat: Infinity }} style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: -0.5 }}>{message}</motion.span>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>Preparando seu ambiente seguro...</span>
       </div>
     </motion.div>
   </div>
 );
 
+const ViewLoader = () => (
+  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)', height: '100%' }}>
+    <div className="shimmer" style={{ width: '80%', height: '80%', borderRadius: 'var(--radius-lg)' }} />
+  </div>
+);
+
 const isOnlyMissingComprovante = (d) => {
   const checklist = d.checklist || [];
-  const p1 = checklist.find(c => c.id === 'p1'); // Depósito
-  const p2 = checklist.find(c => c.id === 'p2'); // Comprovante arquivado
+  const p1 = checklist.find(c => c.id === 'p1');
+  const p2 = checklist.find(c => c.id === 'p2');
   const paid = (p1 && p1.done) || d.status === 'pago';
   const noReceipt = p2 && !p2.done && !p2.notApplicable;
   return paid && noReceipt;
@@ -72,61 +62,35 @@ const applyColigadaFilter = (list, coligadaFilter) => {
 function AppContent() {
   const { state, dispatch, actions } = useApp();
   const { user, view, selected, desligamentos, archivedDesligamentos, loading, error, globalColigadaFilter } = state;
-
   const [showNew, setShowNew] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  // Consolidated Data Processing
   const processedData = useMemo(() => {
     const activeRaw = applyColigadaFilter(desligamentos || [], globalColigadaFilter);
     const archivedRaw = applyColigadaFilter(archivedDesligamentos || [], globalColigadaFilter);
     const allRaw = [...activeRaw, ...archivedRaw];
-
     const pendentesComprovante = allRaw.filter(d => isOnlyMissingComprovante(d));
     const mainDesligamentos = activeRaw.filter(d => !isOnlyMissingComprovante(d));
     const mainArquivados = archivedRaw.filter(d => !isOnlyMissingComprovante(d));
-
     const globalVencidos = mainDesligamentos.filter(d => {
       if (d.status === 'pago' || d.status === 'cancelado' || !d.dataPagamento) return false;
-      try {
-        const days = differenceInDays(parseISO(d.dataPagamento), startOfDay(new Date()));
-        return days < 0;
-      } catch (e) { return false; }
+      try { return differenceInDays(parseISO(d.dataPagamento), startOfDay(new Date())) < 0; } catch (e) { return false; }
     }).length;
-
-    const activeBadge = mainDesligamentos.filter(d => d.status !== 'pago').length;
-    const pendingBadge = pendentesComprovante.length;
-    const archivedBadge = mainArquivados.length + mainDesligamentos.filter(d => d.status === 'pago').length;
-
     return {
-      all: allRaw,
-      mainDesligamentos,
-      mainArquivados,
-      pendentesComprovante,
-      globalVencidos,
+      all: allRaw, mainDesligamentos, mainArquivados, pendentesComprovante, globalVencidos,
       counts: {
-        active: activeBadge,
-        pending: pendingBadge,
-        archived: archivedBadge
+        active: mainDesligamentos.filter(d => d.status !== 'pago').length,
+        pending: pendentesComprovante.length,
+        archived: mainArquivados.length + mainDesligamentos.filter(d => d.status === 'pago').length
       }
     };
   }, [desligamentos, archivedDesligamentos, globalColigadaFilter]);
 
-  if (!state.isAuthChecked) {
-    return <LoadingScreen message="Autenticando..." />;
-  }
+  if (!state.isAuthChecked) return <LoadingScreen message="Autenticando..." />;
+  if (!user) return <AuthView />;
+  if (loading && !desligamentos.length && !archivedDesligamentos.length) return <LoadingScreen message="Conectando ao banco de dados..." />;
 
-  if (!user) {
-    return <AuthView />;
-  }
-
-  // Loading skeleton
-  if (loading && !desligamentos.length && !archivedDesligamentos.length) {
-    return <LoadingScreen message="Conectando ao banco de dados..." />;
-  }
-
-  // Sidebar Menu Config
   const navItems = [
     { id: 'lista', label: 'Lista de Processos', icon: <LayoutList size={15} />, badge: processedData.counts.active, badgeColor: processedData.globalVencidos > 0 ? 'var(--accent-red)' : '' },
     { id: 'kanban', label: 'Quadro Kanban', icon: <Columns size={15} /> },
@@ -141,85 +105,35 @@ function AppContent() {
   ];
 
   const viewTitles = {
-    dashboard: 'Estatísticas do RH',
-    lista: 'Processos de Desligamento',
-    kanban: 'Quadro Kanban',
-    calendar: 'Calendário de Prazos',
-    pendentes: 'Aguardando Comprovante',
-    arquivados: 'Processos Arquivados',
-    relatorios: 'Central de Relatórios',
-    audit: 'Log de Auditoria Global',
-    configuracoes: 'Configurações do Sistema',
-    ajuda: 'Central de Ajuda',
-    detalhe: 'Detalhe do Processo',
+    dashboard: 'Estatísticas do RH', lista: 'Processos de Desligamento', kanban: 'Quadro Kanban', calendar: 'Calendário de Prazos',
+    pendentes: 'Aguardando Comprovante', arquivados: 'Processos Arquivados', relatorios: 'Central de Relatórios',
+    audit: 'Log de Auditoria Global', configuracoes: 'Configurações do Sistema', ajuda: 'Central de Ajuda', detalhe: 'Detalhe do Processo',
   };
 
   const selectedName = selected ? (processedData.all.find(d => d.id === selected)?.nome) : '';
   const viewSubtitle = {
-    dashboard: 'Visão geral por motivos e empresas',
-    lista: 'Organizados por data de pagamento',
-    kanban: 'Visão por etapa do processo',
-    calendar: 'Visualização mensal de vencimentos',
-    pendentes: 'Processos com pagamento pendente de arquivo',
-    arquivados: 'Histórico de processos finalizados',
-    relatorios: 'Exportar dados para auditoria e gerência',
-    audit: 'Monitoramento de alterações em tempo real',
-    configuracoes: 'Administração de dados e preferências',
-    ajuda: 'Guia de uso e funcionalidades',
-    detalhe: selectedName,
+    dashboard: 'Visão geral por motivos e empresas', lista: 'Organizados por data de pagamento', kanban: 'Visão por etapa do processo',
+    calendar: 'Visualização mensal de vencimentos', pendentes: 'Processos com pagamento pendente de arquivo', arquivados: 'Histórico de processos finalizados',
+    relatorios: 'Exportar dados para auditoria e gerência', audit: 'Monitoramento de alterações em tempo real', configuracoes: 'Administração de dados e preferências',
+    ajuda: 'Guia de uso e funcionalidades', detalhe: selectedName,
   };
-
-  let coligadosObj = {};
-  try {
-    const saved = localStorage.getItem('desligest_coligadas');
-    if (saved) coligadosObj = JSON.parse(saved);
-  } catch (e) { }
-  if (Object.keys(coligadosObj).length === 0) {
-    coligadosObj = { '1': { nome: 'Concreta' }, '4': { nome: 'JPL Gomes' }, '11': { nome: 'JC Gomes' } };
-  }
 
   return (
     <div className="app-layout">
-      {/* Sidebar */}
       <nav className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`} aria-label="Navegação principal">
         <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div className="logo-mark" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div className="logo-icon">
-              <Users size={18} color="white" />
-            </div>
-            {!isSidebarCollapsed && (
-              <div>
-                <div className="logo-text">DesliGest</div>
-                <div className="logo-sub" style={{ paddingLeft: 0 }}>Gestão RH</div>
-              </div>
-            )}
+            <div className="logo-icon"><Users size={18} color="white" /></div>
+            {!isSidebarCollapsed && <div><div className="logo-text">DesliGest</div><div className="logo-sub" style={{ paddingLeft: 0 }}>Gestão RH</div></div>}
           </div>
-          <button
-            className="btn btn-icon"
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}
-            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            title={isSidebarCollapsed ? "Expandir Menu" : "Recolher Menu"}
-          >
+          <button className="btn btn-icon" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }} onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}>
             <PanelLeftClose size={18} style={{ transform: isSidebarCollapsed ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }} />
           </button>
         </div>
-
         <div className="sidebar-nav">
           <div className="nav-section-label">Navegação</div>
           {navItems.map((item, i) => (
-            <motion.button
-              key={item.id}
-              id={`nav-${item.id}`}
-              className={`nav-item ${view === item.id ? 'active' : ''}`}
-              style={{ justifyContent: isSidebarCollapsed ? 'center' : 'flex-start', padding: isSidebarCollapsed ? '12px' : '11px 16px' }}
-              onClick={() => dispatch({ type: 'SET_VIEW', view: item.id })}
-              title={isSidebarCollapsed ? item.label : undefined}
-              initial={{ opacity: 0, x: -16 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.04, duration: 0.3, ease: 'easeOut' }}
-              whileHover={{ x: 4 }}
-              whileTap={{ scale: 0.97 }}
-            >
+            <motion.button key={item.id} id={`nav-${item.id}`} className={`nav-item ${view === item.id ? 'active' : ''}`} style={{ justifyContent: isSidebarCollapsed ? 'center' : 'flex-start', padding: isSidebarCollapsed ? '12px' : '11px 16px' }} onClick={() => dispatch({ type: 'SET_VIEW', view: item.id })} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
               <div style={{ position: 'relative', display: 'flex' }}>
                 {item.icon}
                 {isSidebarCollapsed && item.badge > 0 && <span style={{ position: 'absolute', top: -6, right: -8, background: item.badgeColor || 'var(--accent-blue)', fontSize: 9, padding: '2px 4px', borderRadius: 8, color: 'white' }}>{item.badge}</span>}
@@ -228,111 +142,46 @@ function AppContent() {
               {!isSidebarCollapsed && item.badge > 0 && <span className="badge" style={item.badgeColor ? { background: item.badgeColor } : {}}>{item.badge}</span>}
             </motion.button>
           ))}
-
-          <div className="nav-section-label" style={{ marginTop: 16 }}>
-            {isSidebarCollapsed ? '...' : 'Ações'}
-          </div>
-          <button
-            id="nav-novo"
-            className="nav-item"
-            style={{ justifyContent: isSidebarCollapsed ? 'center' : 'flex-start', padding: isSidebarCollapsed ? '12px' : '11px 16px' }}
-            onClick={() => setShowNew(true)}
-            title="Novo Desligamento"
-          >
-            <Plus size={15} />
-            {!isSidebarCollapsed && <span>Novo Desligamento</span>}
-          </button>
-          <button
-            id="nav-import"
-            className="nav-item"
-            style={{ justifyContent: isSidebarCollapsed ? 'center' : 'flex-start', padding: isSidebarCollapsed ? '12px' : '11px 16px' }}
-            onClick={() => setShowImport(true)}
-            title="Importar Planilha"
-          >
-            <FileSpreadsheet size={15} />
-            {!isSidebarCollapsed && <span>Importar Planilha</span>}
-          </button>
-        </div>
-
-        <div className="sidebar-footer">
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center' }}>
-            {isSidebarCollapsed ? `${processedData.all.length}` : `${processedData.all.length} processo${processedData.all.length !== 1 ? 's' : ''} registrado${processedData.all.length !== 1 ? 's' : ''}`}
-          </div>
+          <div className="nav-section-label" style={{ marginTop: 16 }}>{isSidebarCollapsed ? '...' : 'Ações'}</div>
+          <button className="nav-item" style={{ justifyContent: isSidebarCollapsed ? 'center' : 'flex-start', padding: isSidebarCollapsed ? '12px' : '11px 16px' }} onClick={() => setShowNew(true)}><Plus size={15} />{!isSidebarCollapsed && <span>Novo Desligamento</span>}</button>
+          <button className="nav-item" style={{ justifyContent: isSidebarCollapsed ? 'center' : 'flex-start', padding: isSidebarCollapsed ? '12px' : '11px 16px' }} onClick={() => setShowImport(true)}><FileSpreadsheet size={15} />{!isSidebarCollapsed && <span>Importar Planilha</span>}</button>
         </div>
       </nav>
 
-      {/* Main Content */}
       <div className="main-content">
-        <header className="topbar">
-          <div style={{ flex: 1 }}>
-            <span className="topbar-title">{viewTitles[view]}</span>
-            {viewSubtitle[view] && (
-              <span className="topbar-subtitle"> · {viewSubtitle[view]}</span>
-            )}
-          </div>
-
+        <header className="topbar"><div style={{ flex: 1 }}><span className="topbar-title">{viewTitles[view]}</span>{viewSubtitle[view] && <span className="topbar-subtitle"> · {viewSubtitle[view]}</span>}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button 
-              className="btn btn-icon" 
-              onClick={actions.toggleTheme}
-              title={state.theme === 'dark' ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro'}
-              style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
-            >
-              {state.theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
-
+            <button className="btn btn-icon" onClick={actions.toggleTheme} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>{state.theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}</button>
             <NotificationCenter />
             <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
-
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 8px', borderRadius: 8, background: 'var(--bg-card)' }}>
-              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-purple), var(--accent-indigo))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff', textTransform: 'uppercase' }}>
-                {user?.name ? user.name.substring(0, 2) : 'HR'}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', marginRight: 8 }}>
-                <span style={{ fontSize: 14, fontWeight: 600 }}>{user?.name || 'Admin'}</span>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{user?.role || 'RH Corporativo'}</span>
-              </div>
-              <button className="btn btn-icon" onClick={actions.logout} title="Sair do sistema" style={{ color: 'var(--accent-red)' }}>
-                <LogOut size={16} />
-              </button>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-purple), var(--accent-indigo))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff' }}>{user?.name ? user.name.substring(0, 2) : 'HR'}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', marginRight: 8 }}><span style={{ fontSize: 14, fontWeight: 600 }}>{user?.name || 'Admin'}</span><span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{user?.role || 'RH Corporativo'}</span></div>
+              <button className="btn btn-icon" onClick={actions.logout} style={{ color: 'var(--accent-red)' }}><LogOut size={16} /></button>
             </div>
           </div>
         </header>
-
-        {error && (
-          <div className="alert alert-warning" style={{ margin: '12px 24px 0', borderRadius: 'var(--radius-md)' }}>
-            <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
-            <span>{error}</span>
-            <button style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: 16, lineHeight: 1 }} onClick={() => dispatch({ type: 'CLEAR_ERROR' })}>×</button>
-          </div>
-        )}
-
+        {error && <div className="alert alert-warning" style={{ margin: '12px 24px 0', borderRadius: 'var(--radius-md)' }}><AlertTriangle size={15} style={{ flexShrink: 0 }} /><span>{error}</span><button style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }} onClick={() => dispatch({ type: 'CLEAR_ERROR' })}>×</button></div>}
         <div className="page-wrapper" style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <AnimatePresence mode="wait">
-            <motion.div
-              key={view + (selected || '')}
-              initial={{ opacity: 0, y: 18, filter: 'blur(4px)' }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, y: -14, filter: 'blur(4px)' }}
-              transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-              style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
-            >
-              {view === 'dashboard' && <Dashboard data={processedData.all} />}
-              {view === 'lista' && <ListView data={processedData.mainDesligamentos} />}
-              {view === 'calendar' && <CalendarView data={processedData.all} />}
-              {view === 'pendentes' && <ListView data={processedData.pendentesComprovante} />}
-              {view === 'kanban' && <KanbanView data={processedData.mainDesligamentos} />}
-              {view === 'arquivados' && <ArchivedView data={processedData.mainArquivados} />}
-              {view === 'relatorios' && <ReportsView ativos={processedData.mainDesligamentos} arquivados={processedData.mainArquivados} />}
-              {view === 'audit' && <AuditLogView data={processedData.all} />}
-              {view === 'configuracoes' && <SettingsView />}
-              {view === 'ajuda' && <HelpView />}
-              {view === 'detalhe' && selected && <DetailView id={selected} />}
+            <motion.div key={view + (selected || '')} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} transition={{ duration: 0.3 }} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+              <Suspense fallback={<ViewLoader />}>
+                {view === 'dashboard' && <Dashboard data={processedData.all} />}
+                {view === 'lista' && <ListView data={processedData.mainDesligamentos} />}
+                {view === 'calendar' && <CalendarView data={processedData.all} />}
+                {view === 'pendentes' && <ListView data={processedData.pendentesComprovante} />}
+                {view === 'kanban' && <KanbanView data={processedData.mainDesligamentos} />}
+                {view === 'arquivados' && <ArchivedView data={processedData.mainArquivados} />}
+                {view === 'relatorios' && <ReportsView ativos={processedData.mainDesligamentos} arquivados={processedData.mainArquivados} />}
+                {view === 'audit' && <AuditLogView data={processedData.all} />}
+                {view === 'configuracoes' && <SettingsView />}
+                {view === 'ajuda' && <HelpView />}
+                {view === 'detalhe' && selected && <DetailView id={selected} />}
+              </Suspense>
             </motion.div>
           </AnimatePresence>
         </div>
       </div>
-
       {showNew && <ModalNovoDesligamento onClose={() => setShowNew(false)} />}
       {showImport && <ModalImportarPlanilha onClose={() => setShowImport(false)} />}
     </div>
@@ -340,9 +189,5 @@ function AppContent() {
 }
 
 export default function App() {
-  return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
-  );
+  return (<AppProvider><AppContent /></AppProvider>);
 }
