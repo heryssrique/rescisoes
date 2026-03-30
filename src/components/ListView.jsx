@@ -234,6 +234,16 @@ export function ListView({ data: injectedData }) {
 
   const pagosNoFiltro = activeFiltered.filter(d => d.status === 'pago').length;
 
+  const makeGroups = (list) => {
+    if (sortBy === 'pagamento') return groupByPaymentDate(list);
+    const groups = {};
+    list.forEach(d => {
+      if (!groups[d.status]) groups[d.status] = [];
+      groups[d.status].push(d);
+    });
+    return Object.entries(groups);
+  };
+
   const totalPages = Math.ceil(activeFiltered.length / itemsPerPage);
   const paginatedData = useMemo(() => {
     const start = (page - 1) * itemsPerPage;
