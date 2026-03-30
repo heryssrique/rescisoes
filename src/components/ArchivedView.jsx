@@ -93,6 +93,8 @@ export function ArchivedView({ data: injectedData }) {
   const { loading } = state;
   const [search, setSearch] = useState('');
   const [filterMotivo, setFilterMotivo] = useState('todos');
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 50;
 
   let coligadosObj = {};
   try {
@@ -111,6 +113,7 @@ export function ArchivedView({ data: injectedData }) {
     const value = e.target.value;
     setSearch(value);
     actions.fetchArchived(value);
+    setPage(1);
   };
 
   const filtered = useMemo(() => {
@@ -121,7 +124,13 @@ export function ArchivedView({ data: injectedData }) {
     });
   }, [archivedDesligamentos, filterMotivo]);
 
-  const grouped = useMemo(() => groupByPaymentDate(filtered), [filtered]);
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * itemsPerPage;
+    return filtered.slice(start, start + itemsPerPage);
+  }, [filtered, page]);
+
+  const grouped = useMemo(() => groupByPaymentDate(paginatedData), [paginatedData]);
 
   function openDetail(id) {
     dispatch({ type: 'SET_SELECTED', id });
@@ -147,14 +156,14 @@ export function ArchivedView({ data: injectedData }) {
           />
         </div>
 
-        <select id="filter-coligada-archived" className="filter-select" value={state.globalColigadaFilter || 'todas'} onChange={e => dispatch({ type: 'SET_GLOBAL_COLIGADA_FILTER', payload: e.target.value })}>
+        <select id="filter-coligada-archived" className="filter-select" value={state.globalColigadaFilter || 'todas'} onChange={e => { dispatch({ type: 'SET_GLOBAL_COLIGADA_FILTER', payload: e.target.value }); setPage(1); }}>
           <option value="todas">Todas as Empresas</option>
           {Object.entries(coligadosObj).map(([id, col]) => (
             <option key={id} value={id}>{id} - {col.nome}</option>
           ))}
         </select>
 
-        <select id="filter-motivo-archived" className="filter-select" value={filterMotivo} onChange={e => setFilterMotivo(e.target.value)}>
+        <select id="filter-motivo-archived" className="filter-select" value={filterMotivo} onChange={e => { setFilterMotivo(e.target.value); setPage(1); }}>
           <option value="todos">Todos os motivos</option>
           {MOTIVOS.map(m => (
             <option key={m.value} value={m.value}>{m.label}</option>
@@ -174,27 +183,59 @@ export function ArchivedView({ data: injectedData }) {
           <span>{search ? 'Tente outros termos de busca' : 'Processos terminados ou cancelados podem ser arquivados'}</span>
         </div>
       ) : (
-        grouped.map(([groupKey, items]) => (
-          <div key={groupKey} className="date-group">
-            <div className="date-group-header">
-              <Calendar size={14} style={{ color: 'var(--text-muted)' }} />
-              <span className="date-group-label">
-                {groupKey === 'sem-data' ? 'Sem data de pagamento' : `Pagamento: ${formatDate(groupKey)}`}
+        <>
+          {grouped.map(([groupKey, items]) => (
+            <div key={groupKey} className="date-group">
+              <div className="date-group-header">
+                <Calendar size={14} style={{ color: 'var(--text-muted)' }} />
+                <span className="date-group-label">
+                  {groupKey === 'sem-data' ? 'Sem data de pagamento' : `Pagamento: ${formatDate(groupKey)}`}
+                </span>
+                <span className="section-count">{items.length}</span>
+              </div>
+              <div className="term-list">
+                {items.map(d => (
+                  <TermCard
+                    key={d.id}
+                    d={d}
+                    onOpen={openDetail}
+                    onUnarchive={handleUnarchive}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {totalPages > 1 && (
+            <div className="pagination" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, marginTop: 32, paddingBottom: 40 }}>
+              <button 
+                className="btn btn-secondary" 
+                disabled={page === 1} 
+                onClick={() => {
+                  setPage(p => Math.max(1, p - 1));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                style={{ height: 36 }}
+              >
+                Anterior
+              </button>
+              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)' }}>
+                Página {page} de {totalPages}
               </span>
-              <span className="section-count">{items.length}</span>
+              <button 
+                className="btn btn-secondary" 
+                disabled={page === totalPages} 
+                onClick={() => {
+                  setPage(p => Math.min(totalPages, p + 1));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                style={{ height: 36 }}
+              >
+                Próxima
+              </button>
             </div>
-            <div className="term-list">
-              {items.map(d => (
-                <TermCard
-                  key={d.id}
-                  d={d}
-                  onOpen={openDetail}
-                  onUnarchive={handleUnarchive}
-                />
-              ))}
-            </div>
-          </div>
-        ))
+          )}
+        </>
       )}
     </div>
   );

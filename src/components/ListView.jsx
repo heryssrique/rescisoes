@@ -164,6 +164,13 @@ export function ListView({ data: injectedData }) {
   const [selectedIds, setSelectedIds] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 50;
+
+  // Reset page when filters change
+  React.useEffect(() => {
+    setPage(1);
+  }, [search, filterStatus, filterMotivo, filterPrazo, dateRange, sortBy]);
 
   // Debounce search
   React.useEffect(() => {
@@ -227,17 +234,13 @@ export function ListView({ data: injectedData }) {
 
   const pagosNoFiltro = activeFiltered.filter(d => d.status === 'pago').length;
 
-  const makeGroups = (list) => {
-    if (sortBy === 'pagamento') return groupByPaymentDate(list);
-    const groups = {};
-    list.forEach(d => {
-      if (!groups[d.status]) groups[d.status] = [];
-      groups[d.status].push(d);
-    });
-    return Object.entries(groups);
-  };
+  const totalPages = Math.ceil(activeFiltered.length / itemsPerPage);
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * itemsPerPage;
+    return activeFiltered.slice(start, start + itemsPerPage);
+  }, [activeFiltered, page]);
 
-  const activeGrouped = useMemo(() => makeGroups(activeFiltered), [activeFiltered, sortBy]);
+  const activeGrouped = useMemo(() => makeGroups(paginatedData), [paginatedData, sortBy]);
 
   const openDetail = useCallback((id) => {
     dispatch({ type: 'SET_SELECTED', id });
@@ -499,36 +502,68 @@ export function ListView({ data: injectedData }) {
           <span>Tente ajustar os filtros ou crie um novo desligamento</span>
         </div>
       ) : (
-        activeGrouped.map(([groupKey, items]) => (
-          <div key={groupKey} className="date-group">
-            <div className="date-group-header">
-              <Calendar size={14} style={{ color: 'var(--text-muted)' }} />
-              <span className="date-group-label">
-                {groupKey === 'sem-data' ? 'Sem data de pagamento' : (
-                  sortBy === 'pagamento'
-                    ? `Pagamento: ${formatDate(groupKey)}`
-                    : `Status: ${groupKey}`
-                )}
+        <>
+          {activeGrouped.map(([groupKey, items]) => (
+            <div key={groupKey} className="date-group">
+              <div className="date-group-header">
+                <Calendar size={14} style={{ color: 'var(--text-muted)' }} />
+                <span className="date-group-label">
+                  {groupKey === 'sem-data' ? 'Sem data de pagamento' : (
+                    sortBy === 'pagamento'
+                      ? `Pagamento: ${formatDate(groupKey)}`
+                      : `Status: ${groupKey}`
+                  )}
+                </span>
+                <DateGroupTag dataPagamento={groupKey !== 'sem-data' ? groupKey : null} />
+                <span className="section-count">{items.length}</span>
+              </div>
+              <div className="term-list">
+                <AnimatePresence mode="popLayout">
+                  {items.map(d => (
+                    <TermCard 
+                      key={d.id} 
+                      d={d} 
+                      onOpen={openDetail} 
+                      onArchive={handleArchive} 
+                      isSelected={selectedIds.includes(d.id)}
+                      onSelect={toggleSelection}
+                    />
+                  ))}
+                </AnimatePresence>
+              </div>
+            </div>
+          ))}
+
+          {totalPages > 1 && (
+            <div className="pagination" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, marginTop: 32, paddingBottom: 40 }}>
+              <button 
+                className="btn btn-secondary" 
+                disabled={page === 1} 
+                onClick={() => {
+                  setPage(p => Math.max(1, p - 1));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                style={{ height: 36 }}
+              >
+                Anterior
+              </button>
+              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)' }}>
+                Página {page} de {totalPages}
               </span>
-              <DateGroupTag dataPagamento={groupKey !== 'sem-data' ? groupKey : null} />
-              <span className="section-count">{items.length}</span>
+              <button 
+                className="btn btn-secondary" 
+                disabled={page === totalPages} 
+                onClick={() => {
+                  setPage(p => Math.min(totalPages, p + 1));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                style={{ height: 36 }}
+              >
+                Próxima
+              </button>
             </div>
-            <div className="term-list">
-              <AnimatePresence mode="popLayout">
-                {items.map(d => (
-                  <TermCard 
-                    key={d.id} 
-                    d={d} 
-                    onOpen={openDetail} 
-                    onArchive={handleArchive} 
-                    isSelected={selectedIds.includes(d.id)}
-                    onSelect={toggleSelection}
-                  />
-                ))}
-              </AnimatePresence>
-            </div>
-          </div>
-        ))
+          )}
+        </>
       )}
     </div>
   );
