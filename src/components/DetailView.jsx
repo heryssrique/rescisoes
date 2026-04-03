@@ -19,7 +19,14 @@ export function DetailView({ id }) {
   const d = state.desligamentos.find(x => x.id === id) || state.archivedDesligamentos?.find(x => x.id === id);
   const [showEdit, setShowEdit] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [activeTab, setActiveTab] = useState('checklist');
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('desligest_detail_tab') || 'checklist';
+  });
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    localStorage.setItem('desligest_detail_tab', tabId);
+  };
   const [nota, setNota] = useState('');
   const [acaoNote, setAcaoNote] = useState('');
   const [showNoteInput, setShowNoteInput] = useState(false);
@@ -332,15 +339,15 @@ export function DetailView({ id }) {
 
       {/* Tabs */}
       <div className="tabs">
-        <button className={`tab ${activeTab === 'checklist' ? 'active' : ''}`} onClick={() => setActiveTab('checklist')}>
+        <button className={`tab ${activeTab === 'checklist' ? 'active' : ''}`} onClick={() => handleTabChange('checklist')}>
           <CheckSquare size={13} style={{ display: 'inline', marginRight: 5 }} />
           Checklist
         </button>
-        <button className={`tab ${activeTab === 'historico' ? 'active' : ''}`} onClick={() => setActiveTab('historico')}>
+        <button className={`tab ${activeTab === 'historico' ? 'active' : ''}`} onClick={() => handleTabChange('historico')}>
           <Clock size={13} style={{ display: 'inline', marginRight: 5 }} />
           Histórico
         </button>
-        <button className={`tab ${activeTab === 'anexos' ? 'active' : ''}`} onClick={() => setActiveTab('anexos')}>
+        <button className={`tab ${activeTab === 'anexos' ? 'active' : ''}`} onClick={() => handleTabChange('anexos')}>
           <Paperclip size={13} style={{ display: 'inline', marginRight: 5 }} />
           Anexos
         </button>
