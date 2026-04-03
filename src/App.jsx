@@ -170,7 +170,7 @@ function AppContent() {
                 {view === 'lista' && <ListView data={processedData.mainDesligamentos} />}
                 {view === 'calendar' && <CalendarView data={processedData.all} />}
                 {view === 'pendentes' && <ListView data={processedData.pendentesComprovante} />}
-                {view === 'kanban' && <KanbanView data={processedData.mainDesligamentos} />}
+                {view === 'kanban' && <KanbanView data={[...processedData.mainDesligamentos, ...processedData.pendentesComprovante]} />}
                 {view === 'arquivados' && <ArchivedView data={processedData.mainArquivados} />}
                 {view === 'relatorios' && <ReportsView ativos={processedData.mainDesligamentos} arquivados={processedData.mainArquivados} />}
                 {view === 'audit' && <AuditLogView data={processedData.all} />}

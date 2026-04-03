@@ -10,8 +10,18 @@ const COLUMNS = [
   { key: 'documentacao', label: 'Documentação', color: 'var(--accent-yellow)' },
   { key: 'homologacao', label: 'Homologação', color: 'var(--accent-purple)' },
   { key: 'aguardando', label: 'Ag. Pagamento', color: 'var(--accent-orange)' },
+  { key: 'pendente_comprovante', label: 'Pend. Comprovante', color: 'var(--accent-red)' },
   { key: 'pago', label: 'Pago', color: 'var(--accent-green)' },
 ];
+
+const isOnlyMissingComprovante = (d) => {
+  const checklist = d.checklist || [];
+  const p1 = checklist.find(c => c.id === 'p1');
+  const p2 = checklist.find(c => c.id === 'p2');
+  const paid = (p1 && p1.done) || d.status === 'pago';
+  const noReceipt = p2 && !p2.done && !p2.notApplicable;
+  return paid && noReceipt;
+};
 
 export function KanbanView({ data: injectedData }) {
   const { state, dispatch } = useApp();
@@ -26,7 +36,12 @@ export function KanbanView({ data: injectedData }) {
     <div className="page-content" style={{ paddingBottom: 0 }}>
       <div className="kanban-board">
         {COLUMNS.map((col, idx) => {
-          const items = desligamentos.filter(d => d.status === col.key);
+          const items = desligamentos.filter(d => {
+            const isPending = isOnlyMissingComprovante(d);
+            if (col.key === 'pendente_comprovante') return isPending;
+            if (isPending) return false;
+            return d.status === col.key;
+          });
           return (
             <motion.div 
               key={col.key} 
