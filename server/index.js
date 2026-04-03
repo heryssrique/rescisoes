@@ -46,7 +46,7 @@ const corsOptions = {
   optionsSuccessStatus: 200 // Suporte para navegadores antigos
 };
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Habilitar Preflight para todas as rotas
+app.options('(.*)', cors(corsOptions)); // Habilitar Preflight para todas as rotas (Sintaxe Express 5)
 app.use(express.json({ limit: '10kb' })); // Body limit to prevent DoS
 app.use(express.urlencoded({ limit: '10kb', extended: true }));
 
