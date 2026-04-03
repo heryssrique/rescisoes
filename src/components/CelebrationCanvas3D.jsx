@@ -61,7 +61,12 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
     
     mesh.current.position.copy(pos.current);
 
-    if (pos.current.y < -30) {
+    const dist = pos.current.length();
+    const speed = vel.current.length();
+    
+    // RENASCER CONTÍNUO: Elimina o "vazio / estático" do final das animações
+    // Se caiu da borda (y <-30), viajou muito (dist > 60) ou os fogos pararam no ar (speed < 0.02)
+    if (pos.current.y < -30 || dist > 60 || ((type === 'firework' || type === 'sparkle') && speed < 0.02)) {
       if (type === 'confetti_rect' || type === 'confetti_square') {
         const fromLeft = pos.current.x < 0;
         pos.current.set(fromLeft ? -15 : 15, -12, THREE.MathUtils.randFloatSpread(10));
@@ -70,7 +75,31 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
           0.15 + Math.random() * 0.2, 
           THREE.MathUtils.randFloatSpread(0.1)
         );
+      } else if (type === 'firework' || type === 'sparkle') {
+        // Dispara UMA NOVA BATERIA de fogos no céu 
+        const newCenter = [THREE.MathUtils.randFloatSpread(25), 5 + Math.random() * 10, THREE.MathUtils.randFloatSpread(5)];
+        pos.current.set(...newCenter);
+        const newSpeed = type === 'sparkle' ? (0.2 + Math.random() * 0.3) : (0.5 + Math.random() * 0.6); 
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos((Math.random() * 2) - 1); 
+        vel.current.set(
+          newSpeed * Math.sin(phi) * Math.cos(theta),
+          newSpeed * Math.cos(phi), 
+          newSpeed * Math.sin(phi) * Math.sin(theta)
+        );
+      } else if (type === 'neon_laser') {
+        // Dispara no novo pulso do centro da tela para manter ritmo High Tech
+        pos.current.set(0,0,0);
+        const newSpeed = 0.5 + Math.random() * 0.8; 
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos((Math.random() * 2) - 1); 
+        vel.current.set(
+          newSpeed * Math.sin(phi) * Math.cos(theta),
+          newSpeed * Math.cos(phi), 
+          newSpeed * Math.sin(phi) * Math.sin(theta)
+        );
       } else {
+        // Default Ouro/Rainbow
         pos.current.y = 30; 
         vel.current.y = velocity[1];
       }
