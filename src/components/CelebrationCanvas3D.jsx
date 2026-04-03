@@ -90,7 +90,8 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, burstVe
     const speed = vel.current.length();
     
     // RENASCER CONTÍNUO: Elimina o "vazio / estático" 
-    if (pos.current.y < -30 || dist > 60 || ((type === 'neon_laser') && speed < 0.02)) {
+    // Se caiu da borda, viajou muito ou os fogos terminaram de brilhar (speed mínima)
+    if (pos.current.y < -35 || dist > 65 || ((type === 'neon_laser') && speed < 0.02) || ((type === 'firework' || type === 'sparkle') && hasBurst.current && speed < 0.005)) {
       if (type === 'confetti_rect' || type === 'confetti_square') {
         const fromLeft = pos.current.x < 0;
         pos.current.set(fromLeft ? -15 : 15, -12, THREE.MathUtils.randFloatSpread(10));
@@ -109,8 +110,13 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, burstVe
           newSpeed * Math.cos(phi), 
           newSpeed * Math.sin(phi) * Math.sin(theta)
         );
+      } else if (type === 'firework' || type === 'sparkle') {
+        // RESET PARA LANÇAMENTO: Volta para a base para atirar de novo
+        hasBurst.current = false;
+        age.current = 0;
+        pos.current.set(position[0], position[1], position[2]);
+        vel.current.set(velocity[0], velocity[1], velocity[2]);
       } else if (type === 'coin' || type === 'diamond' || type === 'pearl_star') {
-        // Apenas Gold volta lá pra cima
         pos.current.y = 30; 
         vel.current.y = velocity[1];
       }
@@ -228,13 +234,13 @@ function CelebrationScene({ style = 'royal_gold' }) {
         const launcher = launchers[launcherIdx];
         
         // Todos do mesmo array sharem a posição inferior exata para mascarar um tiro único
-        position = [launcher.x, -25, 0];
+        position = [launcher.x, -16, 0];
         
-        // Disparo idêntico para o bloco (O rastro do projetil)
-        velocity = [0, 0.45 + (launcherIdx * 0.02), 0]; 
+        // Disparo idêntico para o bloco (O rastro do projetil) com MUITA potência
+        velocity = [0, 0.55 + (launcherIdx * 0.05), 0]; 
         
         // A matemática da explosão na meia vida (Boom)
-        const speed = isCrackle ? (0.05 + Math.random() * 0.05) : (0.1 + Math.random() * 0.1); 
+        const speed = isCrackle ? (0.05 + Math.random() * 0.05) : (0.12 + Math.random() * 0.08); 
         const theta = Math.random() * Math.PI * 2;
         const phi = Math.acos((Math.random() * 2) - 1); 
         burstVelocity = [
@@ -245,7 +251,7 @@ function CelebrationScene({ style = 'royal_gold' }) {
         
         delay = launcher.delay;
         gravity = 0.0005; // Pequeníssima gravidade no pós-bomba
-        damping = 0.97;
+        damping = 0.975;
       } else if (style === 'neon_corporate') {
         // "Vibrant, high-energy explosions of neon cyan, magenta... bursting from the center"
         type = 'neon_laser';
