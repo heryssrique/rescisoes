@@ -1,5 +1,4 @@
 import React, { useState, useMemo, Suspense, lazy, useEffect, useRef } from 'react';
-import ReactConfetti from 'react-confetti';
 import { AppProvider, useApp } from './context/AppContext';
 import { ToastProvider, useToast } from './components/Toast';
 import { ModalNovoDesligamento } from './components/Modals';
@@ -149,17 +148,6 @@ function AppContent() {
 
   return (
     <div className="app-layout">
-      {state.triggerConfetti && (
-        <ReactConfetti
-          width={typeof window !== 'undefined' ? window.innerWidth : 1280}
-          height={typeof window !== 'undefined' ? window.innerHeight : 720}
-          recycle={false}
-          numberOfPieces={600}
-          gravity={0.15}
-          onConfettiComplete={() => dispatch({ type: 'TRIGGER_CONFETTI', value: false })}
-          style={{ zIndex: 999999, position: 'fixed', top: 0, left: 0, pointerEvents: 'none' }}
-        />
-      )}
       <nav className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`} aria-label="Navegação principal">
         <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div className="logo-mark" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
