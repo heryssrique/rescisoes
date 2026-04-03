@@ -34,16 +34,18 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
     // Aplicar gravidade à velocidade
     vel.current.y -= gravity;
     
-    // Simular resistência do ar (Damping) para suavidade extrema
-    vel.current.multiplyScalar(0.98);
+    // Damping (Amortecimento aerodinâmico) levíssimo para não prender as moedas no ar
+    vel.current.multiplyScalar(0.992);
     
-    // Atualizar posição
-    pos.current.add(vel.current);
+    // Atualizar posição com uma escala de tempo cinematográfica global (50% da velocidade)
+    pos.current.x += vel.current.x * 0.5;
+    pos.current.y += vel.current.y * 0.5;
+    pos.current.z += vel.current.z * 0.5;
     
-    // Atualizar rotação
-    mesh.current.rotation.x += rot.current.x;
-    mesh.current.rotation.y += rot.current.y;
-    mesh.current.rotation.z += rot.current.z;
+    // Atualizar rotação (Reduzido em 90% para dar o aspecto de câmera hiper-lenta)
+    mesh.current.rotation.x += rot.current.x * 0.1;
+    mesh.current.rotation.y += rot.current.y * 0.1;
+    mesh.current.rotation.z += rot.current.z * 0.1;
     
     mesh.current.position.copy(pos.current);
 
