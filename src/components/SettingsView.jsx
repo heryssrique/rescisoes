@@ -204,6 +204,16 @@ export function SettingsView() {
     setStatusFlowList(newList);
   };
 
+  const addStatusFlow = () => {
+    const newId = `custom_${Date.now().toString(36)}`;
+    setStatusFlowList([...statusFlowList, { key: newId, label: 'Nova Etapa', short: 'Nova', color: 'var(--accent-blue)' }]);
+  };
+
+  const removeStatusFlow = (index) => {
+    if (statusFlowList.length <= 1) return;
+    setStatusFlowList(statusFlowList.filter((_, i) => i !== index));
+  };
+
   const [activeTab, setActiveTab] = useState('empresas');
 
   return (
@@ -435,54 +445,94 @@ export function SettingsView() {
                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}
                 className="card" style={{ padding: 32, borderColor: 'transparent', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}
               >
-                <div style={{ marginBottom: 24 }}>
-                  <h3 style={{ fontSize: 20, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                    <Columns size={20} color="var(--accent-orange)" />
-                    Fluxo & Colunas do Kanban
-                  </h3>
-                  <p style={{ color: 'var(--text-muted)', fontSize: 13, lineHeight: 1.5 }}>
-                    Personalize as colunas do seu quadro Kanban. Você pode renomear as etapas e trocar as cores de identificação.
-                    <br /><span style={{ color: 'var(--accent-orange)', fontWeight: 600 }}>Nota:</span> Algumas colunas (como Pend. Comprovante) são calculadas automaticamente.
-                  </p>
+                <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h3 style={{ fontSize: 20, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                      <Columns size={20} color="var(--accent-orange)" />
+                      Fluxo & Colunas do Kanban
+                    </h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: 13, lineHeight: 1.5 }}>
+                      Personalize as colunas do seu quadro Kanban. Arraste para reordenar, renomeie as etapas e escolha as cores.
+                    </p>
+                  </div>
+                  <button className="btn btn-secondary" onClick={addStatusFlow} style={{ padding: '10px 16px', fontSize: 13, gap: 8 }}>
+                    <Plus size={16} /> Nova Etapa
+                  </button>
                 </div>
                 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+                <Reorder.Group axis="y" values={statusFlowList} onReorder={setStatusFlowList} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
                   {statusFlowList.map((step, idx) => (
-                    <div key={idx} style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'var(--bg-secondary)', padding: '12px 16px', borderRadius: 12 }}>
+                    <Reorder.Item 
+                      key={step.key} 
+                      value={step}
+                      style={{ 
+                        display: 'flex', 
+                        gap: 12, 
+                        alignItems: 'center', 
+                        background: 'var(--bg-secondary)', 
+                        padding: '12px 16px', 
+                        borderRadius: 12,
+                        border: '1px solid var(--border)',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                      }}
+                    >
+                      <div style={{ cursor: 'grab', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                        <GripVertical size={18} />
+                      </div>
+
                       <div style={{ width: 100, display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>ID Status</label>
-                        <input className="form-input" value={step.key} readOnly style={{ padding: '8px 12px', opacity: 0.7, cursor: 'not-allowed' }} title="O ID interno não pode ser alterado para manter compatibilidade com registros antigos." />
+                        <input className="form-input" value={step.key} readOnly style={{ padding: '8px 12px', opacity: 0.7, fontSize: 11, background: 'var(--bg-card)' }} />
                       </div>
+
                       <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>Nome da Coluna</label>
                         <input className="form-input" placeholder="Ex: Triagem" value={step.label} onChange={e => updateStatusFlow(idx, 'label', e.target.value)} style={{ padding: '8px 12px' }} />
                       </div>
+
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>Abreviação</label>
                         <input className="form-input" placeholder="Ex: Tria." value={step.short} onChange={e => updateStatusFlow(idx, 'short', e.target.value)} style={{ padding: '8px 12px' }} />
                       </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>Cor</label>
-                        <select 
-                          className="form-input" 
-                          value={step.color} 
-                          onChange={e => updateStatusFlow(idx, 'color', e.target.value)}
-                          style={{ padding: '7px 10px', fontSize: 13, background: 'var(--bg-card)' }}
-                        >
-                          <option value="var(--accent-blue)">Azul</option>
-                          <option value="var(--accent-indigo)">Índigo</option>
-                          <option value="var(--accent-purple)">Roxo</option>
-                          <option value="var(--accent-pink)">Rosa</option>
-                          <option value="var(--accent-red)">Vermelho</option>
-                          <option value="var(--accent-orange)">Laranja</option>
-                          <option value="var(--accent-yellow)">Amarelo</option>
-                          <option value="var(--accent-green)">Verde</option>
-                          <option value="var(--accent-teal)">Ciano</option>
-                        </select>
+                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                          <div style={{ 
+                            position: 'absolute', 
+                            left: 10, 
+                            width: 10, 
+                            height: 10, 
+                            borderRadius: '50%', 
+                            background: step.color,
+                            boxShadow: `0 0 8px ${step.color}66`,
+                            pointerEvents: 'none'
+                          }} />
+                          <select 
+                            className="form-input" 
+                            value={step.color} 
+                            onChange={e => updateStatusFlow(idx, 'color', e.target.value)}
+                            style={{ padding: '7px 10px 7px 28px', fontSize: 13, background: 'var(--bg-card)', minWidth: 110 }}
+                          >
+                            <option value="var(--accent-blue)">Azul</option>
+                            <option value="var(--accent-indigo)">Índigo</option>
+                            <option value="var(--accent-purple)">Roxo</option>
+                            <option value="var(--accent-pink)">Rosa</option>
+                            <option value="var(--accent-red)">Vermelho</option>
+                            <option value="var(--accent-orange)">Laranja</option>
+                            <option value="var(--accent-yellow)">Amarelo</option>
+                            <option value="var(--accent-green)">Verde</option>
+                            <option value="var(--accent-teal)">Ciano</option>
+                          </select>
+                        </div>
                       </div>
-                    </div>
+
+                      <button className="btn btn-icon" onClick={() => removeStatusFlow(idx)} style={{ color: 'var(--accent-red)', marginTop: 18 }}>
+                        <X size={18} />
+                      </button>
+                    </Reorder.Item>
                   ))}
-                </div>
+                </Reorder.Group>
                 
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 24 }}>
                   <button className="btn" onClick={handleSaveStatusFlow} style={{ background: 'var(--accent-orange)', color: '#fff', padding: '10px 24px', fontWeight: 600, boxShadow: '0 4px 12px rgba(249, 115, 22, 0.3)' }}>
