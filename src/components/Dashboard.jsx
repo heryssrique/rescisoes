@@ -3,7 +3,6 @@ import { useApp } from '../context/AppContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts';
 import { User, Calendar, CheckCircle, TrendingUp, Briefcase } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { MOTIVOS, COLIGADAS, STATUS_FLOW } from '../data/initialData';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#f97316', '#14b8a6'];
 
@@ -101,7 +100,7 @@ export function Dashboard({ data: injectedData }) {
     });
 
     const motivoComparisonData = Array.from(todosMotivos).map(m => {
-      const label = MOTIVOS.find(mot => mot.value === m)?.label || m;
+      const label = state.motivos?.find(mot => mot.value === m)?.label || m;
       return {
         name: label,
         current: currentMotivos[m] || 0,
@@ -111,15 +110,15 @@ export function Dashboard({ data: injectedData }) {
 
     return {
       motivoChartData: Object.entries(stats.peloMotivo).map(([name, value]) => ({ 
-        name: MOTIVOS.find(m => m.value === name)?.label || name, 
+        name: state.motivos?.find(m => m.value === name)?.label || name, 
         value 
       })),
       statusChartData: Object.entries(stats.peloStatus).map(([name, value]) => ({ 
-        name: STATUS_FLOW.find(s => s.key === name)?.label || name, 
+        name: state.statusFlow?.find(s => s.key === name)?.label || name, 
         value 
       })),
       empresaChartData: Object.entries(stats.pelaEmpresa).map(([id, value]) => ({ 
-        name: COLIGADAS[id]?.nome || id, 
+        name: state.coligadas?.[id]?.nome || id, 
         value 
       })),
       mesChartData: data,
@@ -127,7 +126,7 @@ export function Dashboard({ data: injectedData }) {
       yoyData: yoyMap,
       motivoComparisonData
     };
-  }, [stats, desligamentos]);
+  }, [stats, desligamentos, state.motivos, state.statusFlow, state.coligadas]);
 
   const containerVariants = {
     hidden: {},

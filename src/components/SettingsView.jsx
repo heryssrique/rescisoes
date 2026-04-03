@@ -110,9 +110,7 @@ export function SettingsView() {
 
   const handleSaveMotivos = () => {
     const valid = motivosList.filter(m => m.value.trim() && m.label.trim());
-    localStorage.setItem('desligest_motivos', JSON.stringify(valid));
-    alert('Padrões de motivos salvos e atualizados no sistema!');
-    window.location.reload();
+    actions.updateConfig('motivos', 'desligest_motivos', valid);
   };
 
   const updateMotivo = (index, field, value) => {
@@ -125,9 +123,7 @@ export function SettingsView() {
 
   const handleSaveChecklist = () => {
     const valid = checklistList.filter(c => c.id.trim() && c.label.trim() && c.etapa);
-    localStorage.setItem('desligest_checklist', JSON.stringify(valid));
-    alert('Checklist padrão salvo e atualizado nas novas rescisões!');
-    window.location.reload();
+    actions.updateConfig('checklistTemplate', 'desligest_checklist', valid);
   };
 
   const updateChecklist = (index, field, value) => {
@@ -185,9 +181,7 @@ export function SettingsView() {
     coligadasList.forEach(c => {
       if (c.code.trim()) newColigadas[c.code] = { nome: c.nome, color: c.color };
     });
-    localStorage.setItem('desligest_coligadas', JSON.stringify(newColigadas));
-    alert('Padrões de empresas salvos e atualizados no sistema!');
-    window.location.reload();
+    actions.updateConfig('coligadas', 'desligest_coligadas', newColigadas);
   };
 
   const updateColigada = (index, field, value) => {
@@ -200,9 +194,7 @@ export function SettingsView() {
   const removeColigada = (index) => setColigadasList(coligadasList.filter((_, i) => i !== index));
 
   const handleSaveStatusFlow = () => {
-    localStorage.setItem('desligest_status_flow', JSON.stringify(statusFlowList));
-    alert('Padrões de fluxo salvos e atualizados no Kanban!');
-    window.location.reload();
+    actions.updateConfig('statusFlow', 'desligest_status_flow', statusFlowList);
   };
 
   const updateStatusFlow = (index, field, value) => {
@@ -222,9 +214,7 @@ export function SettingsView() {
   };
 
   const handleSaveLinks = () => {
-    localStorage.setItem('desligest_links', JSON.stringify(linksList));
-    alert('Links úteis atualizados!');
-    window.location.reload();
+    actions.updateConfig('linksUteis', 'desligest_links', linksList);
   };
 
   const addLink = () => setLinksList([...linksList, { id: Date.now().toString(), label: '', url: '', category: 'Geral' }]);

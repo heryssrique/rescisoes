@@ -1,5 +1,5 @@
 import React from 'react';
-import { LINKS_UTEIS } from '../data/initialData';
+import { useApp } from '../context/AppContext';
 import { ExternalLink, Calculator, BookOpen, Globe, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -20,6 +20,8 @@ const categoryColors = {
 };
 
 export function LinksView() {
+  const { state } = useApp();
+  const linksUteis = state.linksUteis || [];
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -52,7 +54,7 @@ export function LinksView() {
           gap: 20 
         }}
       >
-        {LINKS_UTEIS.map((link) => (
+        {linksUteis.map((link) => (
           <motion.a
             key={link.id}
             variants={item}
@@ -115,7 +117,7 @@ export function LinksView() {
         ))}
       </motion.div>
 
-      {LINKS_UTEIS.length === 0 && (
+      {linksUteis.length === 0 && (
         <div style={{ textAlign: 'center', padding: '60px 0', border: '2px dashed var(--border)', borderRadius: 16, color: 'var(--text-muted)' }}>
           Nenhum link configurado. Adicione links nas Configurações.
         </div>

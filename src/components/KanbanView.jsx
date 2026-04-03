@@ -5,8 +5,6 @@ import { formatDate } from '../utils/formatters';
 import { Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { STATUS_FLOW } from '../data/initialData';
-
 const isOnlyMissingComprovante = (d) => {
   const checklist = d.checklist || [];
   const p1 = checklist.find(c => c.id === 'p1');
@@ -28,7 +26,7 @@ export function KanbanView({ data: injectedData }) {
   return (
     <div className="page-content" style={{ paddingBottom: 0 }}>
       <div className="kanban-board">
-        {STATUS_FLOW.map((col, idx) => {
+        {(state.statusFlow || []).map((col, idx) => {
           const items = desligamentos.filter(d => {
             const isPending = isOnlyMissingComprovante(d);
             if (col.key === 'pendente_comprovante') return isPending;

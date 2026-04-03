@@ -1,26 +1,23 @@
 import React from 'react';
-import { STATUS_FLOW, MOTIVOS, COLIGADAS } from '../data/initialData';
+import { useApp } from '../context/AppContext';
 import { differenceInDays, parseISO, startOfDay, differenceInYears } from 'date-fns';
 
 export function StatusBadge({ status }) {
-  const labels = {
-    comunicado: 'Comunicado',
-    documentacao: 'Documentação',
-    homologacao: 'Homologação',
-    aguardando: 'Ag. Pagamento',
-    pago: 'Pago',
-    cancelado: 'Cancelado',
-  };
+  const { state } = useApp();
+  const step = state.statusFlow?.find(s => s.key === status);
+  const label = step ? step.label : (status === 'cancelado' ? 'Cancelado' : status);
+  
   return (
-    <span className={`status-badge status-${status}`}>
-      <span className="dot" />
-      {labels[status] || status}
+    <span className={`status-badge status-${status}`} style={step ? { color: step.color, borderColor: `${step.color}40` } : {}}>
+      <span className="dot" style={step ? { background: step.color, boxShadow: `0 0 6px ${step.color}` } : {}} />
+      {label}
     </span>
   );
 }
 
 export function MotivoBadge({ motivo }) {
-  const m = MOTIVOS.find(x => x.value === motivo);
+  const { state } = useApp();
+  const m = state.motivos?.find(x => x.value === motivo);
   if (!m) return null;
   return <span className={`motivo-tag ${m.class}`}>{m.label}</span>;
 }
@@ -65,7 +62,8 @@ export function AvisoBadge({ aviso, dias, dataAdmissao, dataComunicado }) {
 }
 
 export function ColigadaBadge({ code }) {
-  const c = COLIGADAS[code];
+  const { state } = useApp();
+  const c = state.coligadas?.[code];
   if (!c) return <span className="coligada-tag" style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>{code}</span>;
   return (
     <span 
@@ -87,10 +85,12 @@ export function ColigadaBadge({ code }) {
 }
 
 export function ProgressSteps({ status }) {
-  const currentIdx = STATUS_FLOW.findIndex(s => s.key === status);
+  const { state } = useApp();
+  const statusFlow = state.statusFlow || [];
+  const currentIdx = statusFlow.findIndex(s => s.key === status);
   return (
     <div className="progress-steps">
-      {STATUS_FLOW.map((step, i) => {
+      {statusFlow.map((step, i) => {
         const isCompleted = i < currentIdx;
         const isActive = i === currentIdx;
         return (

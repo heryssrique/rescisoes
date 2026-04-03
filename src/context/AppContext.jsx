@@ -140,6 +140,9 @@ function reducer(state, action) {
         readNotificationIds: [...s.readNotificationIds, action.id],
         notifications: s.notifications.map(n => n.id === action.id ? { ...n, read: true } : n)
       };
+    case 'UPDATE_CONFIG':
+      localStorage.setItem(action.key, JSON.stringify(action.payload));
+      return { ...s, [action.configName]: action.payload };
     default:
       return s;
   }
@@ -152,6 +155,15 @@ function getInitialState() {
     const savedSelected = localStorage.getItem('desligest_selected') || null;
     const view = (savedView === 'detalhe' && !savedSelected) ? 'lista' : savedView;
     const readIds = (() => { try { return JSON.parse(localStorage.getItem('readNotificationIds') || '[]') || []; } catch { return []; } })();
+    
+    const getConfig = (key, fallback) => {
+      try {
+        const data = localStorage.getItem(key);
+        return data ? JSON.parse(data) : fallback;
+      } catch { return fallback; }
+    };
+
+    const { DEFAULT_COLIGADAS, DEFAULT_MOTIVOS, DEFAULT_STATUS_FLOW, DEFAULT_CHECKLIST_TEMPLATE, DEFAULT_LINKS_UTEIS } = require('../data/initialData');
     return {
       user: null,
       isAuthChecked: false,
@@ -166,12 +178,19 @@ function getInitialState() {
       offline: false,
       notifications: [],
       readNotificationIds: readIds,
+      coligadas: getConfig('desligest_coligadas', DEFAULT_COLIGADAS),
+      motivos: getConfig('desligest_motivos', DEFAULT_MOTIVOS),
+      statusFlow: getConfig('desligest_status_flow', DEFAULT_STATUS_FLOW),
+      checklistTemplate: getConfig('desligest_checklist', DEFAULT_CHECKLIST_TEMPLATE),
+      linksUteis: getConfig('desligest_links', DEFAULT_LINKS_UTEIS),
     };
-  } catch {
+  } catch (e) {
+    console.error("Error initializing state", e);
     return {
       user: null, isAuthChecked: false, desligamentos: [], archivedDesligamentos: [],
       view: 'lista', selected: null, theme: 'dark', globalColigadaFilter: 'todas',
       loading: true, error: null, offline: false, notifications: [], readNotificationIds: [],
+      coligadas: {}, motivos: [], statusFlow: [], checklistTemplate: [], linksUteis: [],
     };
   }
 }
@@ -580,6 +599,10 @@ export function AppProvider({ children }) {
     dispatch({ type: 'LOGOUT' });
   }
 
+  function updateConfig(configName, key, payload) {
+    dispatch({ type: 'UPDATE_CONFIG', configName, key, payload });
+  }
+
   // Mantém compatibilidade com o dispatch direto p/ navegação de UI
   const uiDispatch = (action) => {
     if (['SET_VIEW', 'SET_SELECTED', 'CLEAR_ERROR', 'SET_GLOBAL_COLIGADA_FILTER'].includes(action.type)) {
@@ -621,8 +644,9 @@ export function AppProvider({ children }) {
         }
       },
       toggleTheme: () => dispatch({ type: 'TOGGLE_THEME' }),
+      updateConfig,
     },
-  }), [state, uiDispatch, fetchAll, fetchArchived, addDesligamento, updateDesligamento, archiveDesligamento, unarchiveDesligamento, deleteDesligamento, bulkArchive, bulkDelete, toggleChecklist, toggleNaoAplicavel, markNotificationRead, requestNotificationPermission, addHistorico, changeStatus, login, register, logout]);
+  }), [state, uiDispatch, fetchAll, fetchArchived, addDesligamento, updateDesligamento, archiveDesligamento, unarchiveDesligamento, deleteDesligamento, bulkArchive, bulkDelete, toggleChecklist, toggleNaoAplicavel, markNotificationRead, requestNotificationPermission, addHistorico, changeStatus, login, register, logout, updateConfig]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
