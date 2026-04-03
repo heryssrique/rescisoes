@@ -25,19 +25,6 @@ app.set('trust proxy', 1);
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/desligest';
 
-// ── Rate Limiting ──────────────────────────────────────────────────────────
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // Limite de 100 requisições por IP
-  message: { error: 'Muitas requisições vindas deste IP, tente novamente em 15 minutos.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use('/api/', limiter);
-
-// ── Middlewares ────────────────────────────────────────────────────────────
-app.use(helmet()); // Secure HTTP headers
-// ── Configuração de CORS (Segura) ──────────────────────────────────────────
 // ── Configuração de CORS (Segura) ──────────────────────────────────────────
 const corsOptions = {
   origin: ['https://rescisoes.vercel.app', 'http://localhost:5173'],
@@ -48,6 +35,19 @@ const corsOptions = {
   preflightContinue: false
 };
 app.use(cors(corsOptions));
+
+// ── Middlewares Globais ──────────────────────────────────────────────────
+app.use(helmet()); // Secure HTTP headers
+
+// ── Rate Limiting ──────────────────────────────────────────────────────────
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // Limite de 100 requisições por IP
+  message: { error: 'Muitas requisições vindas deste IP, tente novamente em 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/', limiter);
 app.use(express.json({ limit: '10kb' })); // Body limit to prevent DoS
 app.use(express.urlencoded({ limit: '10kb', extended: true }));
 
