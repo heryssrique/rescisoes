@@ -7,7 +7,7 @@ import { AuthView } from './components/AuthView';
 import { differenceInDays, parseISO, startOfDay } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LayoutList, Columns, Plus, Users, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut, HelpCircle, FileText, Sun, Moon, Calendar, History
+  LayoutList, Columns, Plus, Users, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut, HelpCircle, FileText, Sun, Moon, Calendar, History, Link
 } from 'lucide-react';
 
 // Lazy Load Views for better performance and to avoid initialization race conditions
