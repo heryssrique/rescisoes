@@ -17,7 +17,7 @@ const AVISO_LABEL = { trabalhado: 'Trabalhado', indenizado: 'Indenizado', nao_ap
 
 export function DetailView({ id }) {
   const { state, dispatch, actions } = useApp();
-  const { confirm: showConfirm } = useToast();
+  const { toast, confirm: showConfirm } = useToast();
   const d = state.desligamentos.find(x => x.id === id) || state.archivedDesligamentos?.find(x => x.id === id);
   const [showEdit, setShowEdit] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
