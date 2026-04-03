@@ -37,7 +37,16 @@ app.use('/api/', limiter);
 
 // ── Middlewares ────────────────────────────────────────────────────────────
 app.use(helmet()); // Secure HTTP headers
-app.use(cors());
+// ── Configuração de CORS (Segura) ──────────────────────────────────────────
+const corsOptions = {
+  origin: ['https://rescisoes.vercel.app', 'http://localhost:5173'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true,
+  optionsSuccessStatus: 200 // Suporte para navegadores antigos
+};
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Habilitar Preflight para todas as rotas
 app.use(express.json({ limit: '10kb' })); // Body limit to prevent DoS
 app.use(express.urlencoded({ limit: '10kb', extended: true }));
 
