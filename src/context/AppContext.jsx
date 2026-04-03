@@ -671,7 +671,12 @@ export function AppProvider({ children }) {
       updateConfig,
       triggerCelebration: (style) => {
         dispatch({ type: 'SET_CELEBRATION', payload: style });
-        setTimeout(() => dispatch({ type: 'SET_CELEBRATION', payload: null }), 12000);
+        
+        let duration = 12000;
+        if (style === 'neon_corporate') duration = 5000;
+        else if (style === 'midnight_fireworks') duration = 9000;
+        
+        setTimeout(() => dispatch({ type: 'SET_CELEBRATION', payload: null }), duration);
       },
     },
   }), [state, uiDispatch, fetchAll, fetchArchived, addDesligamento, updateDesligamento, archiveDesligamento, unarchiveDesligamento, deleteDesligamento, bulkArchive, bulkDelete, toggleChecklist, toggleNaoAplicavel, markNotificationRead, requestNotificationPermission, addHistorico, changeStatus, login, register, logout, updateConfig]);

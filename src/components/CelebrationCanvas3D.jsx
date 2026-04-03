@@ -66,9 +66,9 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
         const fromLeft = pos.current.x < 0;
         pos.current.set(fromLeft ? -15 : 15, -12, THREE.MathUtils.randFloatSpread(10));
         vel.current.set(
-          fromLeft ? 0.2 + Math.random() * 0.2 : -0.2 - Math.random() * 0.2, 
-          0.4 + Math.random() * 0.4, 
-          THREE.MathUtils.randFloatSpread(0.15)
+          fromLeft ? 0.08 + Math.random() * 0.08 : -0.08 - Math.random() * 0.08, 
+          0.15 + Math.random() * 0.2, 
+          THREE.MathUtils.randFloatSpread(0.1)
         );
       } else {
         pos.current.y = 30; 
@@ -164,12 +164,12 @@ function CelebrationScene({ style = 'royal_gold' }) {
         const fromLeft = i % 2 === 0;
         position = [fromLeft ? -15 : 15, -12, THREE.MathUtils.randFloatSpread(10)]; 
         velocity = [
-          fromLeft ? 0.2 + Math.random() * 0.2 : -0.2 - Math.random() * 0.2, 
-          0.4 + Math.random() * 0.4, 
-          THREE.MathUtils.randFloatSpread(0.15) 
+          fromLeft ? 0.08 + Math.random() * 0.08 : -0.08 - Math.random() * 0.08, 
+          0.15 + Math.random() * 0.2, 
+          THREE.MathUtils.randFloatSpread(0.1) 
         ];
         rotation = [Math.random() * 0.8, Math.random() * 0.8, Math.random() * 0.8]; 
-        gravity = 0.006; 
+        gravity = 0.002; 
         damping = 0.98; 
       } else if (style === 'midnight_fireworks') {
         const isCrackle = Math.random() > 0.7; // "crackle effect with tiny shimmering white dots"
