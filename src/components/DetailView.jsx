@@ -86,6 +86,10 @@ export function DetailView({ id }) {
   async function handleStatusChange(newStatus) {
     try {
       await actions.changeStatus(d, newStatus);
+      if (newStatus === 'pago') {
+        dispatch({ type: 'TRIGGER_CONFETTI', value: true });
+        toast('🎉 Processo concluído e pago!', 'success');
+      }
     } catch {
       // Erro gerenciado via AppContext (state.error)
     }

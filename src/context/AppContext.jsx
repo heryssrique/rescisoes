@@ -150,6 +150,8 @@ function reducer(state, action) {
     case 'UPDATE_CONFIG':
       localStorage.setItem(action.key, JSON.stringify(action.payload));
       return { ...s, [action.configName]: action.payload };
+    case 'TRIGGER_CONFETTI':
+      return { ...s, triggerConfetti: action.value };
     default:
       return s;
   }
