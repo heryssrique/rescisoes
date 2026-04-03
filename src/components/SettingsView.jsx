@@ -675,32 +675,38 @@ export function SettingsView() {
                     </p>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16, marginBottom: 32 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 18, marginBottom: 32 }}>
                     {[
-                      { id: 'firework', name: 'Fogos de Artifício (v3.0)', desc: 'Morteiros reais e estrelas.', icon: <Sparkles size={20} />, color: 'var(--accent-orange)' },
-                      { id: 'gold_rain', name: 'Chuva de Ouro', desc: 'Elegância com brilhos constantes.', icon: <Trophy size={20} />, color: 'var(--accent-yellow)' },
-                      { id: 'neon', name: 'Explosão Neon', desc: 'Alta energia e cores vibrantes.', icon: <Zap size={20} />, color: 'var(--accent-pink)' },
-                      { id: 'classic', name: 'Canhões Clássicos', desc: 'O estouro tradicional do RH.', icon: <PartyPopper size={20} />, color: 'var(--accent-blue)' },
-                      { id: 'random', name: 'Modo Aleatório', desc: 'Uma surpresa a cada pagamento!', icon: <Settings size={20} />, color: 'var(--text-secondary)' },
+                      { id: 'royal_gold', name: 'Royal Gold & Diamonds', desc: 'O ápice do luxo: ouro e diamantes cascateantes.', icon: <Trophy size={20} />, color: 'var(--accent-yellow)' },
+                      { id: 'midnight_fireworks', name: 'Midnight Fireworks', desc: 'Física realista de morteiros profissionais.', icon: <Sparkles size={20} />, color: 'var(--accent-blue)' },
+                      { id: 'neon_corporate', name: 'Neon Corporate High-Tech', desc: 'Inovação pura com cores elétricas rápidas.', icon: <Zap size={20} />, color: 'var(--accent-pink)' },
+                      { id: 'classic_rh', name: 'Classic RH Pride', desc: 'Canhões clássicos unificados com cores da marca.', icon: <PartyPopper size={20} />, color: 'var(--accent-indigo)' },
+                      { id: 'random', name: 'Surpresa Aleatória', desc: 'Alterna entre todos os estilos premium.', icon: <Settings size={20} />, color: 'var(--text-secondary)' },
                     ].map(style => (
-                      <div 
+                      <motion.div 
                         key={style.id}
+                        whileHover={{ y: -4, scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => handleSaveConfettiStyle(style.id)}
                         style={{ 
-                          padding: 20, 
-                          borderRadius: 16, 
+                          padding: 24, 
+                          borderRadius: 20, 
                           border: `2px solid ${confettiStyle === style.id ? style.color : 'var(--border)'}`,
-                          background: confettiStyle === style.id ? `${style.color}08` : 'var(--bg-secondary)',
+                          background: confettiStyle === style.id ? `${style.color}08` : 'var(--bg-card)',
                           cursor: 'pointer',
-                          transition: 'all 0.2s ease'
+                          transition: 'border-color 0.2s ease, background 0.2s ease',
+                          boxShadow: confettiStyle === style.id ? `0 10px 25px -5px ${style.color}33` : '0 4px 12px rgba(0,0,0,0.03)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 4
                         }}
                       >
-                        <div style={{ width: 40, height: 40, borderRadius: 10, background: `${style.color}15`, color: style.color, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                        <div style={{ width: 44, height: 44, borderRadius: 12, background: `${style.color}15`, color: style.color, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
                           {style.icon}
                         </div>
-                        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>{style.name}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4 }}>{style.desc}</div>
-                      </div>
+                        <div style={{ fontWeight: 800, fontSize: 16, color: 'var(--text-primary)' }}>{style.name}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>{style.desc}</div>
+                      </motion.div>
                     ))}
                   </div>
 

@@ -1,129 +1,150 @@
 import confetti from 'canvas-confetti';
 
 /**
- * GESTOR DE CELEBRAÇÕES PREMIUM V4.0
- * Contém diferentes estilos de efeitos reais e luxuosos.
+ * GESTOR DE CELEBRAÇÕES LUXO V5.0
+ * Estilos baseados nos mockups premium apresentados.
  */
 
-// 1. EFEITO: SHOW DE FOGOS REALISTA (O atual v3.0)
-function fireworkShow() {
+// 1. ROYAL GOLD & DIAMONDS (Luxo e Prestígio)
+function royalGold() {
   const duration = 10 * 1000;
   const animationEnd = Date.now() + duration;
-  const appColors = ['#3b82f6', '#6366f1', '#f59e0b', '#ffffff', '#a855f7'];
-  const goldColors = ['#f59e0b', '#FFD700', '#ffffff', '#B8860B'];
-  const randomInRange = (min, max) => Math.random() * (max - min) + min;
-
-  const shellInterval = setInterval(() => {
-    const timeLeft = animationEnd - Date.now();
-    if (timeLeft <= 2500) return clearInterval(shellInterval);
-
-    const x = randomInRange(0.15, 0.85);
-    const y = randomInRange(0.15, 0.45);
-    const currentColors = Math.random() > 0.6 ? goldColors : appColors;
-
-    confetti({ particleCount: 15, angle: 90, spread: 20, origin: { x, y: y + 0.2 }, colors: ['#ffffff'], startVelocity: 35, gravity: 2, scalar: 0.5, ticks: 30, zIndex: 999999 });
-
-    setTimeout(() => {
-      confetti({ particleCount: 180, spread: 360, startVelocity: 50, decay: 0.92, gravity: 0.6, origin: { x, y }, colors: currentColors, zIndex: 999999, scalar: 1.5, shapes: ['circle'], ticks: 200 });
-      setTimeout(() => {
-        confetti({ particleCount: 60, spread: 360, startVelocity: 25, decay: 0.88, gravity: 0.5, origin: { x, y }, colors: ['#ffffff', '#FFD700'], zIndex: 999999, scalar: 0.5, shapes: ['star'], ticks: 300 });
-      }, 100);
-    }, 200);
-  }, 1200);
-
-  // Grand Finale
-  setTimeout(() => {
-    const finalePositions = [0.2, 0.5, 0.8];
-    finalePositions.forEach((pos, i) => {
-      setTimeout(() => {
-        confetti({ particleCount: 300, spread: 360, startVelocity: 70, origin: { x: pos, y: 0.4 }, colors: ['#ff0000', '#ffff00', '#00ff00', '#0000ff', '#ffffff'], zIndex: 999999, scalar: 2.2, ticks: 400, gravity: 0.8 });
-      }, i * 300);
-    });
-  }, 7800);
-}
-
-// 2. EFEITO: CHUVA DE OURO (Elegante e constante)
-function goldRain() {
-  const duration = 8 * 1000;
-  const animationEnd = Date.now() + duration;
-  const goldPalette = ['#f59e0b', '#FFD700', '#ffffff', '#B8860B', '#F3F4F6'];
+  const goldPalette = ['#FFD700', '#DAA520', '#EEE8AA', '#FFFFFF', '#F0E68C'];
 
   const interval = setInterval(function() {
     const timeLeft = animationEnd - Date.now();
     if (timeLeft <= 0) return clearInterval(interval);
 
+    // Chuva constante
     confetti({
-      particleCount: 20,
+      particleCount: 15,
       startVelocity: 0,
-      ticks: 300,
+      ticks: 400,
       origin: { x: Math.random(), y: Math.random() - 0.3 },
       colors: goldPalette,
       shapes: ['circle', 'star'],
-      gravity: 0.4,
-      scalar: Math.random() * 1 + 0.5,
+      gravity: 0.3,
+      scalar: Math.random() * 1.2 + 0.8,
       drift: Math.random() * 2 - 1,
       zIndex: 999999
     });
+
+    // Explosões ocasionais de "Diamante"
+    if (Math.random() > 0.9) {
+      confetti({
+        particleCount: 50,
+        startVelocity: 30,
+        spread: 360,
+        origin: { x: Math.random(), y: Math.random() * 0.5 },
+        colors: ['#ffffff', '#f8fafc'],
+        shapes: ['star'],
+        scalar: 0.7,
+        zIndex: 999999
+      });
+    }
   }, 100);
 }
 
-// 3. EFEITO: EXPLOSÃO NEON (Energia Alta e Rápida)
-function neonExplosion() {
-  const neonColors = ['#39ff14', '#fe019a', '#04d9ff', '#bc13fe', '#ff073a', '#ccff00'];
-  const count = 300;
-  
-  const burst = (originX, originY) => {
+// 2. MIDNIGHT FIREWORKS (Morteiros Reais e Realismo)
+function midnightFireworks() {
+  const duration = 10 * 1000;
+  const animationEnd = Date.now() + duration;
+  const fireworkColors = ['#3b82f6', '#6366f1', '#a855f7', '#f59e0b', '#ffffff'];
+
+  const shellInterval = setInterval(() => {
+    const timeLeft = animationEnd - Date.now();
+    if (timeLeft <= 2000) return clearInterval(shellInterval);
+
+    const x = Math.random() * 0.8 + 0.1;
+    const y = Math.random() * 0.3 + 0.1;
+
+    // Launch trail
+    confetti({ particleCount: 10, angle: 90, spread: 15, origin: { x, y: y + 0.3 }, colors: ['#ffffff'], startVelocity: 40, gravity: 2, scalar: 0.4, ticks: 40, zIndex: 999999 });
+
+    setTimeout(() => {
+      // Main Burst
+      confetti({
+        particleCount: 200,
+        spread: 360,
+        startVelocity: 55,
+        decay: 0.93,
+        gravity: 0.7,
+        origin: { x, y },
+        colors: fireworkColors,
+        zIndex: 999999,
+        scalar: 1.4,
+        ticks: 250
+      });
+
+      // Shimmer
+      setTimeout(() => {
+        confetti({
+          particleCount: 80,
+          spread: 360,
+          startVelocity: 25,
+          decay: 0.9,
+          gravity: 0.4,
+          origin: { x, y },
+          colors: ['#ffffff', '#FFD700'],
+          shapes: ['star'],
+          scalar: 0.5,
+          ticks: 400
+        });
+      }, 150);
+    }, 250);
+  }, 1000);
+}
+
+// 3. NEON CORPORATE (Inovação e Energia High-Tech)
+function neonCorporate() {
+  const neonColors = ['#00f2ff', '#00ff9d', '#ff00ea', '#7d00ff', '#ffffff'];
+  const duration = 6 * 1000;
+  const animationEnd = Date.now() + duration;
+
+  const interval = setInterval(() => {
+    const timeLeft = animationEnd - Date.now();
+    if (timeLeft <= 0) return clearInterval(interval);
+
     confetti({
-      particleCount: count,
-      startVelocity: 55,
+      particleCount: 100,
+      startVelocity: 60,
       spread: 360,
-      origin: { x: originX, y: originY },
+      origin: { x: Math.random(), y: Math.random() * 0.5 + 0.2 },
       colors: neonColors,
       zIndex: 999999,
       scalar: 1.2,
-      gravity: 0.7,
-      decay: 0.95
+      gravity: 0.8,
+      decay: 0.94,
+      ticks: 150
     });
-  };
-
-  burst(0.25, 0.5);
-  setTimeout(() => burst(0.75, 0.5), 300);
-  setTimeout(() => burst(0.5, 0.3), 600);
+  }, 800);
 }
 
-// 4. EFEITO: TIRO DE CANHÃO (Clássico Lado a Lado)
-function schoolPride() {
+// 4. CLASSIC RH CELEBRATION (O clássico unificado)
+function classicRH() {
   const appColors = ['#3b82f6', '#6366f1', '#f59e0b', '#ffffff'];
-  const count = 250;
-  const defaults = { origin: { y: 0.7 }, zIndex: 999999, scalar: 1.5 };
+  const end = Date.now() + (5 * 1000);
 
-  function fire(particleRatio, opts) {
-    confetti({
-      ...defaults,
-      ...opts,
-      particleCount: Math.floor(count * particleRatio),
-      colors: appColors
-    });
-  }
+  (function frame() {
+    confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0, y: 0.6 }, colors: appColors, zIndex: 999999, scalar: 1.2 });
+    confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1, y: 0.6 }, colors: appColors, zIndex: 999999, scalar: 1.2 });
 
-  fire(0.25, { spread: 26, startVelocity: 55 });
-  fire(0.2, { spread: 60 });
-  fire(0.35, { spread: 100, decay: 0.91, scalar: 1.2 });
-  fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
-  fire(0.1, { spread: 120, startVelocity: 45 });
+    if (Date.now() < end) {
+      requestAnimationFrame(frame);
+    }
+  }());
 }
 
-// FUNÇÃO PRINCIPAL DE DISPARO (Router)
+// ROUTER PRINCIPAL
 export function fireExtravagantConfetti(styleId = 'random') {
-  // Se 'random', escolhe um estilo
-  const styles = ['firework', 'gold_rain', 'neon', 'classic'];
+  const styles = ['royal_gold', 'midnight_fireworks', 'neon_corporate', 'classic_rh'];
   const effectiveStyle = styleId === 'random' ? styles[Math.floor(Math.random() * styles.length)] : styleId;
 
   switch (effectiveStyle) {
-    case 'firework': fireworkShow(); break;
-    case 'gold_rain': goldRain(); break;
-    case 'neon': neonExplosion(); break;
-    case 'classic': schoolPride(); break;
-    default: fireworkShow();
+    case 'royal_gold': royalGold(); break;
+    case 'midnight_fireworks': midnightFireworks(); break;
+    case 'neon_corporate': neonCorporate(); break;
+    case 'classic_rh': classicRH(); break;
+    default: midnightFireworks();
   }
 }
