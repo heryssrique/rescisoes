@@ -42,7 +42,7 @@ app.use(helmet()); // Secure HTTP headers
 // ── Rate Limiting ──────────────────────────────────────────────────────────
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // Limite de 100 requisições por IP
+  max: 500, // Limite aumentado para evitar falsos positivos
   message: { error: 'Muitas requisições vindas deste IP, tente novamente em 15 minutos.' },
   standardHeaders: true,
   legacyHeaders: false,
