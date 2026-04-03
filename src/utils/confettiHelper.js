@@ -1,125 +1,139 @@
 import confetti from 'canvas-confetti';
 
 /**
- * Dispara uma celebração V2.7 — Show de Fogos de Artifício com Grand Finale Arco-Íris.
- * Combina elegância corporativa no início com uma explosão de cores vibrantes no final.
+ * Dispara uma celebração V3.0 (ULTRA-REALISTA) — Real Firework Shells.
+ * Simula o lançamento de morteiros, o estouro em alta altitude e o brilho final (shimmer).
  */
 export function fireExtravagantConfetti() {
-  const duration = 9 * 1000; // Estendido para 9 segundos para acomodar o show completo
+  const duration = 10 * 1000; // Celebração estendida de 10 segundos
   const animationEnd = Date.now() + duration;
   
   const appColors = ['#3b82f6', '#6366f1', '#f59e0b', '#ffffff', '#a855f7'];
-  const goldColors = ['#f59e0b', '#FFD700', '#ffffff'];
+  const goldColors = ['#f59e0b', '#FFD700', '#ffffff', '#B8860B'];
   const rainbowColors = ['#ff0000', '#ffa500', '#ffff00', '#008000', '#0000ff', '#4b0082', '#ee82ee'];
 
   const randomInRange = (min, max) => Math.random() * (max - min) + min;
 
-  // 1. SHOW DE FOGOS CORPORATIVOS (Primeiros 7 segundos)
-  const fireworkInterval = setInterval(() => {
+  // 1. LANÇADOR DE MORTEIROS (Efeito Realista de Explosão única)
+  const shellInterval = setInterval(() => {
     const timeLeft = animationEnd - Date.now();
-    // Parar os fogos normais um pouco antes do Grand Finale
-    if (timeLeft <= 2000) return clearInterval(fireworkInterval);
+    if (timeLeft <= 2500) return clearInterval(shellInterval);
 
-    const x = randomInRange(0.1, 0.9);
-    const y = randomInRange(0.1, 0.4);
-    
+    // Coordenadas da Explosão
+    const x = randomInRange(0.15, 0.85);
+    const y = randomInRange(0.15, 0.45);
+    const useRainbow = timeLeft < 5000; // Começa a usar cores arco-íris na metade final
+    const currentColors = useRainbow ? rainbowColors : (Math.random() > 0.6 ? goldColors : appColors);
+
+    // PASSO 1: O "Launch" (Rastro rápido de subida)
+    // Simulado por uma pequena explosão vertical estreita
+    confetti({
+      particleCount: 15,
+      angle: 90,
+      spread: 20,
+      origin: { x, y: y + 0.2 }, // Começa logo abaixo da explosão
+      colors: ['#ffffff'],
+      startVelocity: 35,
+      gravity: 2,
+      scalar: 0.5,
+      ticks: 30,
+      zIndex: 999999
+    });
+
+    // PASSO 2: A Explosão Principal (High Altitude Shell)
     setTimeout(() => {
+      // Impacto Primário (Bolas grandes)
       confetti({
-        particleCount: 150,
-        spread: 180,
-        startVelocity: 45,
+        particleCount: 180,
+        spread: 360,
+        startVelocity: 50,
+        decay: 0.92,
+        gravity: 0.6,
         origin: { x, y },
-        colors: Math.random() > 0.5 ? appColors : goldColors,
+        colors: currentColors,
         zIndex: 999999,
-        scalar: 1.2,
-        gravity: 0.7,
+        scalar: 1.5,
         shapes: ['circle'],
         ticks: 200
       });
 
-      // Efeito de "Crackle" (Estrelinhas brancas)
+      // Shimmer/Brocade (Faíscas prateadas/douradas que demoram a sumir)
       setTimeout(() => {
         confetti({
-          particleCount: 40,
+          particleCount: 60,
           spread: 360,
-          startVelocity: 20,
+          startVelocity: 25,
+          decay: 0.88,
+          gravity: 0.5,
           origin: { x, y },
-          colors: ['#ffffff'],
+          colors: ['#ffffff', '#FFD700'],
           zIndex: 999999,
-          scalar: 0.7,
+          scalar: 0.5,
           shapes: ['star'],
-          gravity: 0.4,
-          ticks: 100
+          ticks: 300 // Duram mais tempo no ar
         });
       }, 100);
-    }, randomInRange(10, 500));
-  }, 900);
 
-  // 2. CHUVA LATERAL (Para preencher o fundo)
-  const rainInterval = setInterval(function() {
-    const timeLeft = animationEnd - Date.now();
-    if (timeLeft <= 2500) return clearInterval(rainInterval);
+      // Pequenas explosões secundárias (Efeito cascata)
+      if (Math.random() > 0.5) {
+        setTimeout(() => {
+          fireworkBurst(x + randomInRange(-0.1, 0.1), y + randomInRange(-0.1, 0.1), currentColors, 40);
+        }, 300);
+      }
+    }, 200);
 
+  }, 1200);
+
+  function fireworkBurst(originX, originY, colors, count) {
     confetti({
-      particleCount: 20,
-      angle: 60,
-      spread: 60,
-      origin: { x: 0, y: 0.7 },
-      colors: appColors,
+      particleCount: count,
+      spread: 360,
+      startVelocity: 30,
+      origin: { x: originX, y: originY },
+      colors: colors,
       zIndex: 999999,
       scalar: 1,
-      gravity: 1.2
+      gravity: 0.8
     });
+  }
 
-    confetti({
-      particleCount: 20,
-      angle: 120,
-      spread: 60,
-      origin: { x: 1, y: 0.7 },
-      colors: appColors,
-      zIndex: 999999,
-      scalar: 1,
-      gravity: 1.2
-    });
-  }, 450);
-
-  // 3. O GRANDE FINAL ARCO-ÍRIS (Barragem de cores vibrantes)
-  // Ativa nos últimos 2 segundos da animação
+  // 2. GRAND FINALE (Múltiplos Morteiros e Rainbow Blast)
   setTimeout(() => {
-    const burstRainbow = (x, delay) => {
+    // 3 Morteiros de uma vez
+    const finalePositions = [0.2, 0.5, 0.8];
+    
+    finalePositions.forEach((pos, i) => {
       setTimeout(() => {
+        // Explosão de Grande Escala
         confetti({
-          particleCount: 500,
+          particleCount: 400,
           spread: 360,
-          startVelocity: 70,
-          origin: { x, y: 0.5 },
+          startVelocity: 75,
+          origin: { x: pos, y: 0.4 },
           colors: rainbowColors,
           zIndex: 999999,
-          scalar: 2.2,
-          ticks: 400,
-          gravity: 0.9,
+          scalar: 2.5,
+          ticks: 500,
+          gravity: 0.8,
           shapes: ['circle', 'star']
         });
-      }, delay);
-    };
+      }, i * 300);
+    });
 
-    // Sequência final de explosões massivas
-    burstRainbow(0.2, 0);      // Explosão Esquerda
-    burstRainbow(0.8, 400);    // Explosão Direita
-    burstRainbow(0.5, 800);    // Explosão Central (O Clímax)
-    
-    // Chuva de encerramento
+    // Chuva Final de "Cinzas Douradas"
     setTimeout(() => {
       confetti({
-        particleCount: 200,
+        particleCount: 150,
         spread: 160,
-        origin: { y: 0.3 }, // Caindo bem de cima
-        colors: rainbowColors,
+        origin: { y: 0.2 },
+        colors: ['#FFD700', '#ffffff'],
         zIndex: 999999,
-        scalar: 1.5,
-        gravity: 0.5
+        scalar: 0.6,
+        gravity: 0.4,
+        drift: 0,
+        ticks: 600
       });
-    }, 1200);
-    
-  }, 7000);
+    }, 1500);
+
+  }, 7800);
 }
