@@ -65,10 +65,24 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
   // Memoizar material para evitar re-alocação a cada frame
   const material = useMemo(() => {
     if (type === 'diamond') return new THREE.MeshPhysicalMaterial({ 
-      color, metalness: 0.1, roughness: 0, transmission: 1, thickness: 1, ior: 2.4, iridescence: 0.5, reflectivity: 1 
+      color: 0xffffff, 
+      metalness: 0, 
+      roughness: 0, 
+      transmission: 1, 
+      thickness: 1.5, 
+      ior: 2.417, 
+      iridescence: 0.3, 
+      reflectivity: 1,
+      clearcoat: 1,
+      clearcoatRoughness: 0,
+      envMapIntensity: 2
     });
     return new THREE.MeshStandardMaterial({ 
-      color, metalness: type === 'coin' ? 0.9 : 0.5, roughness: 0.2, emissive: color, emissiveIntensity: type === 'box' || type === 'sparkle' ? 2 : 0.2 
+      color, 
+      metalness: type === 'coin' ? 0.9 : 0.5, 
+      roughness: 0.2, 
+      emissive: color, 
+      emissiveIntensity: type === 'box' || type === 'sparkle' ? 2 : 0.2 
     });
   }, [type, color]);
 
