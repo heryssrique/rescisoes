@@ -24,7 +24,7 @@ const NEON_RIBBON_GEOM = new THREE.BoxGeometry(0.08, 1.5, 0.2);
 const NEON_RING_GEOM = new THREE.TorusGeometry(0.5, 0.08, 8, 24); 
 const CONFETTI_RECT_GEOM = new THREE.BoxGeometry(0.8, 0.4, 0.02); 
 const CONFETTI_SQUARE_GEOM = new THREE.BoxGeometry(0.5, 0.5, 0.02); 
-const FIREWORK_GEOM = new THREE.BoxGeometry(0.03, 0.03, 0.6); // Rastro fino apontado pro eixo Z (direção)
+const FIREWORK_GEOM = new THREE.BoxGeometry(0.04, 0.04, 1.0); // Rastro de Pólvora Dinâmico
 
 // 1. COMPONENTE BASE: ITEM COM FÍSICA 3D
 function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity = 0.005, damping = 0.992 }) {
@@ -42,17 +42,20 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
     // Damping (Amortecimento aerodinâmico)
     vel.current.multiplyScalar(damping);
     
-    // Escala de tempo: se o construtor indicar um "slow motion" leve. (Damping alto = lenta, baixo = frenética)
+    // Escala de tempo: se o construtor indicar um "slow motion" leve. 
     const timeScale = damping < 0.985 ? 1 : 0.5; 
     
     pos.current.x += vel.current.x * timeScale;
     pos.current.y += vel.current.y * timeScale;
     pos.current.z += vel.current.z * timeScale;
     
-    // Rotação: papel e neo turbilhonam; fogos apontam pra velocidade
+    // Rotação Adaptativa e Motion Blur Físico
     if (type === 'firework') {
       const target = pos.current.clone().add(vel.current);
-      mesh.current.lookAt(target); // Sempre aponta a ponta (Z) para a direção da sua velocidade, como pólvora
+      mesh.current.lookAt(target); 
+      // Motion blur autêntico: o rastro se alonga conforme a velocidade atual e se torna um pinguinho de luz quando para
+      const speed = vel.current.length();
+      mesh.current.scale.z = Math.max(0.1, speed * 8); // Estica o Z
     } else {
       const rotScale = timeScale === 1 ? 1 : 0.15;
       mesh.current.rotation.x += rot.current.x * rotScale;
@@ -82,7 +85,6 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
   }, [type]);
 
   const material = useMemo(() => {
-    // Shader Cristal / Diamante de Alta Refracao
     if (type === 'diamond') return new THREE.MeshPhysicalMaterial({ 
       color: 0xffffff, metalness: 0, roughness: 0, transmission: 1, thickness: 1.5, ior: 2.417, iridescence: 0.3, reflectivity: 1, clearcoat: 1, envMapIntensity: 2
     });
@@ -90,9 +92,8 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
     // Fagulhas e Fogos = Pura luz (Basic Material ignora sombras e luzes, é sempre "aceso" 100%)
     if (type === 'firework') return new THREE.MeshBasicMaterial({ color });
 
-    // Papel Convencional Fosco
     if (type === 'confetti_rect' || type === 'confetti_square') return new THREE.MeshStandardMaterial({
-      color, metalness: 0, roughness: 0.8 // papel não reflete
+      color, metalness: 0, roughness: 0.8 
     });
 
     const isNeon = type.includes('neon');
@@ -101,7 +102,7 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
       metalness: type === 'coin' ? 0.9 : 0.2, 
       roughness: isNeon ? 0 : 0.2, 
       emissive: color, 
-      emissiveIntensity: isNeon ? 8 : (type === 'sparkle' ? 2 : 0) // Faíscas brilham menos que Neon
+      emissiveIntensity: isNeon ? 8 : (type === 'sparkle' ? 2 : 0) 
     });
   }, [type, color]);
 
@@ -112,7 +113,7 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
 
 // 2. CENA DE CELEBRAÇÃO ESPECIALIZADA
 function CelebrationScene({ style = 'royal_gold' }) {
-  const count = style === 'midnight_fireworks' ? 180 : (style === 'classic_rh' || style === 'neon_corporate' ? 150 : 80);
+  const count = style === 'midnight_fireworks' ? 200 : (style === 'classic_rh' || style === 'neon_corporate' ? 150 : 80);
   
   const elements = useMemo(() => {
     const rainbowColors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#8b00ff'];
@@ -131,41 +132,39 @@ function CelebrationScene({ style = 'royal_gold' }) {
       let position = [0, 0, 0];
       let velocity = [0, 0, 0];
       let gravity = 0.005;
-      let damping = 0.992; // Damping base para gravidade zero cinemática
+      let damping = 0.992; 
       let rotation = [Math.random() * 0.1, Math.random() * 0.1, Math.random() * 0.1];
 
       if (style === 'royal_gold') {
-        // Cascata Imponente
         type = Math.random() > 0.4 ? 'coin' : 'diamond';
         color = goldColors[i % goldColors.length];
         position = [THREE.MathUtils.randFloatSpread(25), 15 + Math.random() * 20, THREE.MathUtils.randFloatSpread(10)];
         velocity = [Math.random() * 0.01 - 0.005, -0.01 - Math.random() * 0.02, 0];
         rotation = [Math.random() * 0.5, Math.random() * 0.5, Math.random() * 0.5];
         gravity = 0.0003; 
-        damping = 0.995; // Flutua demais, muito elegante
+        damping = 0.995; 
       } else if (style === 'classic_rh') {
-        // Canhões Tradicionais de Confete de Papel
         type = Math.random() > 0.5 ? 'confetti_rect' : 'confetti_square';
         color = ['#3b82f6', '#6366f1', '#f59e0b', '#ffffff', '#10b981', '#ec4899'][i % 6];
         const fromLeft = i % 2 === 0;
-        position = [fromLeft ? -15 : 15, -12, THREE.MathUtils.randFloatSpread(10)]; // Nascem dos cantos inferiores
+        position = [fromLeft ? -15 : 15, -12, THREE.MathUtils.randFloatSpread(10)]; 
         velocity = [
-          fromLeft ? 0.2 + Math.random() * 0.15 : -0.2 - Math.random() * 0.15, // Disparo em X pro meio da tela
-          0.4 + Math.random() * 0.3, // Impulso pra cima
-          THREE.MathUtils.randFloatSpread(0.15) // Dispersão em Z
+          fromLeft ? 0.2 + Math.random() * 0.15 : -0.2 - Math.random() * 0.15, 
+          0.4 + Math.random() * 0.3, 
+          THREE.MathUtils.randFloatSpread(0.15) 
         ];
-        rotation = [Math.random() * 0.8, Math.random() * 0.8, Math.random() * 0.8]; // Papel gira muito rapido
-        gravity = 0.006; // Gravidade realista de papel
-        damping = 0.98; // Atrito real aerodinâmico (velocidade real 1:1 ativada)
+        rotation = [Math.random() * 0.8, Math.random() * 0.8, Math.random() * 0.8]; 
+        gravity = 0.006; 
+        damping = 0.98; 
       } else if (style === 'midnight_fireworks') {
-        // Fogos Reais com Rastros Finos apontando a direção do vôo
+        // Estouro Realista (Altíssima energia inicial com forte desaceleração pelo atrito)
         type = 'firework';
         color = ['#ff0055', '#FFD700', '#00f2ff', '#ff00ea'][i % 4];
         
         const center = fireworksCenters[i % 3];
         position = [...center];
         
-        const speed = 0.08 + Math.random() * 0.12; 
+        const speed = 0.4 + Math.random() * 0.5; // Explosão violentamente forte
         const theta = Math.random() * Math.PI * 2;
         const phi = Math.acos((Math.random() * 2) - 1); 
         velocity = [
@@ -173,7 +172,8 @@ function CelebrationScene({ style = 'royal_gold' }) {
           speed * Math.cos(phi), 
           speed * Math.sin(phi) * Math.sin(theta)
         ];
-        gravity = 0.001; // Caem rápido após a explosão
+        gravity = 0.004; // Peso sensível para criar a cascata de pólvora caindo
+        damping = 0.92; // Alta fricção para barrar a explosão e fazê-la parar no ar como um balão
       } else if (style === 'neon_corporate') {
         // High-Tech Cyber Streams (Estilo Matrix Data Rain / Lasers)
         type = 'neon_ribbon';
