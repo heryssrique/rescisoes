@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
 import { useApp } from '../context/AppContext';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts';
 import { User, Calendar, CheckCircle, TrendingUp, Briefcase } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { MOTIVOS, COLIGADAS, STATUS_FLOW } from '../data/initialData';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#f97316', '#14b8a6'];
 
@@ -99,16 +100,28 @@ export function Dashboard({ data: injectedData }) {
       }
     });
 
-    const motivoComparisonData = Array.from(todosMotivos).map(m => ({
-      name: m,
-      current: currentMotivos[m] || 0,
-      previous: previousMotivos[m] || 0
-    })).sort((a, b) => (b.current + b.previous) - (a.current + a.previous));
+    const motivoComparisonData = Array.from(todosMotivos).map(m => {
+      const label = MOTIVOS.find(mot => mot.value === m)?.label || m;
+      return {
+        name: label,
+        current: currentMotivos[m] || 0,
+        previous: previousMotivos[m] || 0
+      };
+    }).sort((a, b) => (b.current + b.previous) - (a.current + a.previous));
 
     return {
-      motivoChartData: Object.entries(stats.peloMotivo).map(([name, value]) => ({ name, value })),
-      statusChartData: Object.entries(stats.peloStatus).map(([name, value]) => ({ name, value })),
-      empresaChartData: Object.entries(stats.pelaEmpresa).map(([name, value]) => ({ name, value })),
+      motivoChartData: Object.entries(stats.peloMotivo).map(([name, value]) => ({ 
+        name: MOTIVOS.find(m => m.value === name)?.label || name, 
+        value 
+      })),
+      statusChartData: Object.entries(stats.peloStatus).map(([name, value]) => ({ 
+        name: STATUS_FLOW.find(s => s.key === name)?.label || name, 
+        value 
+      })),
+      empresaChartData: Object.entries(stats.pelaEmpresa).map(([id, value]) => ({ 
+        name: COLIGADAS[id]?.nome || id, 
+        value 
+      })),
       mesChartData: data,
       growthPercent: growth,
       yoyData: yoyMap,
@@ -301,7 +314,7 @@ export function Dashboard({ data: injectedData }) {
                 <div style={{ width: 40, fontWeight: 800, color: 'var(--text-muted)', fontSize: 16 }}>{i+1}º</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <span style={{ fontSize: 12, fontWeight: 600 }}>C{emp.name}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600 }}>{emp.name}</span>
                     <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{emp.value} proc.</span>
                   </div>
                   <div style={{ height: 6, background: 'var(--bg-secondary)', borderRadius: 3, overflow: 'hidden' }}>
