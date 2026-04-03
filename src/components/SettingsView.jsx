@@ -322,7 +322,7 @@ export function SettingsView() {
                       </div>
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>Cor da Etiqueta Visual</label>
-                        <select className="form-input" value={motivo.class} onChange={e => updateMotivo(idx, 'class', e.target.value)} style={{ padding: '8px 12px', background: '#fff' }}>
+                        <select className="form-input" value={motivo.class} onChange={e => updateMotivo(idx, 'class', e.target.value)} style={{ padding: '8px 12px', background: 'var(--bg-card)' }}>
                           <option value="motivo-pedido">Azul (Padrão/Pedido)</option>
                           <option value="motivo-demissao">Laranja (Demissão/Alerta)</option>
                           <option value="motivo-acordo">Amarelo (Acordo Mútuo)</option>
