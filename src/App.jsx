@@ -67,25 +67,11 @@ function AppContent() {
   const [showNew, setShowNew] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const { toast } = useToast();
-  const notifiedPrazos = useRef(new Set());
 
   useEffect(() => {
     actions.fetchAll();
     actions.fetchArchived();
   }, [actions]);
-
-  // Toast de Prazos (Substituindo Notificações do Navegador)
-  useEffect(() => {
-    if (state.notifications && state.notifications.length > 0) {
-      state.notifications.forEach(n => {
-        if (!n.read && !notifiedPrazos.current.has(n.id)) {
-          toast(n.message, n.severity || 'info');
-          notifiedPrazos.current.add(n.id);
-        }
-      });
-    }
-  }, [state.notifications, toast]);
 
   const processedData = useMemo(() => {
     const activeRaw = applyColigadaFilter(desligamentos || [], globalColigadaFilter);
