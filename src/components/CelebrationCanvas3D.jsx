@@ -65,8 +65,8 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
     const speed = vel.current.length();
     
     // RENASCER CONTÍNUO: Elimina o "vazio / estático" do final das animações
-    // Se caiu da borda (y <-30), viajou muito (dist > 60) ou os fogos pararam no ar (speed < 0.02)
-    if (pos.current.y < -30 || dist > 60 || ((type === 'firework' || type === 'sparkle') && speed < 0.02)) {
+    // Se caiu da borda (y <-30), viajou muito (dist > 60) ou os fogos pararam no ar (speed < 0.005)
+    if (pos.current.y < -30 || dist > 60 || ((type === 'firework' || type === 'sparkle') && speed < 0.005)) {
       if (type === 'confetti_rect' || type === 'confetti_square') {
         const fromLeft = pos.current.x < 0;
         pos.current.set(fromLeft ? -15 : 15, -12, THREE.MathUtils.randFloatSpread(10));
@@ -76,10 +76,11 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
           THREE.MathUtils.randFloatSpread(0.1)
         );
       } else if (type === 'firework' || type === 'sparkle') {
-        // Dispara UMA NOVA BATERIA de fogos no céu 
+        // Dispara UMA NOVA BATERIA de fogos no céu lenta e perfeitamente
         const newCenter = [THREE.MathUtils.randFloatSpread(25), 5 + Math.random() * 10, THREE.MathUtils.randFloatSpread(5)];
         pos.current.set(...newCenter);
-        const newSpeed = type === 'sparkle' ? (0.2 + Math.random() * 0.3) : (0.5 + Math.random() * 0.6); 
+        // Velocidade natural e elegante de fogos maciços caindo do ceu
+        const newSpeed = type === 'sparkle' ? (0.05 + Math.random() * 0.05) : (0.1 + Math.random() * 0.1); 
         const theta = Math.random() * Math.PI * 2;
         const phi = Math.acos((Math.random() * 2) - 1); 
         vel.current.set(
@@ -225,8 +226,8 @@ function CelebrationScene({ style = 'royal_gold' }) {
         const center = centers[i % centers.length];
         position = [...center];
         
-        // Explosão Absurda com travamento de atrito (Eles explodem e PARAM NO AR pra não cair como "projéteis")
-        const speed = isCrackle ? (0.2 + Math.random() * 0.3) : (0.5 + Math.random() * 0.6); 
+        // Explosão majestosa e flutuante
+        const speed = isCrackle ? (0.05 + Math.random() * 0.05) : (0.1 + Math.random() * 0.1); 
         const theta = Math.random() * Math.PI * 2;
         const phi = Math.acos((Math.random() * 2) - 1); 
         velocity = [
@@ -234,8 +235,8 @@ function CelebrationScene({ style = 'royal_gold' }) {
           speed * Math.cos(phi), 
           speed * Math.sin(phi) * Math.sin(theta)
         ];
-        gravity = 0; // ZERO gravidade. Pólvora voa, para, brilha parado igual ao real e evapora.
-        damping = 0.90; // Super atrito freia a explosão logo criando esferas volumosas perfeitas no céu
+        gravity = 0.0005; // Pequeníssima gravidade, só pesa gentilmente o pó do fogo descendo
+        damping = 0.97; // Expande largamente e lentamente
       } else if (style === 'neon_corporate') {
         // "Vibrant, high-energy explosions of neon cyan, magenta... bursting from the center"
         type = 'neon_laser';
