@@ -8,7 +8,7 @@ import { AuthView } from './components/AuthView';
 import { differenceInDays, parseISO, startOfDay } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LayoutList, Columns, Plus, Users, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut, HelpCircle, FileText, Sun, Moon, Calendar, History, Link
+  LayoutList, Columns, Plus, Users, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut, HelpCircle, FileText, Sun, Moon, Calendar, History, Link, Monitor
 } from 'lucide-react';
 
 // Lazy Load Views for better performance and to avoid initialization race conditions
@@ -63,6 +63,31 @@ const applyColigadaFilter = (list, coligadaFilter) => {
 
 function AppContent() {
   const { state, dispatch, actions } = useApp();
+  const { toast } = useToast();
+  const notifiedPrazos = useRef(new Set());
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallBtn, setShowInstallBtn] = useState(false);
+
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBtn(true);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setShowInstallBtn(false);
+      setDeferredPrompt(null);
+    }
+  };
+
   const { user, view, selected, desligamentos, archivedDesligamentos, loading, error, globalColigadaFilter } = state;
   const [showNew, setShowNew] = useState(false);
   const [showImport, setShowImport] = useState(false);
@@ -176,6 +201,23 @@ function AppContent() {
             </motion.button>
           ))}
           <div className="nav-section-label" style={{ marginTop: 16 }}>{isSidebarCollapsed ? '...' : 'Ações'}</div>
+          {showInstallBtn && (
+            <motion.button 
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="nav-item install-btn" 
+              style={{ 
+                justifyContent: isSidebarCollapsed ? 'center' : 'flex-start', 
+                padding: isSidebarCollapsed ? '12px' : '11px 16px',
+                color: 'var(--accent-blue)',
+                fontWeight: 700
+              }} 
+              onClick={handleInstallApp}
+            >
+              <Monitor size={15} />
+              {!isSidebarCollapsed && <span>Instalar Aplicativo</span>}
+            </motion.button>
+          )}
           <button className="nav-item" style={{ justifyContent: isSidebarCollapsed ? 'center' : 'flex-start', padding: isSidebarCollapsed ? '12px' : '11px 16px' }} onClick={() => setShowImport(true)}><FileSpreadsheet size={15} />{!isSidebarCollapsed && <span>Importar Planilha</span>}</button>
         </div>
       </nav>
