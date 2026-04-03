@@ -1,7 +1,8 @@
-import React, { useRef, useMemo, useState, useEffect } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Stars, PerspectiveCamera, Environment, Float, Sparkles } from '@react-three/drei';
+import { Stars, PerspectiveCamera, Environment, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // 1. COMPONENTE BASE: ITEM COM FÍSICA 3D
 function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity = 0.005 }) {
@@ -15,6 +16,9 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
     
     // Aplicar gravidade à velocidade
     vel.current.y -= gravity;
+    
+    // Simular resistência do ar (Damping) para suavidade extrema
+    vel.current.multiplyScalar(0.98);
     
     // Atualizar posição
     pos.current.add(vel.current);
@@ -87,22 +91,22 @@ function CelebrationScene({ style = 'royal_gold' }) {
         type = Math.random() > 0.4 ? 'coin' : 'diamond';
         color = goldColors[i % goldColors.length];
         position = [THREE.MathUtils.randFloatSpread(25), 15 + Math.random() * 10, THREE.MathUtils.randFloatSpread(10)];
-        velocity = [Math.random() * 0.01 - 0.005, -0.02 - Math.random() * 0.02, 0];
-        gravity = 0.002;
+        velocity = [Math.random() * 0.005 - 0.0025, -0.005 - Math.random() * 0.01, 0];
+        gravity = 0.0004;
       } else if (style === 'classic_rh') {
         type = Math.random() > 0.5 ? 'coin' : 'sparkle';
         color = ['#3b82f6', '#6366f1', '#f59e0b', '#ffffff'][i % 4];
         const fromLeft = i % 2 === 0;
         position = [fromLeft ? -15 : 15, -10, 0];
-        velocity = [fromLeft ? 0.08 + Math.random() * 0.05 : -0.08 - Math.random() * 0.05, 0.12 + Math.random() * 0.1, Math.random() * 0.04 - 0.02];
-        gravity = 0.003;
+        velocity = [fromLeft ? 0.04 + Math.random() * 0.03 : -0.04 - Math.random() * 0.03, 0.08 + Math.random() * 0.08, Math.random() * 0.02 - 0.01];
+        gravity = 0.0006;
       } else if (style === 'midnight_fireworks') {
         type = 'sparkle';
         color = ['#ffffff', '#FFD700', '#3b82f6', '#ff00ea'][i % 4];
         // Múltiplos pontos de explosão
         const burstPos = [THREE.MathUtils.randFloatSpread(30), THREE.MathUtils.randFloat(0, 10), THREE.MathUtils.randFloatSpread(10)];
         position = [...burstPos];
-        const speed = 0.04 + Math.random() * 0.08;
+        const speed = 0.02 + Math.random() * 0.04;
         const theta = Math.random() * Math.PI * 2;
         const phi = Math.random() * Math.PI;
         velocity = [
@@ -110,20 +114,20 @@ function CelebrationScene({ style = 'royal_gold' }) {
           speed * Math.sin(phi) * Math.sin(theta),
           speed * Math.cos(phi)
         ];
-        gravity = 0.0008;
+        gravity = 0.0001;
       } else if (style === 'neon_corporate') {
         type = Math.random() > 0.5 ? 'box' : 'diamond';
         color = corporateColors[i % corporateColors.length];
         position = [THREE.MathUtils.randFloatSpread(30), 15, THREE.MathUtils.randFloatSpread(15)];
-        velocity = [0, -0.04 - Math.random() * 0.04, 0];
-        gravity = 0.002;
+        velocity = [0, -0.01 - Math.random() * 0.02, 0];
+        gravity = 0.0004;
       } else {
         // Rainbow/Default
         type = 'diamond';
         color = rainbowColors[i % rainbowColors.length];
         position = [THREE.MathUtils.randFloatSpread(25), 15, THREE.MathUtils.randFloatSpread(10)];
-        velocity = [0, -0.03 - Math.random() * 0.02, 0];
-        gravity = 0.0015;
+        velocity = [0, -0.01 - Math.random() * 0.01, 0];
+        gravity = 0.0003;
       }
 
       return {
@@ -140,7 +144,6 @@ function CelebrationScene({ style = 'royal_gold' }) {
 
   return (
     <>
-      <PerspectiveCamera makeDefault position={[0, 0, 15]} />
       <ambientLight intensity={0.6} />
       <pointLight position={[10, 10, 10]} intensity={2.5} color="#ffffff" />
       <pointLight position={[-10, 5, 5]} intensity={1.5} color={style === 'royal_gold' ? '#FFD700' : '#ffffff'} />
@@ -157,10 +160,9 @@ function CelebrationScene({ style = 'royal_gold' }) {
   );
 }
 
-// 3. WRAPPER CONTAINER
-export function CelebrationCanvas3D({ active, onComplete }) {
-  if (!active) return null;
-
+// 3. WRAPPER CONTAINER (Truly Persistent Canvas)
+export function CelebrationCanvas3D({ active }) {
+  // O segredo do 'Context Lost' é o Canvas estar SEMPRE montado
   return (
     <div style={{ 
       position: 'fixed', 
@@ -170,12 +172,31 @@ export function CelebrationCanvas3D({ active, onComplete }) {
       height: '100vh', 
       zIndex: 999999, 
       pointerEvents: 'none',
-      background: 'rgba(0,0,0,0.15)',
-      backdropFilter: 'blur(3px)'
     }}>
-      <Canvas shadows dpr={[1, 2]}>
-        <CelebrationScene style={active} />
+      <AnimatePresence>
+        {active && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+            style={{ 
+              width: '100%', 
+              height: '100%', 
+              background: 'rgba(0,0,0,0.15)',
+              backdropFilter: 'blur(3px)'
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <Canvas shadows dpr={[1, 2]} gl={{ antialias: true }} camera={{ position: [0, 0, 15] }}>
+        {active && <CelebrationScene style={active} />}
       </Canvas>
     </div>
   );
 }
+
+// 4. NOTA FINAL: Sistema de Celebração Premium v12.1
+// Estabilização completa do contexto WebGL com física ultra-lenta.
+
