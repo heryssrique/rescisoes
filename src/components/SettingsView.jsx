@@ -235,7 +235,14 @@ export function SettingsView() {
   };
   const removeLink = (index) => setLinksList(linksList.filter((_, i) => i !== index));
 
-  const [activeTab, setActiveTab] = useState('empresas');
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('desligest_settings_tab') || 'empresas';
+  });
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    localStorage.setItem('desligest_settings_tab', tabId);
+  };
 
   return (
     <motion.div 
@@ -261,42 +268,42 @@ export function SettingsView() {
           <button 
             className={`btn ${activeTab === 'empresas' ? 'btn-primary' : ''}`}
             style={{ justifyContent: 'flex-start', padding: '12px 16px', background: activeTab === 'empresas' ? 'var(--accent-blue)' : 'transparent', color: activeTab === 'empresas' ? '#fff' : 'var(--text-secondary)', border: 'none', boxShadow: 'none' }}
-            onClick={() => setActiveTab('empresas')}
+            onClick={() => handleTabChange('empresas')}
           >
             <Users size={16} /> Padrões de Empresas
           </button>
           <button 
             className={`btn ${activeTab === 'motivos' ? 'btn-primary' : ''}`}
             style={{ justifyContent: 'flex-start', padding: '12px 16px', background: activeTab === 'motivos' ? 'var(--accent-indigo)' : 'transparent', color: activeTab === 'motivos' ? '#fff' : 'var(--text-secondary)', border: 'none', boxShadow: 'none' }}
-            onClick={() => setActiveTab('motivos')}
+            onClick={() => handleTabChange('motivos')}
           >
             <FileText size={16} /> Motivos de Desligamento
           </button>
           <button 
             className={`btn ${activeTab === 'checklist' ? 'btn-primary' : ''}`}
             style={{ justifyContent: 'flex-start', padding: '12px 16px', background: activeTab === 'checklist' ? 'var(--accent-green)' : 'transparent', color: activeTab === 'checklist' ? '#fff' : 'var(--text-secondary)', border: 'none', boxShadow: 'none' }}
-            onClick={() => setActiveTab('checklist')}
+            onClick={() => handleTabChange('checklist')}
           >
             <ListChecks size={16} /> Checklist Automático
           </button>
           <button 
             className={`btn ${activeTab === 'fluxo' ? 'btn-primary' : ''}`}
             style={{ justifyContent: 'flex-start', padding: '12px 16px', background: activeTab === 'fluxo' ? 'var(--accent-orange)' : 'transparent', color: activeTab === 'fluxo' ? '#fff' : 'var(--text-secondary)', border: 'none', boxShadow: 'none' }}
-            onClick={() => setActiveTab('fluxo')}
+            onClick={() => handleTabChange('fluxo')}
           >
             <Columns size={16} /> Etapas do Kanban
           </button>
           <button 
             className={`btn ${activeTab === 'links' ? 'btn-primary' : ''}`}
             style={{ justifyContent: 'flex-start', padding: '12px 16px', background: activeTab === 'links' ? 'var(--accent-blue)' : 'transparent', color: activeTab === 'links' ? '#fff' : 'var(--text-secondary)', border: 'none', boxShadow: 'none' }}
-            onClick={() => setActiveTab('links')}
+            onClick={() => handleTabChange('links')}
           >
             <Link size={16} /> Links Úteis
           </button>
           <button 
             className={`btn ${activeTab === 'sistema' ? 'btn-primary' : ''}`}
             style={{ justifyContent: 'flex-start', padding: '12px 16px', background: activeTab === 'sistema' ? 'var(--accent-purple)' : 'transparent', color: activeTab === 'sistema' ? '#fff' : 'var(--text-secondary)', border: 'none', boxShadow: 'none' }}
-            onClick={() => setActiveTab('sistema')}
+            onClick={() => handleTabChange('sistema')}
           >
             <Database size={16} /> Sistema e Dados
           </button>
