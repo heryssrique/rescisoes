@@ -87,21 +87,29 @@ router.put('/:id', auth, async (req, res, next) => {
     for (const key in updates) {
       if (ignoreFields.includes(key) || updates[key] === undefined) continue;
 
-      const oldVal = String(existing[key] || '');
-      const newVal = String(updates[key] || '');
+      // Safe comparison for dates and complex objects
+      let oldVal = existing[key];
+      let newVal = updates[key];
 
-      if (oldVal !== newVal) {
+      // Convert mongoose items to JS objects if needed
+      if (oldVal && typeof oldVal.toObject === 'function') oldVal = oldVal.toObject();
+
+      const oldClean = (oldVal instanceof Date) ? oldVal.toISOString() : (typeof oldVal === 'object' ? JSON.stringify(oldVal) : String(oldVal || ''));
+      const newClean = (newVal instanceof Date) ? newVal.toISOString() : (typeof newVal === 'object' ? JSON.stringify(newVal) : String(newVal || ''));
+
+      if (oldClean !== newClean) {
         historyEntries.push({
           data: new Date().toISOString(),
           acao: `Campo '${key}' alterado por ${req.user.name}`,
-          nota: `De: "${oldVal}" Para: "${newVal}"`
+          nota: `De: "${oldClean.substring(0, 50)}${oldClean.length > 50 ? '...' : ''}" Para: "${newClean.substring(0, 50)}${newClean.length > 50 ? '...' : ''}"`
         });
       }
     }
 
     if (historyEntries.length > 0) {
-      if (!updates.historico) updates.historico = existing.historico || [];
-      updates.historico.push(...historyEntries);
+      // Ensure we don't accidentally wipe existing history if it wasn't sent
+      const currentHistory = Array.isArray(existing.historico) ? existing.historico.map(h => (h.toObject ? h.toObject() : h)) : [];
+      updates.historico = [...currentHistory, ...historyEntries];
     }
 
     const doc = await Desligamento.findByIdAndUpdate(
@@ -112,6 +120,7 @@ router.put('/:id', auth, async (req, res, next) => {
     
     res.json(doc);
   } catch (err) {
+    console.error(`[PUT /desligamentos/${req.params.id}] Error:`, err);
     next(err);
   }
 });

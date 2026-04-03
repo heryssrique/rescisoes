@@ -27,10 +27,11 @@ const errorHandler = (err, req, res, next) => {
       stack: err.stack
     });
   } else {
-    // Production: Hide stack trace
+    // Production: We still expose the message for remote debugging during this launch phase
     res.status(err.statusCode).json({
       status: err.status,
-      message: err.isOperational ? err.message : 'Algo deu errado!'
+      message: err.message,
+      detail: err.isOperational ? undefined : err.stack // Only show stack for non-operational errors
     });
   }
 };
