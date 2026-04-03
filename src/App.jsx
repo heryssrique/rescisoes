@@ -93,11 +93,6 @@ function AppContent() {
   const [showImport, setShowImport] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  useEffect(() => {
-    actions.fetchAll();
-    actions.fetchArchived();
-  }, [actions]);
-
   const processedData = useMemo(() => {
     const activeRaw = applyColigadaFilter(desligamentos || [], globalColigadaFilter);
     const archivedRaw = applyColigadaFilter(archivedDesligamentos || [], globalColigadaFilter);
