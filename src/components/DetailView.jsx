@@ -12,7 +12,7 @@ import {
 import { CHECKLIST_TEMPLATE, STATUS_FLOW } from '../data/initialData';
 import { format } from 'date-fns';
 import { getPaymentDate } from '../utils/dateUtils';
-import confetti from 'canvas-confetti';
+import { fireExtravagantConfetti } from '../utils/confettiHelper';
 
 const AVISO_LABEL = { trabalhado: 'Trabalhado', indenizado: 'Indenizado', nao_aplicavel: 'Não aplicável' };
 
@@ -88,12 +88,7 @@ export function DetailView({ id }) {
     try {
       await actions.changeStatus(d, newStatus);
       if (newStatus === 'pago') {
-        confetti({
-          particleCount: 150,
-          spread: 80,
-          origin: { y: 0.6 },
-          zIndex: 999999
-        });
+        fireExtravagantConfetti();
         toast('🎉 Processo concluído e pago!', 'success');
       }
     } catch {

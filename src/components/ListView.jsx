@@ -8,7 +8,7 @@ import { Search, ChevronRight, Calendar, User, AlertCircle, Archive, ChevronDown
 import { differenceInDays, parseISO, isWithinInterval, startOfDay } from 'date-fns';
 import { getPaymentDate } from '../utils/dateUtils';
 import { motion, AnimatePresence } from 'framer-motion';
-import confetti from 'canvas-confetti';
+import { fireExtravagantConfetti } from '../utils/confettiHelper';
 
 const ARCHIVED_STATUSES = ['pago', 'cancelado'];
 
@@ -302,12 +302,7 @@ export function ListView({ data: injectedData }) {
     const ok = await showConfirm(`Deseja marcar os ${selectedIds.length} processos como PAGOS?`, { title: 'Marcar como Pago', confirmText: 'Confirmar' });
     if (ok) {
       await actions.bulkUpdateStatus(selectedIds, 'pago');
-      confetti({
-        particleCount: 200,
-        spread: 100,
-        origin: { y: 0.6 },
-        zIndex: 999999
-      });
+      fireExtravagantConfetti();
       toast('🎉 Processos concluídos e pagos em lote!', 'success');
       setSelectedIds([]);
     }
