@@ -54,7 +54,7 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, burstVe
       vel.current.multiplyScalar(0.985); // Atrito da bala de ar
       
       // CHEGOU NO APOGEU ou TRAVA DE ALTURA: BUM!
-      if (vel.current.y <= 0.08 || pos.current.y > 2) {
+      if (vel.current.y <= 0.08 || pos.current.y > 5) {
         vel.current.set(...burstVelocity);
         hasBurst.current = true;
       }
@@ -114,8 +114,10 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, burstVe
         // RESET PARA LANÇAMENTO: Volta para a base para atirar de novo
         hasBurst.current = false;
         age.current = 0;
-        pos.current.set(position[0], position[1], position[2]);
-        vel.current.set(velocity[0], velocity[1], velocity[2]);
+        delay = Math.random() * 120; // Novos rojões ressurgem em ondas randômicas de até 2s
+        const resetX = [-12, -4, 4, 12][Math.floor(Math.random() * 4)] + THREE.MathUtils.randFloatSpread(2);
+        pos.current.set(resetX, -18, THREE.MathUtils.randFloatSpread(5));
+        vel.current.set(THREE.MathUtils.randFloatSpread(0.01), 0.75 + Math.random() * 0.1, 0);
       } else if (type === 'coin' || type === 'diamond' || type === 'pearl_star') {
         pos.current.y = 30; 
         vel.current.y = velocity[1];
@@ -173,11 +175,12 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, burstVe
 
 // 2. CENA DE CELEBRAÇÃO ESPECIALIZADA
 function CelebrationScene({ style = 'royal_gold' }) {
-  const count = style === 'midnight_fireworks' ? 300 : (style === 'classic_rh' || style === 'neon_corporate' ? 200 : 120);
+  // Aumentando a contagem para Midnight para ter a densidade solicitada do 2D
+  const count = style === 'midnight_fireworks' ? 1000 : (style === 'classic_rh' || style === 'neon_corporate' ? 300 : 200);
   
   const elements = useMemo(() => {
     const goldColors = ['#FFD700', '#DAA520', '#F8E231', '#B8860B'];
-    const neonColors = ['#00f2ff', '#ff00ea', '#39ff14']; // Cyan, Magenta, Electric Lime Green do Prompt
+    const neonColors = ['#00f2ff', '#ff00ea', '#39ff14', '#00ff9d', '#7d00ff']; 
     
     return new Array(count).fill().map((_, i) => {
       let type = 'diamond';
@@ -213,29 +216,29 @@ function CelebrationScene({ style = 'royal_gold' }) {
         gravity = 0.002; 
         damping = 0.98; 
       } else if (style === 'midnight_fireworks') {
-        const isCrackle = Math.random() > 0.7; 
+        const isCrackle = Math.random() > 0.85; 
         type = isCrackle ? 'sparkle' : 'firework';
         
-        const diversedColors = [
-          '#ff0055', '#FFD700', '#00f2ff', '#ff00ea', 
-          '#00ff66', '#ff8800', '#ff0044', '#7d00ff', 
-          '#ffffff', '#0044ff'
-        ];
+        // Cores vibrantes do 2D (confettiHelper.js)
+        const diversedColors = ['#3b82f6', '#6366f1', '#a855f7', '#ffffff', '#f59e0b', '#FFD700'];
         color = isCrackle ? '#ffffff' : diversedColors[i % diversedColors.length];
         
-        // LANÇADORES INDIVIDUAIS: Agora cada partícula é seu próprio rojão completo!
-        // Criamos "clusters" de explosão (várias partículas saem juntas em tempos aleatórios)
-        const clusterId = Math.floor(i / 15); // Grupos de 15 partículas por explosão
-        const clusterX = THREE.MathUtils.randFloatSpread(30);
-        const clusterDelay = Math.random() * 250; // Começam sparalhados em 4 segundos
+        // LANÇADORES EM ONDAS DE 4: Grupos de 4 projéteis simultâneos (250 partículas por par)
+        const shellSize = 250; 
+        const shellIdx = Math.floor(i / shellSize); 
+        const waveIdx = Math.floor(shellIdx / 1); // Disparamos rojões sequenciais rápidos
+        const subIdx = i % 4; // Posição de origem baseada no resto pra espalhar ondas de 4
         
-        position = [clusterX + THREE.MathUtils.randFloatSpread(0.5), -18, THREE.MathUtils.randFloatSpread(5)];
+        const shellX = [-14, -6, 6, 14][i % 4] + THREE.MathUtils.randFloatSpread(3);
+        const shellDelay = (Math.floor(i / 100)) * 60; // Ondas a cada 1 segundo
         
-        // Velocidade vertical com pequena variação para não sobreporem
-        velocity = [THREE.MathUtils.randFloatSpread(0.02), 0.5 + Math.random() * 0.2, 0]; 
+        position = [shellX, -22, THREE.MathUtils.randFloatSpread(5)];
         
-        // A matemática da explosão na meia vida (Boom)
-        const speed = isCrackle ? (0.05 + Math.random() * 0.05) : (0.12 + Math.random() * 0.08); 
+        // Potência Máxima: Atira para o topo da tela
+        velocity = [THREE.MathUtils.randFloatSpread(0.02), 0.9 + Math.random() * 0.2, 0]; 
+        
+        // Explosão de Alta Densidade (Boom)
+        const speed = isCrackle ? (0.05 + Math.random() * 0.06) : (0.15 + Math.random() * 0.1); 
         const theta = Math.random() * Math.PI * 2;
         const phi = Math.acos((Math.random() * 2) - 1); 
         burstVelocity = [
@@ -244,16 +247,16 @@ function CelebrationScene({ style = 'royal_gold' }) {
           speed * Math.sin(phi) * Math.sin(theta)
         ];
         
-        delay = clusterDelay + (Math.random() * 20); // Variação de tempo dentro do mesmo rojão
-        gravity = 0.0005; 
-        damping = 0.975;
+        delay = shellDelay + (Math.random() * 15); 
+        gravity = 0.0006; 
+        damping = 0.98;
       } else if (style === 'neon_corporate') {
         // "Vibrant, high-energy explosions of neon cyan, magenta... bursting from the center"
         type = 'neon_laser';
         color = neonColors[i % neonColors.length];
         
         position = [0, 0, 0]; // Bursting from the center
-        const speed = 0.5 + Math.random() * 0.8; // Energia vibrante violentíssima
+        const speed = 0.5 + Math.random() * 0.8; 
         const theta = Math.random() * Math.PI * 2;
         const phi = Math.acos((Math.random() * 2) - 1); 
         velocity = [
@@ -261,12 +264,12 @@ function CelebrationScene({ style = 'royal_gold' }) {
           speed * Math.cos(phi), 
           speed * Math.sin(phi) * Math.sin(theta)
         ];
-        rotation = [0, 0, 0]; // Alinhado ao vetor
-        gravity = 0; // Voa sem peso
-        damping = 0.99; // Lento atrito p viajar longe da tela
+        rotation = [0, 0, 0]; 
+        gravity = 0; 
+        damping = 0.99; 
       } else {
         type = 'diamond';
-        color = rainbowColors[i % rainbowColors.length];
+        color = '#ffffff';
         position = [THREE.MathUtils.randFloatSpread(25), 15, THREE.MathUtils.randFloatSpread(10)];
         velocity = [0, -0.01 - Math.random() * 0.01, 0];
         gravity = 0.0003;
