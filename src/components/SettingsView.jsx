@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Bell, Database, Download, FileSpreadsheet, AlertTriangle, ShieldAlert, Users, Plus, X, Save, FileText, ListChecks, Settings, GripVertical, Archive, Columns, Link, CheckCircle } from 'lucide-react';
+import { useToast } from './Toast';
+import { Bell, Database, Download, FileSpreadsheet, AlertTriangle, ShieldAlert, Users, Plus, X, Save, FileText, ListChecks, Settings, GripVertical, Archive, Columns, Link } from 'lucide-react';
 import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import { format } from 'date-fns';
 import * as api from '../services/api';
@@ -66,13 +67,7 @@ function ChecklistItem({ item, idx, updateChecklist, removeChecklistItem }) {
 export function SettingsView() {
   const { state, actions } = useApp();
   const { desligamentos, archivedDesligamentos } = state;
-
-  // Toast de confirmação
-  const [toast, setToast] = useState(null);
-  const showToast = (message) => {
-    setToast(message);
-    setTimeout(() => setToast(null), 3000);
-  };
+  const { toast, confirm: showConfirm } = useToast();
 
   // Estado das Coligadas
   const [coligadasList, setColigadasList] = useState(() => {
@@ -118,7 +113,7 @@ export function SettingsView() {
   const handleSaveMotivos = () => {
     const valid = motivosList.filter(m => m.value.trim() && m.label.trim());
     actions.updateConfig('motivos', 'desligest_motivos', valid);
-    showToast('Motivos de desligamento atualizados!');
+    toast('Motivos de desligamento atualizados!');
   };
 
   const updateMotivo = (index, field, value) => {
@@ -132,7 +127,7 @@ export function SettingsView() {
   const handleSaveChecklist = () => {
     const valid = checklistList.filter(c => c.id.trim() && c.label.trim() && c.etapa);
     actions.updateConfig('checklistTemplate', 'desligest_checklist', valid);
-    showToast('Checklist padrão atualizado!');
+    toast('Checklist padrão atualizado!');
   };
 
   const updateChecklist = (index, field, value) => {
@@ -162,7 +157,7 @@ export function SettingsView() {
 
   const handleRequestNotifications = () => {
     if (!('Notification' in window)) {
-      alert('Este navegador não suporta notificações de área de trabalho.');
+      toast('Este navegador não suporta notificações de área de trabalho.', 'warning');
       return;
     }
     actions.requestNotificationPermission();
@@ -170,16 +165,20 @@ export function SettingsView() {
 
   const [isMigrating, setIsMigrating] = useState(false);
   const handleMigrateOld = async () => {
-    if (!confirm('Deseja arquivar todos os processos com data de pagamento anterior a 01/03/2026?\nEsta ação também marcará o comprovante de pagamento como arquivado.')) return;
+    const ok = await showConfirm(
+      'Deseja arquivar todos os processos com data de pagamento anterior a 01/03/2026? Esta ação também marcará o comprovante de pagamento como arquivado.',
+      { title: 'Arquivamento em Lote', confirmText: 'Arquivar', type: 'warning' }
+    );
+    if (!ok) return;
     
     setIsMigrating(true);
     try {
       const res = await api.migrateArchiveOld();
-      alert(`Sucesso! ${res.updated} processos foram arquivados.`);
+      toast(`${res.updated} processos foram arquivados com sucesso!`);
       await actions.fetchAll();
       await actions.fetchArchived();
     } catch (err) {
-      alert(`Erro na migração: ${err.message}`);
+      toast(`Erro na migração: ${err.message}`, 'error');
     } finally {
       setIsMigrating(false);
     }
@@ -191,7 +190,7 @@ export function SettingsView() {
       if (c.code.trim()) newColigadas[c.code] = { nome: c.nome, color: c.color };
     });
     actions.updateConfig('coligadas', 'desligest_coligadas', newColigadas);
-    showToast('Empresas e filiais atualizadas!');
+    toast('Empresas e filiais atualizadas!');
   };
 
   const updateColigada = (index, field, value) => {
@@ -205,7 +204,7 @@ export function SettingsView() {
 
   const handleSaveStatusFlow = () => {
     actions.updateConfig('statusFlow', 'desligest_status_flow', statusFlowList);
-    showToast('Fluxo do Kanban atualizado!');
+    toast('Fluxo do Kanban atualizado!');
   };
 
   const updateStatusFlow = (index, field, value) => {
@@ -226,7 +225,7 @@ export function SettingsView() {
 
   const handleSaveLinks = () => {
     actions.updateConfig('linksUteis', 'desligest_links', linksList);
-    showToast('Links úteis atualizados!');
+    toast('Links úteis atualizados!');
   };
 
   const addLink = () => setLinksList([...linksList, { id: Date.now().toString(), label: '', url: '', category: 'Geral' }]);
@@ -710,10 +709,18 @@ export function SettingsView() {
                   <button 
                     className="btn" 
                     style={{ background: '#ef4444', color: '#fff', fontWeight: 600 }}
-                    onClick={() => {
-                      if (confirm('ATENÇÃO: Deseja apagar todas as rescisões ativas e do histórico permanentemente?')) {
-                        if (confirm('Tem certeza absoluta? Essa ação NÃO PODE ser defeita.')) {
-                          alert('Por segurança, habilitar esta função requer liberação do administrador de ambiente AWS.');
+                    onClick={async () => {
+                      const ok = await showConfirm(
+                        'Deseja apagar todas as rescisões ativas e do histórico permanentemente?',
+                        { title: 'ATENÇÃO: Reset Fabril', confirmText: 'Excluir Tudo', type: 'danger' }
+                      );
+                      if (ok) {
+                        const ok2 = await showConfirm(
+                          'Tem certeza absoluta? Essa ação NÃO PODE ser desfeita.',
+                          { title: 'Última Confirmação', confirmText: 'Sim, excluir', type: 'danger' }
+                        );
+                        if (ok2) {
+                          toast('Por segurança, habilitar esta função requer liberação do administrador de ambiente AWS.', 'warning');
                         }
                       }
                     }}
@@ -726,39 +733,6 @@ export function SettingsView() {
           </AnimatePresence>
         </div>
       </div>
-
-      {/* Toast de confirmação */}
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: 40, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-            style={{
-              position: 'fixed',
-              bottom: 32,
-              right: 32,
-              background: 'var(--accent-green)',
-              color: '#fff',
-              padding: '14px 24px',
-              borderRadius: 14,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              fontSize: 14,
-              fontWeight: 700,
-              boxShadow: '0 8px 32px rgba(16, 185, 129, 0.4)',
-              zIndex: 9999,
-              cursor: 'pointer',
-            }}
-            onClick={() => setToast(null)}
-          >
-            <CheckCircle size={20} />
-            {toast}
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 }

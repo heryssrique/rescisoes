@@ -1,5 +1,6 @@
 import React, { useState, useMemo, Suspense, lazy } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
+import { ToastProvider } from './components/Toast';
 import { ModalNovoDesligamento } from './components/Modals';
 import { ModalImportarPlanilha } from './components/ImportModal';
 import { NotificationCenter } from './components/NotificationCenter';
@@ -216,5 +217,11 @@ function AppContent() {
 }
 
 export default function App() {
-  return (<AppProvider><AppContent /></AppProvider>);
+  return (
+    <AppProvider>
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
+    </AppProvider>
+  );
 }

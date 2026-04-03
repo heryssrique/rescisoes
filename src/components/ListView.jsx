@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback, memo } from 'react';
 import { useApp } from '../context/AppContext';
+import { useToast } from './Toast';
 import { StatusBadge, MotivoBadge, ColigadaBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress, AvisoBadge } from './Shared';
 import { formatDate } from '../utils/formatters';
 import { MOTIVOS } from '../data/initialData';
@@ -153,6 +154,7 @@ const TermCard = memo(({ d, onOpen, onArchive, isSelected, onSelect }) => {
 
 export function ListView({ data: injectedData }) {
   const { state, dispatch, actions } = useApp();
+  const { toast, confirm: showConfirm } = useToast();
   const currentList = injectedData || state.desligamentos;
 
   const [search, setSearch] = useState('');
@@ -258,10 +260,11 @@ export function ListView({ data: injectedData }) {
   }, [dispatch]);
 
   const handleArchive = useCallback(async (id) => {
-    if (confirm('Mover este processo para o arquivo?')) {
+    const ok = await showConfirm('Mover este processo para o arquivo?', { title: 'Arquivar Processo', confirmText: 'Arquivar' });
+    if (ok) {
       await actions.archiveDesligamento(id);
     }
-  }, [actions]);
+  }, [actions, showConfirm]);
 
   const toggleSelection = useCallback((id) => {
     setSelectedIds(prev => 
@@ -283,25 +286,28 @@ export function ListView({ data: injectedData }) {
       .map(d => d.id);
     
     if (archivableIds.length === 0) {
-      alert('Atenção: Nesses status selecionados, nenhum pode ser arquivado no momento (apenas Status "Pago" ou "Cancelado").');
+      toast('Nenhum dos itens selecionados pode ser arquivado. Apenas processos com Status "Pago" ou "Cancelado" são elegíveis.', 'warning');
       return;
     }
 
-    if (confirm(`Deseja arquivar os ${archivableIds.length} processos selecionados?`)) {
+    const ok = await showConfirm(`Deseja arquivar os ${archivableIds.length} processos selecionados?`, { title: 'Arquivar em Lote', confirmText: 'Arquivar' });
+    if (ok) {
       await actions.bulkArchive(archivableIds);
       setSelectedIds([]);
     }
   }
 
   async function handleBulkPay() {
-    if (confirm(`Deseja marcar os ${selectedIds.length} processos como PAGOS?`)) {
+    const ok = await showConfirm(`Deseja marcar os ${selectedIds.length} processos como PAGOS?`, { title: 'Marcar como Pago', confirmText: 'Confirmar' });
+    if (ok) {
       await actions.bulkUpdateStatus(selectedIds, 'pago');
       setSelectedIds([]);
     }
   }
 
   async function handleBulkDelete() {
-    if (confirm(`⚠️ EXCLUSÃO PERMANENTE: Deseja apagar os ${selectedIds.length} processos selecionados?`)) {
+    const ok = await showConfirm(`Deseja apagar os ${selectedIds.length} processos selecionados? Esta ação é permanente.`, { title: 'Exclusão Permanente', confirmText: 'Excluir', type: 'danger' });
+    if (ok) {
       await actions.bulkDelete(selectedIds);
       setSelectedIds([]);
     }

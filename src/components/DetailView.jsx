@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
+import { useToast } from './Toast';
 import { StatusBadge, MotivoBadge, ColigadaBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress, AvisoBadge } from './Shared';
 import { formatDate, formatDateTime } from '../utils/formatters';
 import { ModalEditarDesligamento } from './Modals';
@@ -16,6 +17,7 @@ const AVISO_LABEL = { trabalhado: 'Trabalhado', indenizado: 'Indenizado', nao_ap
 
 export function DetailView({ id }) {
   const { state, dispatch, actions } = useApp();
+  const { confirm: showConfirm } = useToast();
   const d = state.desligamentos.find(x => x.id === id) || state.archivedDesligamentos?.find(x => x.id === id);
   const [showEdit, setShowEdit] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -46,14 +48,16 @@ export function DetailView({ id }) {
   }
 
   async function handleArchive() {
-    if (confirm('Mover este processo para o arquivo?')) {
+    const ok = await showConfirm('Mover este processo para o arquivo?', { title: 'Arquivar Processo', confirmText: 'Arquivar' });
+    if (ok) {
       await actions.archiveDesligamento(d.id);
       dispatch({ type: 'SET_VIEW', view: 'arquivados' });
     }
   }
 
   async function handleUnarchive() {
-    if (confirm('Reativar este processo? Ele voltará para a lista principal.')) {
+    const ok = await showConfirm('Reativar este processo? Ele voltará para a lista principal.', { title: 'Reativar Processo', confirmText: 'Reativar' });
+    if (ok) {
       await actions.unarchiveDesligamento(d.id);
       dispatch({ type: 'SET_VIEW', view: 'lista' });
     }
@@ -176,8 +180,9 @@ export function DetailView({ id }) {
     });
   };
 
-  const removeAnexo = (anexoId) => {
-    if (!confirm('Excluir este anexo?')) return;
+  const removeAnexo = async (anexoId) => {
+    const ok = await showConfirm('Excluir este anexo?', { title: 'Excluir Anexo', confirmText: 'Excluir', type: 'danger' });
+    if (!ok) return;
     const updated = {
       ...d,
       anexos: (d.anexos || []).filter(a => a.id !== anexoId)
