@@ -29,29 +29,54 @@ const CONFETTI_SQUARE_GEOM = new THREE.BoxGeometry(0.5, 0.5, 0.02);
 const FIREWORK_GEOM = new THREE.BoxGeometry(0.05, 0.05, 1.5); // Rastro luminoso
 
 // 1. COMPONENTE BASE: ITEM COM FÍSICA 3D
-function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity = 0.005, damping = 0.992 }) {
+function PhysicsItem({ type, position, rotation, scale, color, velocity, burstVelocity = null, delay = 0, gravity = 0.005, damping = 0.992 }) {
   const mesh = useRef();
   const vel = useRef(new THREE.Vector3(...velocity));
   const pos = useRef(new THREE.Vector3(...position));
   const rot = useRef(new THREE.Vector3(...rotation));
+  const age = useRef(0);
+  const hasBurst = useRef(!burstVelocity);
 
   useFrame(() => {
     if (!mesh.current) return;
     
-    vel.current.y -= gravity;
-    vel.current.multiplyScalar(damping);
+    age.current++;
+    if (age.current < delay) {
+      mesh.current.visible = false;
+      return;
+    }
+    mesh.current.visible = true;
+
+    // FASE 1: PROJETIL SUBINDO vs FASE 2: EXPLOSÃO 
+    if (!hasBurst.current) {
+      // É um projetil em ascensão (casca de fogo de artifício)
+      vel.current.y -= 0.002; // Gravidade pesada inicial para atingir o ápice 
+      vel.current.multiplyScalar(0.985); // Atrito da bala de ar
+      
+      // CHEGOU NO APOGEU: BUM! (Velocidade vertical sumiu)
+      if (vel.current.y <= 0.03) {
+        vel.current.set(...burstVelocity);
+        hasBurst.current = true;
+      }
+    } else {
+      // FÍSICA DE QUEDA/EXPANSÃO NORMAL
+      vel.current.y -= gravity;
+      vel.current.multiplyScalar(damping);
+    }
     
-    const timeScale = damping < 0.985 ? 1 : 0.5; 
+    // TIME SCALE: Manter a lógica original de suavização das outras cenas
+    const timeScale = (damping < 0.985 && type !== 'firework' && type !== 'sparkle') ? 1 : 0.5; 
     
     pos.current.x += vel.current.x * timeScale;
     pos.current.y += vel.current.y * timeScale;
     pos.current.z += vel.current.z * timeScale;
     
-    if (type === 'firework' || type === 'neon_laser') {
+    if (type === 'firework' || type === 'neon_laser' || (type === 'sparkle' && !hasBurst.current)) {
+      // Motion blur lookAt do projetil/luz
       const target = pos.current.clone().add(vel.current);
       mesh.current.lookAt(target); 
       const speed = vel.current.length();
-      mesh.current.scale.z = Math.max(0.1, speed * (type === 'neon_laser' ? 4 : 8)); 
+      mesh.current.scale.z = Math.max(0.1, speed * (type === 'neon_laser' ? 4 : 12)); 
     } else {
       const rotScale = timeScale === 1 ? 1 : 0.15;
       mesh.current.rotation.x += rot.current.x * rotScale;
@@ -64,9 +89,8 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
     const dist = pos.current.length();
     const speed = vel.current.length();
     
-    // RENASCER CONTÍNUO: Elimina o "vazio / estático" do final das animações
-    // Se caiu da borda (y <-30), viajou muito (dist > 60) ou os fogos pararam no ar (speed < 0.005)
-    if (pos.current.y < -30 || dist > 60 || ((type === 'firework' || type === 'sparkle') && speed < 0.005)) {
+    // RENASCER CONTÍNUO: Elimina o "vazio / estático" 
+    if (pos.current.y < -30 || dist > 60 || ((type === 'neon_laser') && speed < 0.02)) {
       if (type === 'confetti_rect' || type === 'confetti_square') {
         const fromLeft = pos.current.x < 0;
         pos.current.set(fromLeft ? -15 : 15, -12, THREE.MathUtils.randFloatSpread(10));
@@ -75,21 +99,7 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
           0.15 + Math.random() * 0.2, 
           THREE.MathUtils.randFloatSpread(0.1)
         );
-      } else if (type === 'firework' || type === 'sparkle') {
-        // Dispara UMA NOVA BATERIA de fogos no céu lenta e perfeitamente
-        const newCenter = [THREE.MathUtils.randFloatSpread(25), 5 + Math.random() * 10, THREE.MathUtils.randFloatSpread(5)];
-        pos.current.set(...newCenter);
-        // Velocidade natural e elegante de fogos maciços caindo do ceu
-        const newSpeed = type === 'sparkle' ? (0.05 + Math.random() * 0.05) : (0.1 + Math.random() * 0.1); 
-        const theta = Math.random() * Math.PI * 2;
-        const phi = Math.acos((Math.random() * 2) - 1); 
-        vel.current.set(
-          newSpeed * Math.sin(phi) * Math.cos(theta),
-          newSpeed * Math.cos(phi), 
-          newSpeed * Math.sin(phi) * Math.sin(theta)
-        );
       } else if (type === 'neon_laser') {
-        // Dispara no novo pulso do centro da tela para manter ritmo High Tech
         pos.current.set(0,0,0);
         const newSpeed = 0.5 + Math.random() * 0.8; 
         const theta = Math.random() * Math.PI * 2;
@@ -99,8 +109,8 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
           newSpeed * Math.cos(phi), 
           newSpeed * Math.sin(phi) * Math.sin(theta)
         );
-      } else {
-        // Default Ouro/Rainbow
+      } else if (type === 'coin' || type === 'diamond' || type === 'pearl_star') {
+        // Apenas Gold volta lá pra cima
         pos.current.y = 30; 
         vel.current.y = velocity[1];
       }
@@ -162,19 +172,14 @@ function CelebrationScene({ style = 'royal_gold' }) {
   const elements = useMemo(() => {
     const goldColors = ['#FFD700', '#DAA520', '#F8E231', '#B8860B'];
     const neonColors = ['#00f2ff', '#ff00ea', '#39ff14']; // Cyan, Magenta, Electric Lime Green do Prompt
-    const fireworkColors = ['#0f52ba', '#9966cc', '#FFD700']; // Sapphire blue, Amethyst purple, Gold
-    
-    const fireworksCenters = [
-      [THREE.MathUtils.randFloatSpread(20), 2 + Math.random() * 6, THREE.MathUtils.randFloatSpread(8)],
-      [THREE.MathUtils.randFloatSpread(20), 5 + Math.random() * 8, THREE.MathUtils.randFloatSpread(5)],
-      [THREE.MathUtils.randFloatSpread(20), 4 + Math.random() * 7, THREE.MathUtils.randFloatSpread(8)]
-    ];
     
     return new Array(count).fill().map((_, i) => {
       let type = 'diamond';
       let color = '#ffffff';
       let position = [0, 0, 0];
       let velocity = [0, 0, 0];
+      let burstVelocity = null;
+      let delay = 0;
       let gravity = 0.005;
       let damping = 0.992; 
       let rotation = [Math.random() * 0.1, Math.random() * 0.1, Math.random() * 0.1];
@@ -202,10 +207,9 @@ function CelebrationScene({ style = 'royal_gold' }) {
         gravity = 0.002; 
         damping = 0.98; 
       } else if (style === 'midnight_fireworks') {
-        const isCrackle = Math.random() > 0.7; // "crackle effect with tiny shimmering white dots"
+        const isCrackle = Math.random() > 0.7; 
         type = isCrackle ? 'sparkle' : 'firework';
         
-        // Cores Vibrantes Extremamente Amplas e Variadas!
         const diversedColors = [
           '#ff0055', '#FFD700', '#00f2ff', '#ff00ea', 
           '#00ff66', '#ff8800', '#ff0044', '#7d00ff', 
@@ -213,30 +217,35 @@ function CelebrationScene({ style = 'royal_gold' }) {
         ];
         color = isCrackle ? '#ffffff' : diversedColors[i % diversedColors.length];
         
-        // Múltiplos núcleos no céu (Muito mais explosões ao mesmo tempo)
-        const centers = [
-          [THREE.MathUtils.randFloatSpread(25), 8 + Math.random() * 5, THREE.MathUtils.randFloatSpread(5)],
-          [THREE.MathUtils.randFloatSpread(25), 6 + Math.random() * 5, THREE.MathUtils.randFloatSpread(5)],
-          [THREE.MathUtils.randFloatSpread(25), 10 + Math.random() * 5, THREE.MathUtils.randFloatSpread(5)],
-          [THREE.MathUtils.randFloatSpread(25), 7 + Math.random() * 5, THREE.MathUtils.randFloatSpread(5)],
-          [THREE.MathUtils.randFloatSpread(25), 9 + Math.random() * 5, THREE.MathUtils.randFloatSpread(5)],
-          [THREE.MathUtils.randFloatSpread(25), 5 + Math.random() * 5, THREE.MathUtils.randFloatSpread(5)]
+        // 4 Lançadores Sincronizados de Projéteis 
+        const launcherIdx = i % 4;
+        const launchers = [
+          { x: -10, delay: 0 },    // Esq: Começa Instante 0
+          { x: 5,   delay: 60 },   // Central Dir: 1 segundo depois
+          { x: -5,  delay: 130 },  // Central Esq: 2 segundos depois
+          { x: 12,  delay: 35 }    // Ponta Dir: 0.5 seg depois
         ];
+        const launcher = launchers[launcherIdx];
         
-        const center = centers[i % centers.length];
-        position = [...center];
+        // Todos do mesmo array sharem a posição inferior exata para mascarar um tiro único
+        position = [launcher.x, -25, 0];
         
-        // Explosão majestosa e flutuante
+        // Disparo idêntico para o bloco (O rastro do projetil)
+        velocity = [0, 0.45 + (launcherIdx * 0.02), 0]; 
+        
+        // A matemática da explosão na meia vida (Boom)
         const speed = isCrackle ? (0.05 + Math.random() * 0.05) : (0.1 + Math.random() * 0.1); 
         const theta = Math.random() * Math.PI * 2;
         const phi = Math.acos((Math.random() * 2) - 1); 
-        velocity = [
+        burstVelocity = [
           speed * Math.sin(phi) * Math.cos(theta),
           speed * Math.cos(phi), 
           speed * Math.sin(phi) * Math.sin(theta)
         ];
-        gravity = 0.0005; // Pequeníssima gravidade, só pesa gentilmente o pó do fogo descendo
-        damping = 0.97; // Expande largamente e lentamente
+        
+        delay = launcher.delay;
+        gravity = 0.0005; // Pequeníssima gravidade no pós-bomba
+        damping = 0.97;
       } else if (style === 'neon_corporate') {
         // "Vibrant, high-energy explosions of neon cyan, magenta... bursting from the center"
         type = 'neon_laser';
