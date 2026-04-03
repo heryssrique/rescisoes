@@ -35,8 +35,8 @@ export const DEFAULT_STATUS_FLOW = [
   { key: 'documentacao', label: 'Documentação', short: 'Doc.', color: 'var(--accent-yellow)' },
   { key: 'homologacao', label: 'Homologação', short: 'Hom.', color: 'var(--accent-purple)' },
   { key: 'aguardando', label: 'Ag. Pagamento', short: 'Ag. Pag.', color: 'var(--accent-orange)' },
-  { key: 'pendente_comprovante', label: 'Pend. Comprovante', short: 'P. Comp.', color: 'var(--accent-red)' },
   { key: 'pago', label: 'Pago', short: 'Pago', color: 'var(--accent-green)' },
+  { key: 'pendente_comprovante', label: 'Pend. Comprovante', short: 'P. Comp.', color: 'var(--accent-red)' },
 ];
 
 export const STATUS_FLOW = getConfig('desligest_status_flow', DEFAULT_STATUS_FLOW);
