@@ -175,18 +175,20 @@ function CelebrationScene({ style = 'royal_gold' }) {
         ];
         gravity = 0.001; // Caem rápido após a explosão
       } else if (style === 'neon_corporate') {
-        // High-Tech Cyber Explosão (Fitas 3D espessas e Anéis Virtuais)
-        type = Math.random() > 0.7 ? 'neon_ring' : 'neon_ribbon';
+        // High-Tech Cyber Streams (Estilo Matrix Data Rain / Lasers)
+        type = 'neon_ribbon';
         color = corporateColors[i % corporateColors.length];
-        position = [THREE.MathUtils.randFloatSpread(5), -5, THREE.MathUtils.randFloatSpread(5)];
+        // Espalhar pela TELA TODA (Spread 40)
+        position = [THREE.MathUtils.randFloatSpread(40), 15 + Math.random() * 20, THREE.MathUtils.randFloatSpread(20)];
         velocity = [
-          THREE.MathUtils.randFloatSpread(0.2), 
-          0.1 + Math.random() * 0.25, // Explosão pra cima
-          THREE.MathUtils.randFloatSpread(0.2)
+          0, // Sem dispersão horizontal
+          -0.2 - Math.random() * 0.3, // Queda VERTICAL EXTREMAMENTE RÁPIDA
+          0
         ];
-        rotation = [Math.random() * 0.4, Math.random() * 0.4, Math.random() * 0.4];
-        gravity = 0.002; // Gravidade realista para explodir logo
-        damping = 0.97; // Alta fricção simulando ambiente digital (dados caindo)
+        rotation = [0, 0, 0]; // Retilíneo, como um laser/dado real
+        gravity = 0; // Gravidade zero (movimento linear puro)
+        // Sem fricção (laser não sofre com ar)
+        damping = 1; 
       } else {
         // Rainbow/Default
         type = 'diamond';
