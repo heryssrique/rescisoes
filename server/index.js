@@ -6,6 +6,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const mongoSanitize = require('mongo-sanitize');
+const xss = require('xss-clean');
+const hpp = require('hpp');
 
 const logger = require('./utils/logger');
 const { errorHandler, ApiError } = require('./middleware/errorMiddleware');
@@ -32,9 +36,24 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // ── Middlewares ────────────────────────────────────────────────────────────
+app.use(helmet()); // Secure HTTP headers
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(express.json({ limit: '10kb' })); // Body limit to prevent DoS
+app.use(express.urlencoded({ limit: '10kb', extended: true }));
+
+// Data sanitization against NoSQL query injection
+app.use((req, res, next) => {
+  req.body = mongoSanitize(req.body);
+  req.query = mongoSanitize(req.query);
+  req.params = mongoSanitize(req.params);
+  next();
+});
+
+// Data sanitization against XSS
+app.use(xss());
+
+// Prevent HTTP parameter pollution
+app.use(hpp());
 
 // Professional Logging Middleware
 app.use((req, res, next) => {

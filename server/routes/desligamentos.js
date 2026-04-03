@@ -7,7 +7,7 @@ const { desligamentoCreateSchema } = require('../schemas/desligamentoSchema');
 const { ApiError } = require('../middleware/errorMiddleware');
 
 // ── GET /api/desligamentos (with Pagination) ───────────────────────────────
-router.get('/', async (req, res, next) => {
+router.get('/', auth, async (req, res, next) => {
   try {
     const { status, motivo, q, sort = 'dataPagamento', arquivado, page = 1, limit = 5000 } = req.query;
     const filter = {};
@@ -51,7 +51,7 @@ router.get('/', async (req, res, next) => {
 });
 
 // ── GET /api/desligamentos/:id ────────────────────────────────────────────
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', auth, async (req, res, next) => {
   try {
     const doc = await Desligamento.findById(req.params.id);
     if (!doc) throw new ApiError(404, 'Processo não encontrado');
@@ -227,7 +227,7 @@ router.post('/seed', async (req, res) => {
 
 // ─── POST /api/desligamentos/bulk ───────────────────────────────────────────
 // Importa múltiplos desligamentos de uma vez (ex: via planilha)
-router.post('/bulk', async (req, res) => {
+router.post('/bulk', auth, async (req, res) => {
   try {
     const data = Array.isArray(req.body) ? req.body : [req.body];
     console.log(`[POST /desligamentos/bulk] Tentando importar ${data.length} registros`);
