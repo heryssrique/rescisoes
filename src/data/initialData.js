@@ -31,11 +31,12 @@ export const DEFAULT_MOTIVOS = [
 export const MOTIVOS = getConfig('desligest_motivos', DEFAULT_MOTIVOS);
 
 export const DEFAULT_STATUS_FLOW = [
-  { key: 'comunicado', label: 'Comunicado', short: 'Com.' },
-  { key: 'documentacao', label: 'Documentação', short: 'Doc.' },
-  { key: 'homologacao', label: 'Homologação', short: 'Hom.' },
-  { key: 'aguardando', label: 'Ag. Pagamento', short: 'Ag. Pag.' },
-  { key: 'pago', label: 'Pago', short: 'Pago' },
+  { key: 'comunicado', label: 'Comunicado', short: 'Com.', color: 'var(--accent-blue)' },
+  { key: 'documentacao', label: 'Documentação', short: 'Doc.', color: 'var(--accent-yellow)' },
+  { key: 'homologacao', label: 'Homologação', short: 'Hom.', color: 'var(--accent-purple)' },
+  { key: 'aguardando', label: 'Ag. Pagamento', short: 'Ag. Pag.', color: 'var(--accent-orange)' },
+  { key: 'pendente_comprovante', label: 'Pend. Comprovante', short: 'P. Comp.', color: 'var(--accent-red)' },
+  { key: 'pago', label: 'Pago', short: 'Pago', color: 'var(--accent-green)' },
 ];
 
 export const STATUS_FLOW = getConfig('desligest_status_flow', DEFAULT_STATUS_FLOW);

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Bell, Database, Download, FileSpreadsheet, AlertTriangle, ShieldAlert, Users, Plus, X, Save, FileText, ListChecks, Settings, GripVertical, Archive } from 'lucide-react';
+import { Bell, Database, Download, FileSpreadsheet, AlertTriangle, ShieldAlert, Users, Plus, X, Save, FileText, ListChecks, Settings, GripVertical, Archive, Columns } from 'lucide-react';
 import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import { format } from 'date-fns';
 import * as api from '../services/api';
-import { DEFAULT_COLIGADAS, DEFAULT_MOTIVOS, DEFAULT_CHECKLIST_TEMPLATE } from '../data/initialData';
+import { DEFAULT_COLIGADAS, DEFAULT_MOTIVOS, DEFAULT_CHECKLIST_TEMPLATE, DEFAULT_STATUS_FLOW } from '../data/initialData';
 
 function ChecklistItem({ item, idx, updateChecklist, removeChecklistItem }) {
   const controls = useDragControls();
@@ -91,6 +91,14 @@ export function SettingsView() {
       const saved = localStorage.getItem('desligest_checklist');
       return saved ? JSON.parse(saved) : DEFAULT_CHECKLIST_TEMPLATE;
     } catch { return DEFAULT_CHECKLIST_TEMPLATE; }
+  });
+
+  // Estado do Fluxo
+  const [statusFlowList, setStatusFlowList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('desligest_status_flow');
+      return saved ? JSON.parse(saved) : DEFAULT_STATUS_FLOW;
+    } catch { return DEFAULT_STATUS_FLOW; }
   });
 
   const handleSaveMotivos = () => {
@@ -184,6 +192,18 @@ export function SettingsView() {
   const addColigada = () => setColigadasList([...coligadasList, { code: '', nome: '', color: '#3b82f6' }]);
   const removeColigada = (index) => setColigadasList(coligadasList.filter((_, i) => i !== index));
 
+  const handleSaveStatusFlow = () => {
+    localStorage.setItem('desligest_status_flow', JSON.stringify(statusFlowList));
+    alert('Padrões de fluxo salvos e atualizados no Kanban!');
+    window.location.reload();
+  };
+
+  const updateStatusFlow = (index, field, value) => {
+    const newList = [...statusFlowList];
+    newList[index][field] = value;
+    setStatusFlowList(newList);
+  };
+
   const [activeTab, setActiveTab] = useState('empresas');
 
   return (
@@ -227,6 +247,13 @@ export function SettingsView() {
             onClick={() => setActiveTab('checklist')}
           >
             <ListChecks size={16} /> Checklist Automático
+          </button>
+          <button 
+            className={`btn ${activeTab === 'fluxo' ? 'btn-primary' : ''}`}
+            style={{ justifyContent: 'flex-start', padding: '12px 16px', background: activeTab === 'fluxo' ? 'var(--accent-orange)' : 'transparent', color: activeTab === 'fluxo' ? '#fff' : 'var(--text-secondary)', border: 'none', boxShadow: 'none' }}
+            onClick={() => setActiveTab('fluxo')}
+          >
+            <Columns size={16} /> Etapas do Kanban
           </button>
           <button 
             className={`btn ${activeTab === 'sistema' ? 'btn-primary' : ''}`}
@@ -397,6 +424,69 @@ export function SettingsView() {
                   </button>
                   <button className="btn" onClick={handleSaveChecklist} style={{ background: 'var(--accent-green)', color: '#fff', padding: '10px 24px', fontWeight: 600, boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}>
                     <Save size={16} /> Atualizar Checklist Global
+                  </button>
+                </div>
+              </motion.section>
+            )}
+
+            {activeTab === 'fluxo' && (
+              <motion.section 
+                key="fluxo" 
+                initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}
+                className="card" style={{ padding: 32, borderColor: 'transparent', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}
+              >
+                <div style={{ marginBottom: 24 }}>
+                  <h3 style={{ fontSize: 20, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <Columns size={20} color="var(--accent-orange)" />
+                    Fluxo & Colunas do Kanban
+                  </h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: 13, lineHeight: 1.5 }}>
+                    Personalize as colunas do seu quadro Kanban. Você pode renomear as etapas e trocar as cores de identificação.
+                    <br /><span style={{ color: 'var(--accent-orange)', fontWeight: 600 }}>Nota:</span> Algumas colunas (como Pend. Comprovante) são calculadas automaticamente.
+                  </p>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+                  {statusFlowList.map((step, idx) => (
+                    <div key={idx} style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'var(--bg-secondary)', padding: '12px 16px', borderRadius: 12 }}>
+                      <div style={{ width: 100, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>ID Status</label>
+                        <input className="form-input" value={step.key} readOnly style={{ padding: '8px 12px', opacity: 0.7, cursor: 'not-allowed' }} title="O ID interno não pode ser alterado para manter compatibilidade com registros antigos." />
+                      </div>
+                      <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>Nome da Coluna</label>
+                        <input className="form-input" placeholder="Ex: Triagem" value={step.label} onChange={e => updateStatusFlow(idx, 'label', e.target.value)} style={{ padding: '8px 12px' }} />
+                      </div>
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>Abreviação</label>
+                        <input className="form-input" placeholder="Ex: Tria." value={step.short} onChange={e => updateStatusFlow(idx, 'short', e.target.value)} style={{ padding: '8px 12px' }} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
+                        <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>Cor</label>
+                        <select 
+                          className="form-input" 
+                          value={step.color} 
+                          onChange={e => updateStatusFlow(idx, 'color', e.target.value)}
+                          style={{ padding: '7px 10px', fontSize: 13, background: 'var(--bg-card)' }}
+                        >
+                          <option value="var(--accent-blue)">Azul</option>
+                          <option value="var(--accent-indigo)">Índigo</option>
+                          <option value="var(--accent-purple)">Roxo</option>
+                          <option value="var(--accent-pink)">Rosa</option>
+                          <option value="var(--accent-red)">Vermelho</option>
+                          <option value="var(--accent-orange)">Laranja</option>
+                          <option value="var(--accent-yellow)">Amarelo</option>
+                          <option value="var(--accent-green)">Verde</option>
+                          <option value="var(--accent-teal)">Ciano</option>
+                        </select>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 24 }}>
+                  <button className="btn" onClick={handleSaveStatusFlow} style={{ background: 'var(--accent-orange)', color: '#fff', padding: '10px 24px', fontWeight: 600, boxShadow: '0 4px 12px rgba(249, 115, 22, 0.3)' }}>
+                    <Save size={16} /> Salvar Fluxo do Kanban
                   </button>
                 </div>
               </motion.section>

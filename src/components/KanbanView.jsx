@@ -5,14 +5,7 @@ import { formatDate } from '../utils/formatters';
 import { Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const COLUMNS = [
-  { key: 'comunicado', label: 'Comunicado', color: 'var(--accent-blue)' },
-  { key: 'documentacao', label: 'Documentação', color: 'var(--accent-yellow)' },
-  { key: 'homologacao', label: 'Homologação', color: 'var(--accent-purple)' },
-  { key: 'aguardando', label: 'Ag. Pagamento', color: 'var(--accent-orange)' },
-  { key: 'pendente_comprovante', label: 'Pend. Comprovante', color: 'var(--accent-red)' },
-  { key: 'pago', label: 'Pago', color: 'var(--accent-green)' },
-];
+import { STATUS_FLOW } from '../data/initialData';
 
 const isOnlyMissingComprovante = (d) => {
   const checklist = d.checklist || [];
@@ -35,7 +28,7 @@ export function KanbanView({ data: injectedData }) {
   return (
     <div className="page-content" style={{ paddingBottom: 0 }}>
       <div className="kanban-board">
-        {COLUMNS.map((col, idx) => {
+        {STATUS_FLOW.map((col, idx) => {
           const items = desligamentos.filter(d => {
             const isPending = isOnlyMissingComprovante(d);
             if (col.key === 'pendente_comprovante') return isPending;
