@@ -131,6 +131,31 @@ function AppContent() {
           </button>
         </div>
         <div className="sidebar-nav">
+          <div style={{ padding: isSidebarCollapsed ? '8px' : '0 16px 16px' }}>
+            <motion.button 
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              className="btn btn-primary" 
+              style={{ 
+                width: '100%', 
+                justifyContent: isSidebarCollapsed ? 'center' : 'center', 
+                padding: '12px', 
+                borderRadius: 12,
+                background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-indigo))',
+                boxShadow: '0 8px 16px -4px var(--accent-blue-glow)',
+                border: 'none',
+                gap: 10,
+                color: 'white',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }} 
+              onClick={() => setShowNew(true)}
+            >
+              <Plus size={isSidebarCollapsed ? 20 : 18} />
+              {!isSidebarCollapsed && <span>Novo Desligamento</span>}
+            </motion.button>
+          </div>
+
           <div className="nav-section-label">Navegação</div>
           {navItems.map((item, i) => (
             <motion.button key={item.id} id={`nav-${item.id}`} className={`nav-item ${view === item.id ? 'active' : ''}`} style={{ justifyContent: isSidebarCollapsed ? 'center' : 'flex-start', padding: isSidebarCollapsed ? '12px' : '11px 16px' }} onClick={() => dispatch({ type: 'SET_VIEW', view: item.id })} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
@@ -143,7 +168,6 @@ function AppContent() {
             </motion.button>
           ))}
           <div className="nav-section-label" style={{ marginTop: 16 }}>{isSidebarCollapsed ? '...' : 'Ações'}</div>
-          <button className="nav-item" style={{ justifyContent: isSidebarCollapsed ? 'center' : 'flex-start', padding: isSidebarCollapsed ? '12px' : '11px 16px' }} onClick={() => setShowNew(true)}><Plus size={15} />{!isSidebarCollapsed && <span>Novo Desligamento</span>}</button>
           <button className="nav-item" style={{ justifyContent: isSidebarCollapsed ? 'center' : 'flex-start', padding: isSidebarCollapsed ? '12px' : '11px 16px' }} onClick={() => setShowImport(true)}><FileSpreadsheet size={15} />{!isSidebarCollapsed && <span>Importar Planilha</span>}</button>
         </div>
       </nav>
