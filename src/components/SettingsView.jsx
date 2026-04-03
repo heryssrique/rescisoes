@@ -6,7 +6,7 @@ import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion
 import { format } from 'date-fns';
 import * as api from '../services/api';
 import { DEFAULT_COLIGADAS, DEFAULT_MOTIVOS, DEFAULT_CHECKLIST_TEMPLATE, DEFAULT_STATUS_FLOW, DEFAULT_LINKS_UTEIS } from '../data/initialData';
-import { fireExtravagantConfetti } from '../utils/confettiHelper';
+
 import { Sparkles, Zap, Trophy, PartyPopper } from 'lucide-react';
 
 function ChecklistItem({ item, idx, updateChecklist, removeChecklistItem }) {
@@ -124,7 +124,7 @@ export function SettingsView() {
 
   const handlePreviewConfetti = () => {
     actions.triggerCelebration(confettiStyle);
-    fireExtravagantConfetti(confettiStyle);
+
   };
 
   const handleSaveMotivos = () => {

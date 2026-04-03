@@ -12,7 +12,7 @@ import {
 import { CHECKLIST_TEMPLATE, STATUS_FLOW } from '../data/initialData';
 import { format } from 'date-fns';
 import { getPaymentDate } from '../utils/dateUtils';
-import { fireExtravagantConfetti } from '../utils/confettiHelper';
+
 
 const AVISO_LABEL = { trabalhado: 'Trabalhado', indenizado: 'Indenizado', nao_aplicavel: 'Não aplicável' };
 
@@ -90,7 +90,7 @@ export function DetailView({ id }) {
       if (newStatus === 'pago') {
         const style = localStorage.getItem('desligest_confetti_style') || 'royal_gold';
         actions.triggerCelebration(style);
-        fireExtravagantConfetti(style); // Fallback 2D para preenchimento extra
+
         toast('🎉 Processo concluído e pago!', 'success');
       }
     } catch {

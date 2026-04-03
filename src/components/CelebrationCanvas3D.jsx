@@ -87,22 +87,22 @@ function CelebrationScene({ style = 'royal_gold' }) {
         type = Math.random() > 0.4 ? 'coin' : 'diamond';
         color = goldColors[i % goldColors.length];
         position = [THREE.MathUtils.randFloatSpread(25), 15 + Math.random() * 10, THREE.MathUtils.randFloatSpread(10)];
-        velocity = [Math.random() * 0.02 - 0.01, -0.05 - Math.random() * 0.05, 0];
+        velocity = [Math.random() * 0.01 - 0.005, -0.02 - Math.random() * 0.02, 0];
+        gravity = 0.002;
       } else if (style === 'classic_rh') {
         type = Math.random() > 0.5 ? 'coin' : 'sparkle';
         color = ['#3b82f6', '#6366f1', '#f59e0b', '#ffffff'][i % 4];
         const fromLeft = i % 2 === 0;
         position = [fromLeft ? -15 : 15, -10, 0];
-        velocity = [fromLeft ? 0.15 + Math.random() * 0.1 : -0.15 - Math.random() * 0.1, 0.2 + Math.random() * 0.2, Math.random() * 0.05 - 0.025];
-        gravity = 0.008;
+        velocity = [fromLeft ? 0.08 + Math.random() * 0.05 : -0.08 - Math.random() * 0.05, 0.12 + Math.random() * 0.1, Math.random() * 0.04 - 0.02];
+        gravity = 0.003;
       } else if (style === 'midnight_fireworks') {
         type = 'sparkle';
         color = ['#ffffff', '#FFD700', '#3b82f6', '#ff00ea'][i % 4];
         // Múltiplos pontos de explosão
-        const burstIdx = Math.floor(i / 30);
         const burstPos = [THREE.MathUtils.randFloatSpread(30), THREE.MathUtils.randFloat(0, 10), THREE.MathUtils.randFloatSpread(10)];
         position = [...burstPos];
-        const speed = 0.1 + Math.random() * 0.2;
+        const speed = 0.04 + Math.random() * 0.08;
         const theta = Math.random() * Math.PI * 2;
         const phi = Math.random() * Math.PI;
         velocity = [
@@ -110,18 +110,20 @@ function CelebrationScene({ style = 'royal_gold' }) {
           speed * Math.sin(phi) * Math.sin(theta),
           speed * Math.cos(phi)
         ];
-        gravity = 0.003;
+        gravity = 0.0008;
       } else if (style === 'neon_corporate') {
         type = Math.random() > 0.5 ? 'box' : 'diamond';
         color = corporateColors[i % corporateColors.length];
         position = [THREE.MathUtils.randFloatSpread(30), 15, THREE.MathUtils.randFloatSpread(15)];
-        velocity = [0, -0.1 - Math.random() * 0.1, 0];
+        velocity = [0, -0.04 - Math.random() * 0.04, 0];
+        gravity = 0.002;
       } else {
         // Rainbow/Default
         type = 'diamond';
         color = rainbowColors[i % rainbowColors.length];
         position = [THREE.MathUtils.randFloatSpread(25), 15, THREE.MathUtils.randFloatSpread(10)];
-        velocity = [0, -0.05 - Math.random() * 0.05, 0];
+        velocity = [0, -0.03 - Math.random() * 0.02, 0];
+        gravity = 0.0015;
       }
 
       return {

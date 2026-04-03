@@ -8,7 +8,7 @@ import { Search, ChevronRight, Calendar, User, AlertCircle, Archive, ChevronDown
 import { differenceInDays, parseISO, isWithinInterval, startOfDay } from 'date-fns';
 import { getPaymentDate } from '../utils/dateUtils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { fireExtravagantConfetti } from '../utils/confettiHelper';
+
 
 const ARCHIVED_STATUSES = ['pago', 'cancelado'];
 
@@ -304,7 +304,7 @@ export function ListView({ data: injectedData }) {
       await actions.bulkUpdateStatus(selectedIds, 'pago');
       const style = localStorage.getItem('desligest_confetti_style') || 'royal_gold';
       actions.triggerCelebration(style);
-      fireExtravagantConfetti(style);
+
       toast('🎉 Processos concluídos e pagos em lote!', 'success');
       setSelectedIds([]);
     }
