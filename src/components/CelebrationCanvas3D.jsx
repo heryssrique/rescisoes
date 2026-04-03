@@ -174,12 +174,30 @@ function CelebrationScene({ style = 'royal_gold' }) {
       } else if (style === 'midnight_fireworks') {
         const isCrackle = Math.random() > 0.7; // "crackle effect with tiny shimmering white dots"
         type = isCrackle ? 'sparkle' : 'firework';
-        color = isCrackle ? '#ffffff' : fireworkColors[i % fireworkColors.length];
         
-        const center = fireworksCenters[i % 3];
+        // Cores Vibrantes Extremamente Amplas e Variadas!
+        const diversedColors = [
+          '#ff0055', '#FFD700', '#00f2ff', '#ff00ea', 
+          '#00ff66', '#ff8800', '#ff0044', '#7d00ff', 
+          '#ffffff', '#0044ff'
+        ];
+        color = isCrackle ? '#ffffff' : diversedColors[i % diversedColors.length];
+        
+        // Múltiplos núcleos no céu (Muito mais explosões ao mesmo tempo)
+        const centers = [
+          [THREE.MathUtils.randFloatSpread(25), 8 + Math.random() * 5, THREE.MathUtils.randFloatSpread(5)],
+          [THREE.MathUtils.randFloatSpread(25), 6 + Math.random() * 5, THREE.MathUtils.randFloatSpread(5)],
+          [THREE.MathUtils.randFloatSpread(25), 10 + Math.random() * 5, THREE.MathUtils.randFloatSpread(5)],
+          [THREE.MathUtils.randFloatSpread(25), 7 + Math.random() * 5, THREE.MathUtils.randFloatSpread(5)],
+          [THREE.MathUtils.randFloatSpread(25), 9 + Math.random() * 5, THREE.MathUtils.randFloatSpread(5)],
+          [THREE.MathUtils.randFloatSpread(25), 5 + Math.random() * 5, THREE.MathUtils.randFloatSpread(5)]
+        ];
+        
+        const center = centers[i % centers.length];
         position = [...center];
         
-        const speed = isCrackle ? (0.2 + Math.random() * 0.3) : (0.4 + Math.random() * 0.5); 
+        // Explosão Absurda com travamento de atrito (Eles explodem e PARAM NO AR pra não cair como "projéteis")
+        const speed = isCrackle ? (0.2 + Math.random() * 0.3) : (0.5 + Math.random() * 0.6); 
         const theta = Math.random() * Math.PI * 2;
         const phi = Math.acos((Math.random() * 2) - 1); 
         velocity = [
@@ -187,8 +205,8 @@ function CelebrationScene({ style = 'royal_gold' }) {
           speed * Math.cos(phi), 
           speed * Math.sin(phi) * Math.sin(theta)
         ];
-        gravity = isCrackle ? 0.002 : 0.004;
-        damping = isCrackle ? 0.95 : 0.92; 
+        gravity = 0; // ZERO gravidade. Pólvora voa, para, brilha parado igual ao real e evapora.
+        damping = 0.90; // Super atrito freia a explosão logo criando esferas volumosas perfeitas no céu
       } else if (style === 'neon_corporate') {
         // "Vibrant, high-energy explosions of neon cyan, magenta... bursting from the center"
         type = 'neon_laser';
