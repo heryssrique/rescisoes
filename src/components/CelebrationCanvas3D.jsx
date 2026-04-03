@@ -89,18 +89,25 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
   }, [type, color]);
 
   return (
-    <mesh ref={mesh} geometry={geometry} material={material} position={position} scale={type === 'sparkle' ? scale * 0.3 : type === 'box' ? scale * 0.5 : scale} />
+    <mesh ref={mesh} geometry={geometry} material={material} position={position} scale={type === 'sparkle' ? scale * 0.8 : type === 'box' ? scale * 0.5 : scale} />
   );
 }
 
 // 2. CENA DE CELEBRAÇÃO ESPECIALIZADA
 function CelebrationScene({ style = 'royal_gold' }) {
-  const count = style === 'midnight_fireworks' ? 120 : 80;
+  const count = style === 'midnight_fireworks' ? 180 : 80;
   
   const elements = useMemo(() => {
     const rainbowColors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#8b00ff'];
     const corporateColors = ['#00f2ff', '#7d00ff', '#ff00ea', '#ffffff'];
     const goldColors = ['#FFD700', '#DAA520', '#B8860B', '#f59e0b'];
+    
+    // Gerar 3 núcleos fixos de explosão para os fogos
+    const fireworksCenters = [
+      [THREE.MathUtils.randFloatSpread(20), 2 + Math.random() * 6, THREE.MathUtils.randFloatSpread(8)],
+      [THREE.MathUtils.randFloatSpread(20), 5 + Math.random() * 8, THREE.MathUtils.randFloatSpread(5)],
+      [THREE.MathUtils.randFloatSpread(20), 4 + Math.random() * 7, THREE.MathUtils.randFloatSpread(8)]
+    ];
     
     return new Array(count).fill().map((_, i) => {
       let type = 'diamond';
@@ -124,19 +131,21 @@ function CelebrationScene({ style = 'royal_gold' }) {
         gravity = 0.0006;
       } else if (style === 'midnight_fireworks') {
         type = 'sparkle';
-        color = ['#ffffff', '#FFD700', '#3b82f6', '#ff00ea'][i % 4];
-        // Múltiplos pontos de explosão
-        const burstPos = [THREE.MathUtils.randFloatSpread(30), THREE.MathUtils.randFloat(0, 10), THREE.MathUtils.randFloatSpread(10)];
-        position = [...burstPos];
-        const speed = 0.02 + Math.random() * 0.04;
+        color = ['#ff0055', '#FFD700', '#00f2ff', '#ff00ea'][i % 4];
+        
+        // As partículas partem todas do mesmo centro, criando a esfera do fogo
+        const center = fireworksCenters[i % 3];
+        position = [...center];
+        
+        const speed = 0.08 + Math.random() * 0.12; // Impulso inicial forte
         const theta = Math.random() * Math.PI * 2;
-        const phi = Math.random() * Math.PI;
+        const phi = Math.acos((Math.random() * 2) - 1); // Distribuição esférica
         velocity = [
           speed * Math.sin(phi) * Math.cos(theta),
-          speed * Math.sin(phi) * Math.sin(theta),
-          speed * Math.cos(phi)
+          speed * Math.cos(phi), // velocidade Y impulsionada
+          speed * Math.sin(phi) * Math.sin(theta)
         ];
-        gravity = 0.0001;
+        gravity = 0.0008; // Gravidade um pouco maior após a explosão
       } else if (style === 'neon_corporate') {
         type = Math.random() > 0.5 ? 'box' : 'diamond';
         color = corporateColors[i % corporateColors.length];
