@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Bell, Database, Download, FileSpreadsheet, AlertTriangle, ShieldAlert, Users, Plus, X, Save, FileText, ListChecks, Settings, GripVertical, Archive, Columns } from 'lucide-react';
+import { Bell, Database, Download, FileSpreadsheet, AlertTriangle, ShieldAlert, Users, Plus, X, Save, FileText, ListChecks, Settings, GripVertical, Archive, Columns, Link } from 'lucide-react';
 import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import { format } from 'date-fns';
 import * as api from '../services/api';
-import { DEFAULT_COLIGADAS, DEFAULT_MOTIVOS, DEFAULT_CHECKLIST_TEMPLATE, DEFAULT_STATUS_FLOW } from '../data/initialData';
+import { DEFAULT_COLIGADAS, DEFAULT_MOTIVOS, DEFAULT_CHECKLIST_TEMPLATE, DEFAULT_STATUS_FLOW, DEFAULT_LINKS_UTEIS } from '../data/initialData';
 
 function ChecklistItem({ item, idx, updateChecklist, removeChecklistItem }) {
   const controls = useDragControls();
@@ -99,6 +99,13 @@ export function SettingsView() {
       const saved = localStorage.getItem('desligest_status_flow');
       return saved ? JSON.parse(saved) : DEFAULT_STATUS_FLOW;
     } catch { return DEFAULT_STATUS_FLOW; }
+  });
+
+  const [linksList, setLinksList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('desligest_links');
+      return saved ? JSON.parse(saved) : DEFAULT_LINKS_UTEIS;
+    } catch { return DEFAULT_LINKS_UTEIS; }
   });
 
   const handleSaveMotivos = () => {
@@ -214,6 +221,20 @@ export function SettingsView() {
     setStatusFlowList(statusFlowList.filter((_, i) => i !== index));
   };
 
+  const handleSaveLinks = () => {
+    localStorage.setItem('desligest_links', JSON.stringify(linksList));
+    alert('Links úteis atualizados!');
+    window.location.reload();
+  };
+
+  const addLink = () => setLinksList([...linksList, { id: Date.now().toString(), label: '', url: '', category: 'Geral' }]);
+  const updateLink = (index, field, value) => {
+    const newList = [...linksList];
+    newList[index][field] = value;
+    setLinksList(newList);
+  };
+  const removeLink = (index) => setLinksList(linksList.filter((_, i) => i !== index));
+
   const [activeTab, setActiveTab] = useState('empresas');
 
   return (
@@ -264,6 +285,13 @@ export function SettingsView() {
             onClick={() => setActiveTab('fluxo')}
           >
             <Columns size={16} /> Etapas do Kanban
+          </button>
+          <button 
+            className={`btn ${activeTab === 'links' ? 'btn-primary' : ''}`}
+            style={{ justifyContent: 'flex-start', padding: '12px 16px', background: activeTab === 'links' ? 'var(--accent-blue)' : 'transparent', color: activeTab === 'links' ? '#fff' : 'var(--text-secondary)', border: 'none', boxShadow: 'none' }}
+            onClick={() => setActiveTab('links')}
+          >
+            <Link size={16} /> Links Úteis
           </button>
           <button 
             className={`btn ${activeTab === 'sistema' ? 'btn-primary' : ''}`}
@@ -537,6 +565,63 @@ export function SettingsView() {
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 24 }}>
                   <button className="btn" onClick={handleSaveStatusFlow} style={{ background: 'var(--accent-orange)', color: '#fff', padding: '10px 24px', fontWeight: 600, boxShadow: '0 4px 12px rgba(249, 115, 22, 0.3)' }}>
                     <Save size={16} /> Salvar Fluxo do Kanban
+                  </button>
+                </div>
+              </motion.section>
+            )}
+
+            {activeTab === 'links' && (
+              <motion.section 
+                key="links" 
+                initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}
+                className="card" style={{ padding: 32, borderColor: 'transparent', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}
+              >
+                <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h3 style={{ fontSize: 20, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                      <Link size={20} color="var(--accent-blue)" />
+                      Configurar Links Úteis
+                    </h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: 13, lineHeight: 1.5 }}>
+                      Adicione links para calculadoras, sites de legislação ou portais governamentais que auxiliam no processo.
+                    </p>
+                  </div>
+                  <button className="btn btn-secondary" onClick={addLink} style={{ padding: '10px 16px', fontSize: 13, gap: 8 }}>
+                    <Plus size={16} /> Novo Link
+                  </button>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+                  {linksList.map((link, idx) => (
+                    <div key={link.id} style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'var(--bg-secondary)', padding: '12px 16px', borderRadius: 12 }}>
+                      <div style={{ flex: 1.5, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>Título do Link</label>
+                        <input className="form-input" placeholder="Ex: Cálculo de Rescisão" value={link.label} onChange={e => updateLink(idx, 'label', e.target.value)} style={{ padding: '8px 12px' }} />
+                      </div>
+                      <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>URL (Link Completo)</label>
+                        <input className="form-input" placeholder="https://..." value={link.url} onChange={e => updateLink(idx, 'url', e.target.value)} style={{ padding: '8px 12px' }} />
+                      </div>
+                      <div style={{ width: 120, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>Categoria</label>
+                        <select className="form-input" value={link.category} onChange={e => updateLink(idx, 'category', e.target.value)} style={{ padding: '7px 10px', fontSize: 13, background: 'var(--bg-card)' }}>
+                          <option value="Cálculos">Cálculos</option>
+                          <option value="Legislação">Legislação</option>
+                          <option value="Portais">Portais</option>
+                          <option value="Consultas">Consultas</option>
+                          <option value="Geral">Geral</option>
+                        </select>
+                      </div>
+                      <button className="btn btn-icon" onClick={() => removeLink(idx)} style={{ color: 'var(--accent-red)', marginTop: 18 }}>
+                        <X size={18} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 24 }}>
+                  <button className="btn" onClick={handleSaveLinks} style={{ background: 'var(--accent-blue)', color: '#fff', padding: '10px 24px', fontWeight: 600, boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)' }}>
+                    <Save size={16} /> Salvar Links
                   </button>
                 </div>
               </motion.section>

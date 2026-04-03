@@ -190,3 +190,12 @@ export const INITIAL_DATA = [
     ],
   },
 ];
+
+export const DEFAULT_LINKS_UTEIS = [
+  { id: '1', label: 'Cálculo Exato', url: 'https://calculoexato.com.br/', category: 'Cálculos' },
+  { id: '2', label: 'Portal eSocial', url: 'https://login.esocial.gov.br/', category: 'Portais' },
+  { id: '3', label: 'Consultar CBO', url: 'https://mtecbo.gov.br/cbosite/pages/home.jsf', category: 'Consultas' },
+  { id: '4', label: 'FGTS (Conectividade)', url: 'https://conectividadesocial.caixa.gov.br/', category: 'Portais' },
+];
+
+export const LINKS_UTEIS = getConfig('desligest_links', DEFAULT_LINKS_UTEIS);
