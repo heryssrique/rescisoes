@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Stars, PerspectiveCamera, Environment, Sparkles } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
@@ -62,8 +62,18 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
     mesh.current.position.copy(pos.current);
 
     if (pos.current.y < -30) {
-      pos.current.y = 30; 
-      vel.current.y = velocity[1];
+      if (type === 'confetti_rect' || type === 'confetti_square') {
+        const fromLeft = pos.current.x < 0;
+        pos.current.set(fromLeft ? -15 : 15, -12, THREE.MathUtils.randFloatSpread(10));
+        vel.current.set(
+          fromLeft ? 0.2 + Math.random() * 0.2 : -0.2 - Math.random() * 0.2, 
+          0.4 + Math.random() * 0.4, 
+          THREE.MathUtils.randFloatSpread(0.15)
+        );
+      } else {
+        pos.current.y = 30; 
+        vel.current.y = velocity[1];
+      }
     }
   });
 
@@ -242,46 +252,46 @@ function CelebrationScene({ style = 'royal_gold' }) {
 
 // 3. WRAPPER CONTAINER (Truly Persistent Canvas)
 export function CelebrationCanvas3D({ active }) {
+  // Mantemos a cena renderizando mesmo após o active ser nulo para evitar o "congelamento de último frame" 
+  // O Canvas vai "fazer o fade out" enquanto a cena continua viva por baixo.
+  const [activeScene, setActiveScene] = useState(active);
+
+  useEffect(() => {
+    if (active) {
+      setActiveScene(active);
+    } else {
+      const timeout = setTimeout(() => setActiveScene(null), 1000);
+      return () => clearTimeout(timeout);
+    }
+  }, [active]);
+
   return (
-    <div style={{ 
-      position: 'fixed', 
-      top: 0, 
-      left: 0, 
-      width: '100vw', 
-      height: '100vh', 
-      zIndex: 999999, 
-      pointerEvents: 'none',
-    }}>
-      <AnimatePresence>
-        {active && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.8 }}
-            style={{ 
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%', 
-              height: '100%', 
-              background: 'rgba(0,0,0,0.4)', // Dark mode background do prompt original
-              backdropFilter: 'blur(3px)'
-            }}
-          />
-        )}
-      </AnimatePresence>
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: active ? 1 : 0 }} // Desaparece suavemente
+      transition={{ duration: 0.8 }}
+      style={{ 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        width: '100vw', 
+        height: '100vh', 
+        zIndex: 999999, 
+        pointerEvents: 'none',
+      }}
+    >
+      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(3px)' }} />
 
       <Canvas 
         shadows 
         dpr={[1, 2]} 
-        gl={{ antialias: false }} // Desativa antialias por conflito c Bloom em algumas maquinas 
+        gl={{ antialias: false, alpha: true }} 
         camera={{ position: [0, 0, 15] }}
         style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
       >
-        {active && <CelebrationScene style={active} />}
+        {activeScene && <CelebrationScene style={activeScene} />}
       </Canvas>
-    </div>
+    </motion.div>
   );
 }
 
