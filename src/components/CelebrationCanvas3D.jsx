@@ -20,9 +20,11 @@ const COIN_GEOM = new THREE.CylinderGeometry(1, 1, 0.1, 32);
 const DIAMOND_GEOM = new THREE.IcosahedronGeometry(0.7, 0);
 const BOX_GEOM = new THREE.BoxGeometry(1, 1, 1);
 const SPARKLE_GEOM = new THREE.SphereGeometry(0.5, 16, 16);
+const NEON_RIBBON_GEOM = new THREE.BoxGeometry(0.08, 1.5, 0.2); // Fitas de confetti 3D
+const NEON_RING_GEOM = new THREE.TorusGeometry(0.5, 0.08, 8, 24); // Anéis cibernéticos
 
 // 1. COMPONENTE BASE: ITEM COM FÍSICA 3D
-function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity = 0.005 }) {
+function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity = 0.005, damping = 0.992 }) {
   const mesh = useRef();
   const vel = useRef(new THREE.Vector3(...velocity));
   const pos = useRef(new THREE.Vector3(...position));
@@ -34,24 +36,25 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
     // Aplicar gravidade à velocidade
     vel.current.y -= gravity;
     
-    // Damping (Amortecimento aerodinâmico) levíssimo para não prender as moedas no ar
-    vel.current.multiplyScalar(0.992);
+    // Damping customizável (Amortecimento aerodinâmico)
+    vel.current.multiplyScalar(damping);
     
-    // Atualizar posição com uma escala de tempo cinematográfica global (50% da velocidade)
-    pos.current.x += vel.current.x * 0.5;
-    pos.current.y += vel.current.y * 0.5;
-    pos.current.z += vel.current.z * 0.5;
+    // Atualizar posição (cinemática ou linear dependendo do damping)
+    const timeScale = damping < 0.99 ? 1 : 0.5; // Se não houver mto damping, rola rapido, senão cinematico
+    pos.current.x += vel.current.x * timeScale;
+    pos.current.y += vel.current.y * timeScale;
+    pos.current.z += vel.current.z * timeScale;
     
-    // Atualizar rotação (Reduzido em 90% para dar o aspecto de câmera hiper-lenta)
-    mesh.current.rotation.x += rot.current.x * 0.1;
-    mesh.current.rotation.y += rot.current.y * 0.1;
-    mesh.current.rotation.z += rot.current.z * 0.1;
+    // Atualizar rotação
+    mesh.current.rotation.x += rot.current.x * (timeScale === 1 ? 1 : 0.1);
+    mesh.current.rotation.y += rot.current.y * (timeScale === 1 ? 1 : 0.1);
+    mesh.current.rotation.z += rot.current.z * (timeScale === 1 ? 1 : 0.1);
     
     mesh.current.position.copy(pos.current);
 
     // Reset ou morte (se sair muito da tela)
-    if (pos.current.y < -15) {
-      pos.current.y = 15; // Loop para cascatas
+    if (pos.current.y < -20) {
+      pos.current.y = 20; 
       vel.current.y = velocity[1];
     }
   });
@@ -61,48 +64,40 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
     if (type === 'coin') return COIN_GEOM;
     if (type === 'box') return BOX_GEOM;
     if (type === 'sparkle') return SPARKLE_GEOM;
+    if (type === 'neon_ribbon') return NEON_RIBBON_GEOM;
+    if (type === 'neon_ring') return NEON_RING_GEOM;
     return DIAMOND_GEOM;
   }, [type]);
 
   // Memoizar material para evitar re-alocação a cada frame
   const material = useMemo(() => {
     if (type === 'diamond') return new THREE.MeshPhysicalMaterial({ 
-      color: 0xffffff, 
-      metalness: 0, 
-      roughness: 0, 
-      transmission: 1, 
-      thickness: 1.5, 
-      ior: 2.417, 
-      iridescence: 0.3, 
-      reflectivity: 1,
-      clearcoat: 1,
-      clearcoatRoughness: 0,
-      envMapIntensity: 2
+      color: 0xffffff, metalness: 0, roughness: 0, transmission: 1, thickness: 1.5, ior: 2.417, iridescence: 0.3, reflectivity: 1, clearcoat: 1, envMapIntensity: 2
     });
+    const isNeon = type.includes('neon');
     return new THREE.MeshStandardMaterial({ 
       color, 
-      metalness: type === 'coin' ? 0.9 : 0.5, 
-      roughness: 0.2, 
+      metalness: type === 'coin' ? 0.9 : 0.2, 
+      roughness: isNeon ? 0 : 0.2, 
       emissive: color, 
-      emissiveIntensity: type === 'box' || type === 'sparkle' ? 2 : 0.2 
+      emissiveIntensity: isNeon ? 8 : (type === 'sparkle' ? 2 : 0.2) 
     });
   }, [type, color]);
 
   return (
-    <mesh ref={mesh} geometry={geometry} material={material} position={position} scale={type === 'sparkle' ? scale * 0.8 : type === 'box' ? scale * 0.5 : scale} />
+    <mesh ref={mesh} geometry={geometry} material={material} position={position} scale={type === 'sparkle' ? scale * 0.8 : scale} />
   );
 }
 
 // 2. CENA DE CELEBRAÇÃO ESPECIALIZADA
 function CelebrationScene({ style = 'royal_gold' }) {
-  const count = style === 'midnight_fireworks' ? 180 : 80;
+  const count = style === 'midnight_fireworks' ? 180 : (style === 'neon_corporate' ? 150 : 80);
   
   const elements = useMemo(() => {
     const rainbowColors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#8b00ff'];
-    const corporateColors = ['#00f2ff', '#7d00ff', '#ff00ea', '#ffffff'];
+    const corporateColors = ['#00f2ff', '#7d00ff', '#ff00ea', '#ffffff', '#00ffaa'];
     const goldColors = ['#FFD700', '#DAA520', '#B8860B', '#f59e0b'];
     
-    // Gerar 3 núcleos fixos de explosão para os fogos
     const fireworksCenters = [
       [THREE.MathUtils.randFloatSpread(20), 2 + Math.random() * 6, THREE.MathUtils.randFloatSpread(8)],
       [THREE.MathUtils.randFloatSpread(20), 5 + Math.random() * 8, THREE.MathUtils.randFloatSpread(5)],
@@ -115,6 +110,8 @@ function CelebrationScene({ style = 'royal_gold' }) {
       let position = [0, 0, 0];
       let velocity = [0, 0, 0];
       let gravity = 0.005;
+      let damping = 0.992;
+      let rotation = [Math.random() * 0.1, Math.random() * 0.1, Math.random() * 0.1];
 
       if (style === 'royal_gold') {
         type = Math.random() > 0.4 ? 'coin' : 'diamond';
@@ -133,25 +130,31 @@ function CelebrationScene({ style = 'royal_gold' }) {
         type = 'sparkle';
         color = ['#ff0055', '#FFD700', '#00f2ff', '#ff00ea'][i % 4];
         
-        // As partículas partem todas do mesmo centro, criando a esfera do fogo
         const center = fireworksCenters[i % 3];
         position = [...center];
         
-        const speed = 0.08 + Math.random() * 0.12; // Impulso inicial forte
+        const speed = 0.08 + Math.random() * 0.12; 
         const theta = Math.random() * Math.PI * 2;
-        const phi = Math.acos((Math.random() * 2) - 1); // Distribuição esférica
+        const phi = Math.acos((Math.random() * 2) - 1); 
         velocity = [
           speed * Math.sin(phi) * Math.cos(theta),
-          speed * Math.cos(phi), // velocidade Y impulsionada
+          speed * Math.cos(phi), 
           speed * Math.sin(phi) * Math.sin(theta)
         ];
-        gravity = 0.0008; // Gravidade um pouco maior após a explosão
+        gravity = 0.0008; 
       } else if (style === 'neon_corporate') {
-        type = Math.random() > 0.5 ? 'box' : 'diamond';
+        // High-Tech Cyber Explosão (Fitas 3D espessas e Anéis Virtuais)
+        type = Math.random() > 0.7 ? 'neon_ring' : 'neon_ribbon';
         color = corporateColors[i % corporateColors.length];
-        position = [THREE.MathUtils.randFloatSpread(30), 15, THREE.MathUtils.randFloatSpread(15)];
-        velocity = [0, -0.01 - Math.random() * 0.02, 0];
-        gravity = 0.0004;
+        position = [THREE.MathUtils.randFloatSpread(5), -5, THREE.MathUtils.randFloatSpread(5)];
+        velocity = [
+          THREE.MathUtils.randFloatSpread(0.2), 
+          0.1 + Math.random() * 0.25, // Explosão pra cima
+          THREE.MathUtils.randFloatSpread(0.2)
+        ];
+        rotation = [Math.random() * 0.4, Math.random() * 0.4, Math.random() * 0.4];
+        gravity = 0.002; // Gravidade realista para explodir logo
+        damping = 0.97; // Alta fricção simulando ambiente digital (dados caindo)
       } else {
         // Rainbow/Default
         type = 'diamond';
@@ -167,7 +170,8 @@ function CelebrationScene({ style = 'royal_gold' }) {
         position, 
         velocity, 
         gravity,
-        rotation: [Math.random() * 0.1, Math.random() * 0.1, Math.random() * 0.1],
+        damping,
+        rotation,
         scale: Math.random() * 0.5 + 0.4
       };
     });
