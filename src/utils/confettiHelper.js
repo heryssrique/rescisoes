@@ -1,161 +1,166 @@
 import confetti from 'canvas-confetti';
 
 /**
- * GESTOR DE CELEBRAÇÕES MASTERPIECE V7.0
- * Almejando 100% de fidelidade visual aos mockups de luxo.
+ * GESTOR DE CELEBRAÇÕES CINEMATIC V8.0
+ * Utiliza formas customizadas SVG para atingir 100% de realismo (Moedas, Diamantes e Pérolas).
  */
 
-const GOLD_GRADIENT = ['#FFD700', '#DAA520', '#B8860B', '#f59e0b', '#FFFACD'];
-const DIAMOND_GRADIENT = ['#FFFFFF', '#F0F8FF', '#E0FFFF', '#F8FAF6'];
+// 1. FORMAS CUSTOMIZADAS (SVG Paths para realismo total)
+const coinPath = 'M10,0 A10,10 0 1,1 10,20 A10,10 0 1,1 10,0 M10,3 A7,7 0 1,0 10,17 A7,7 0 1,0 10,3'; // Moeda com borda interna
+const diamondPath = 'M10,0 L20,7 L14,20 L6,20 L0,7 Z M6,7 L14,7 M10,0 L10,7 M10,7 L14,20 M10,7 L6,20'; // Diamante lapidado
 
-// Helper para explosões com "Glow" (dispara duas vezes com escala e alpha diferentes)
-function fireWithGlow(opts) {
-  // 1. O brilho (transparente e maior)
-  confetti({
-    ...opts,
-    particleCount: Math.floor(opts.particleCount * 0.4),
-    scalar: opts.scalar * 1.8,
-    opacity: 0.1,
-    zIndex: 999998,
-  });
-  // 2. A partícula sólida
-  confetti({
-    ...opts,
-    zIndex: 999999,
-  });
-}
+// Cores mais densas e ricas
+const LUXURY_GOLD = ['#FFD700', '#DAA520', '#B8860B', '#f59e0b', '#FFE55E'];
+const LUXURY_DIAMOND = ['#E0F7FA', '#B2EBF2', '#FFFFFF', '#F8FAF6', '#D1D5DB'];
 
-// 1. ROYAL GOLD & DIAMONDS (O efeito do mockup 1)
+// 2. EFEITO: ROYAL GOLD & DIAMONDS (WATERFALL MODE)
 function royalGold() {
   const duration = 12 * 1000;
   const end = Date.now() + duration;
 
-  // Chuva de Moedas e Estrelas (Preenchimento total)
-  const shower = setInterval(() => {
-    if (Date.now() > end) return clearInterval(shower);
+  // Shapes customizados
+  const coin = confetti.shapeFromPath({ path: coinPath });
+  const diamond = confetti.shapeFromPath({ path: diamondPath });
 
-    fireWithGlow({
-      particleCount: 20,
-      startVelocity: 0,
-      ticks: 500,
-      origin: { x: Math.random(), y: Math.random() - 0.2 },
-      colors: Math.random() > 0.7 ? DIAMOND_GRADIENT : GOLD_GRADIENT,
-      shapes: ['circle', 'star'],
-      gravity: 0.25, // Queda bem lenta e graciosa
-      scalar: Math.random() * 2 + 1, // Escala massiva
-      drift: Math.random() * 2 - 1,
-    });
-  }, 100);
+  // EMISSOR CENTRAL (CASCATA): O segredo do mockup é o fluxo central
+  const waterfall = setInterval(() => {
+    if (Date.now() > end) return clearInterval(waterfall);
 
-  // Explosões de Impacto Laterais e Centrais
-  const impacts = setInterval(() => {
-    if (Date.now() > end) return clearInterval(impacts);
-    
-    const x = Math.random();
-    fireWithGlow({
-      particleCount: 150,
-      startVelocity: 40,
-      spread: 360,
-      origin: { x, y: Math.random() * 0.5 },
-      colors: GOLD_GRADIENT,
-      shapes: ['star'],
-      scalar: 1.5,
-      gravity: 0.5
-    });
-  }, 2000);
-}
-
-// 2. MIDNIGHT FIREWORKS (O efeito do mockup 2)
-function midnightFireworks() {
-  const duration = 12 * 1000;
-  const end = Date.now() + duration;
-  const fireworkColors = ['#3b82f6', '#6366f1', '#a855f7', '#1e40af', '#ffffff'];
-
-  const internalShow = setInterval(() => {
-    if (Date.now() > end) return clearInterval(internalShow);
-
-    const x = Math.random() * 0.8 + 0.1;
-    const y = Math.random() * 0.3 + 0.1;
-
-    // Rastro real luminoso
+    // Disparos do topo para simular a queda vertical densa
     confetti({
-      particleCount: 30,
-      angle: 90,
-      spread: 10,
-      origin: { x, y: y + 0.2 },
-      colors: ['#fff'],
-      startVelocity: 35,
-      gravity: 1.5,
-      scalar: 0.5,
-      ticks: 50,
+      particleCount: 8,
+      startVelocity: 0,
+      ticks: 400,
+      origin: { x: Math.random() * 0.4 + 0.3, y: -0.2 }, // Focado no centro
+      colors: LUXURY_GOLD,
+      shapes: [coin],
+      gravity: 0.6,
+      scalar: Math.random() * 1.5 + 1.2,
+      drift: Math.random() * 0.5 - 0.25,
       zIndex: 999999
     });
 
-    setTimeout(() => {
-      // Explosão Esférica Massiva
-      fireWithGlow({
-        particleCount: 500,
-        spread: 360,
-        startVelocity: 60,
-        decay: 0.92,
-        gravity: 0.6,
-        origin: { x, y },
-        colors: fireworkColors,
-        scalar: 1.8,
-        ticks: 300
-      });
+    confetti({
+      particleCount: 5,
+      startVelocity: 0,
+      ticks: 500,
+      origin: { x: Math.random() * 0.5 + 0.25, y: -0.1 },
+      colors: LUXURY_DIAMOND,
+      shapes: [diamond, 'circle'],
+      gravity: 0.4,
+      scalar: Math.random() * 1 + 0.8,
+      drift: Math.random() * 1 - 0.5,
+      zIndex: 999998
+    });
+  }, 80);
 
-      // Shimmer/Brocade Final
-      setTimeout(() => {
-        fireWithGlow({
-          particleCount: 200,
-          spread: 360,
-          startVelocity: 20,
-          decay: 0.88,
-          gravity: 0.3,
-          origin: { x, y },
-          colors: ['#FFD700', '#ffffff'],
-          shapes: ['star'],
-          scalar: 0.6,
-          ticks: 600
-        });
-      }, 200);
-    }, 300);
+  // EXPLOSÕES DE IMPACTO (Para dar volume nas laterais)
+  const impacts = setInterval(() => {
+    if (Date.now() > end) return clearInterval(impacts);
+    
+    confetti({
+      particleCount: 40,
+      startVelocity: 30,
+      spread: 70,
+      origin: { x: Math.random() > 0.5 ? 0.1 : 0.9, y: 0.6 },
+      colors: LUXURY_GOLD,
+      shapes: [coin],
+      scalar: 1,
+      gravity: 1.2,
+      zIndex: 999999
+    });
+  }, 1500);
+}
+
+// 3. MIDNIGHT FIREWORKS (SHELL MODE)
+function midnightFireworks() {
+  const duration = 10 * 1000;
+  const end = Date.now() + duration;
+  const colors = ['#3b82f6', '#6366f1', '#a855f7', '#ffffff', '#f59e0b'];
+
+  const show = setInterval(() => {
+    if (Date.now() > end) return clearInterval(show);
+
+    const x = Math.random() * 0.6 + 0.2;
+    const y = Math.random() * 0.3 + 0.1;
+
+    // Burst Primário
+    confetti({
+      particleCount: 400,
+      spread: 360,
+      startVelocity: 60,
+      origin: { x, y },
+      colors: colors,
+      scalar: 1.4,
+      gravity: 0.8,
+      ticks: 300,
+      zIndex: 999999
+    });
+
+    // Shimmer secundário com estrelas reais
+    setTimeout(() => {
+      confetti({
+        particleCount: 100,
+        spread: 360,
+        startVelocity: 25,
+        origin: { x, y },
+        colors: ['#ffffff', '#FFD700'],
+        shapes: ['star'],
+        scalar: 0.7,
+        gravity: 0.4,
+        ticks: 500,
+        zIndex: 999998
+      });
+    }, 200);
   }, 1200);
 }
 
-// 3. NEON CORPORATE (O efeito do mockup 3)
+// 4. NEON CORPORATE (GLOW MODE)
 function neonCorporate() {
-  const neonColors = ['#00f2ff', '#00ff9d', '#ff00ea', '#7d00ff', '#ffffff'];
-  const duration = 10 * 1000;
+  const duration = 8 * 1000;
   const end = Date.now() + duration;
+  const neonColors = ['#00f2ff', '#00ff9d', '#ff00ea', '#7d00ff', '#ffffff'];
 
-  const quickBursts = setInterval(() => {
-    if (Date.now() > end) return clearInterval(quickBursts);
+  const interval = setInterval(() => {
+    if (Date.now() > end) return clearInterval(interval);
 
-    fireWithGlow({
-      particleCount: 500,
-      startVelocity: 90,
+    const x = Math.random();
+    const y = Math.random() * 0.4 + 0.2;
+
+    // Camada 1: Glow (Maior e translúcida)
+    confetti({
+      particleCount: 50,
       spread: 360,
-      origin: { x: Math.random(), y: Math.random() * 0.5 + 0.2 },
+      startVelocity: 70,
+      origin: { x, y },
       colors: neonColors,
-      scalar: 2,
-      gravity: 1,
-      decay: 0.94,
-      ticks: 150
+      scalar: 4,
+      opacity: 0.1,
+      zIndex: 999997
+    });
+
+    // Camada 2: Core (Sólida e rápida)
+    confetti({
+      particleCount: 200,
+      spread: 360,
+      startVelocity: 50,
+      origin: { x, y },
+      colors: neonColors,
+      scalar: 1.2,
+      zIndex: 999999
     });
   }, 1000);
 }
 
-// 4. CLASSIC RH (Simplificado mas potente)
+// 5. CLASSIC RH PRIDE
 function classicRH() {
   const appColors = ['#3b82f6', '#6366f1', '#f59e0b', '#ffffff'];
-  const end = Date.now() + (8 * 1000);
+  const end = Date.now() + (7 * 1000);
+  const coin = confetti.shapeFromPath({ path: coinPath });
 
   (function frame() {
-    fireWithGlow({ particleCount: 15, angle: 60, spread: 60, origin: { x: 0, y: 0.75 }, colors: appColors, scalar: 2.5 });
-    fireWithGlow({ particleCount: 15, angle: 120, spread: 60, origin: { x: 1, y: 0.75 }, colors: appColors, scalar: 2.5 });
-
+    confetti({ particleCount: 6, angle: 60, spread: 60, origin: { x: 0, y: 0.7 }, colors: appColors, scalar: 2, shapes: [coin, 'circle'] });
+    confetti({ particleCount: 6, angle: 120, spread: 60, origin: { x: 1, y: 0.7 }, colors: appColors, scalar: 2, shapes: [coin, 'circle'] });
     if (Date.now() < end) requestAnimationFrame(frame);
   }());
 }
