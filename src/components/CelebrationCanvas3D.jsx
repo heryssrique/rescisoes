@@ -1,3 +1,8 @@
+import React, { useRef, useMemo, useState, useEffect } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Stars, PerspectiveCamera, Environment, Float, Sparkles } from '@react-three/drei';
+import * as THREE from 'three';
+
 // 1. COMPONENTE BASE: ITEM COM FÍSICA 3D
 function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity = 0.005 }) {
   const mesh = useRef();
