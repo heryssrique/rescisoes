@@ -26,3 +26,11 @@
 {"level":"info","message":"Incoming Request: GET /api/health","service":"desligest-api","timestamp":"2026-04-03 12:23:54"}
 {"level":"info","message":"Incoming Request: POST /api/auth/login","service":"desligest-api","timestamp":"2026-04-03 12:24:02"}
 {"level":"error","message":"[POST] /api/auth/login - Error: E-mail ou senha incorretos","service":"desligest-api","stack":"Error: E-mail ou senha incorretos\n    at C:\\Users\\hhsil\\OneDrive\\Documentos\\rescisoes\\server\\routes\\auth.js:45:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)","timestamp":"2026-04-03 12:24:02"}
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-04-03 15:22:52"}
+{"level":"info","message":"✅ MongoDB conectado com sucesso","service":"desligest-api","timestamp":"2026-04-03 15:22:53"}
+{"level":"info","message":"✅ Tarefas agendadas (Cron) inicializadas","service":"desligest-api","timestamp":"2026-04-03 15:22:53"}
+{"level":"info","message":"🚀 API rodada na porta 3001","service":"desligest-api","timestamp":"2026-04-03 15:22:53"}
+{"level":"info","message":"   Health: http://localhost:3001/api/health","service":"desligest-api","timestamp":"2026-04-03 15:22:53"}
+{"level":"info","message":"Incoming Request: POST /api/auth/login","service":"desligest-api","timestamp":"2026-04-03 15:23:26"}
+{"level":"info","message":"Incoming Request: GET /api/desligamentos?arquivado=false","service":"desligest-api","timestamp":"2026-04-03 15:23:26"}
+{"level":"info","message":"Incoming Request: GET /api/desligamentos?arquivado=true&q=","service":"desligest-api","timestamp":"2026-04-03 15:23:26"}

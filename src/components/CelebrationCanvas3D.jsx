@@ -187,6 +187,9 @@ export function CelebrationCanvas3D({ active }) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.8 }}
             style={{ 
+              position: 'absolute',
+              top: 0,
+              left: 0,
               width: '100%', 
               height: '100%', 
               background: 'rgba(0,0,0,0.15)',
@@ -196,7 +199,13 @@ export function CelebrationCanvas3D({ active }) {
         )}
       </AnimatePresence>
 
-      <Canvas shadows dpr={[1, 2]} gl={{ antialias: true }} camera={{ position: [0, 0, 15] }}>
+      <Canvas 
+        shadows 
+        dpr={[1, 2]} 
+        gl={{ antialias: true }} 
+        camera={{ position: [0, 0, 15] }}
+        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
+      >
         {active && <CelebrationScene style={active} />}
       </Canvas>
     </div>
