@@ -2,10 +2,11 @@
 
 O **DesliGest** é uma plataforma corporativa premium para o acompanhamento e gestão de desligamentos, projetada para departamentos de Recursos Humanos que buscam **máxima eficiência**, **controle rigoroso de prazos** e **rastreabilidade total**.
 
-![Version](https://img.shields.io/badge/version-2.1.0-blue)
+![Version](https://img.shields.io/badge/version-2.2.0-blue)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
-![Node](https://img.shields.io/badge/Node-20-339933?logo=node.js)
+![Node](https://img.shields.io/badge/Node-22-339933?logo=node.js)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Latest-47A248?logo=mongodb)
+![PWA](https://img.shields.io/badge/PWA-Ready-orange?logo=progressive-web-apps)
 
 ---
 
@@ -23,9 +24,27 @@ O **DesliGest** é uma plataforma corporativa premium para o acompanhamento e ge
 *   Centralização radical: Anexe PDFs, comprovantes e fotos diretamente no card de cada colaborador.
 *   Histórico de anexos integrado para controle documental simplificado.
 
-### ⚡ Performance Computacional (Novo!)
+### ⚡ Performance e Estabilidade (Novo!)
+*   **Controle de Concorrência de API**: Sistema inteligente que evita o empilhamento de requisições, garantindo que o servidor nunca seja sobrecarregado.
 *   **Busca com Debounce**: Interface ultra-responsiva que economiza CPU e elimina atrasos de digitação.
-*   **Memoização Inteligente**: Renderização otimizada para suportar milhares de itens sem perda de fluidez.
+### Memoização Crítica
+Foram aplicados padrões preventivos de renderização excessiva:
+*   **React.memo**: Em componentes repetitivos pesados (ex: `TermCard`).
+*   **useCallback**: Para funções passadas como props que disparariam re-renderizações de filhos.
+*   **useMemo**: Para cálculos de estatísticas de dashboard e filtragem de listas.
+
+### 🚦 Prevenção de Loops e Stacking
+Para garantir infraestrutura resiliente, o `AppContext` implementa:
+*   **loadingRef**: Controle sem estado via `useRef` para impedir que o sistema dispare `fetchAll` ou `fetchArchived` enquanto uma requisição já estiver em "vôo".
+*   **Deep Comparison Notifier**: O sistema de notificações utiliza comparação serializada para evitar atualizações de estado quando o conteúdo da notificação não sofreu alterações reais.
+
+---
+
+## 📱 Progressive Web App (PWA)
+O sistema opera como um aplicativo híbrido moderno:
+*   **Service Worker**: Registrado em `public/sw.js`, gerencia o cache básico e permite que a aplicação seja instalada.
+*   **Manifest**: Define a identidade visual do app em `public/manifest.json`.
+*   **Notification API**: Integrada ao browser para alertas persistentes fora da aba do sistema.
 
 ### 📦 Funcionalidades Core
 *   **Checklist Dinâmico**: 15+ etapas automáticas organizadas por fluxo de trabalho (Comunicado, Documentação, Homologação, Pagamento).
@@ -93,15 +112,17 @@ npm run dev
 
 ---
 
-## 🔐 Segurança e Boas Práticas
+## 🔐 Segurança e Conectividade
+*   **CORS Blindado**: Configuração rigorosa de origens permitidas para segurança em ambientes de deploy (Vercel + Render).
+*   **Rate Limiting**: Proteção antiespam que bloqueia IPs maliciosos e ataques de força bruta.
 *   **RBAC (Role-Based Access Control)**: O sistema suporta diferentes níveis de permissão (Admin/Operador).
-*   **Segurança de Dados**: Sanitização de inputs e hashing de senhas.
+*   **Segurança de Dados**: Sanitização de inputs contra NoSQL Injection e Hashing de senhas.
 *   **UX Inclusiva**: Contraste aprimorado para o modo claro e animações suaves para redução de carga cognitiva.
 
 ---
 
 ## 🏢 Sobre o Projeto
-Desenvolvido para ser a solução definitiva em gestão de rescisões, focando em reduzir erros de prazo e garantir que nenhum documento seja esquecido durante as etapas críticas do desligamento.
+Este documento detalha o funcionamento interno, arquitetura e decisões técnicas tomadas no desenvolvimento do **DesliGest (v2.2.0)**.
 
 ---
 
