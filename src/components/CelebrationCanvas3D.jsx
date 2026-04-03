@@ -20,10 +20,11 @@ const COIN_GEOM = new THREE.CylinderGeometry(1, 1, 0.1, 32);
 const DIAMOND_GEOM = new THREE.IcosahedronGeometry(0.7, 0);
 const BOX_GEOM = new THREE.BoxGeometry(1, 1, 1);
 const SPARKLE_GEOM = new THREE.SphereGeometry(0.5, 16, 16);
-const NEON_RIBBON_GEOM = new THREE.BoxGeometry(0.08, 1.5, 0.2); // Fitas cibernéticas
-const NEON_RING_GEOM = new THREE.TorusGeometry(0.5, 0.08, 8, 24); // Anéis cibernéticos
-const CONFETTI_RECT_GEOM = new THREE.BoxGeometry(0.8, 0.4, 0.02); // Confetes retangulares tradicionais
-const CONFETTI_SQUARE_GEOM = new THREE.BoxGeometry(0.5, 0.5, 0.02); // Confetes quadrados
+const NEON_RIBBON_GEOM = new THREE.BoxGeometry(0.08, 1.5, 0.2); 
+const NEON_RING_GEOM = new THREE.TorusGeometry(0.5, 0.08, 8, 24); 
+const CONFETTI_RECT_GEOM = new THREE.BoxGeometry(0.8, 0.4, 0.02); 
+const CONFETTI_SQUARE_GEOM = new THREE.BoxGeometry(0.5, 0.5, 0.02); 
+const FIREWORK_GEOM = new THREE.BoxGeometry(0.03, 0.03, 0.6); // Rastro fino apontado pro eixo Z (direção)
 
 // 1. COMPONENTE BASE: ITEM COM FÍSICA 3D
 function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity = 0.005, damping = 0.992 }) {
@@ -48,11 +49,16 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
     pos.current.y += vel.current.y * timeScale;
     pos.current.z += vel.current.z * timeScale;
     
-    // Rotação: papel e neo turbilhonam; câmera super lenta roda em slowmotion
-    const rotScale = timeScale === 1 ? 1 : 0.15;
-    mesh.current.rotation.x += rot.current.x * rotScale;
-    mesh.current.rotation.y += rot.current.y * rotScale;
-    mesh.current.rotation.z += rot.current.z * rotScale;
+    // Rotação: papel e neo turbilhonam; fogos apontam pra velocidade
+    if (type === 'firework') {
+      const target = pos.current.clone().add(vel.current);
+      mesh.current.lookAt(target); // Sempre aponta a ponta (Z) para a direção da sua velocidade, como pólvora
+    } else {
+      const rotScale = timeScale === 1 ? 1 : 0.15;
+      mesh.current.rotation.x += rot.current.x * rotScale;
+      mesh.current.rotation.y += rot.current.y * rotScale;
+      mesh.current.rotation.z += rot.current.z * rotScale;
+    }
     
     mesh.current.position.copy(pos.current);
 
@@ -71,6 +77,7 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
     if (type === 'neon_ring') return NEON_RING_GEOM;
     if (type === 'confetti_rect') return CONFETTI_RECT_GEOM;
     if (type === 'confetti_square') return CONFETTI_SQUARE_GEOM;
+    if (type === 'firework') return FIREWORK_GEOM;
     return DIAMOND_GEOM;
   }, [type]);
 
@@ -80,6 +87,9 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
       color: 0xffffff, metalness: 0, roughness: 0, transmission: 1, thickness: 1.5, ior: 2.417, iridescence: 0.3, reflectivity: 1, clearcoat: 1, envMapIntensity: 2
     });
     
+    // Fagulhas e Fogos = Pura luz (Basic Material ignora sombras e luzes, é sempre "aceso" 100%)
+    if (type === 'firework') return new THREE.MeshBasicMaterial({ color });
+
     // Papel Convencional Fosco
     if (type === 'confetti_rect' || type === 'confetti_square') return new THREE.MeshStandardMaterial({
       color, metalness: 0, roughness: 0.8 // papel não reflete
@@ -148,7 +158,8 @@ function CelebrationScene({ style = 'royal_gold' }) {
         gravity = 0.006; // Gravidade realista de papel
         damping = 0.98; // Atrito real aerodinâmico (velocidade real 1:1 ativada)
       } else if (style === 'midnight_fireworks') {
-        type = 'sparkle';
+        // Fogos Reais com Rastros Finos apontando a direção do vôo
+        type = 'firework';
         color = ['#ff0055', '#FFD700', '#00f2ff', '#ff00ea'][i % 4];
         
         const center = fireworksCenters[i % 3];
@@ -162,7 +173,7 @@ function CelebrationScene({ style = 'royal_gold' }) {
           speed * Math.cos(phi), 
           speed * Math.sin(phi) * Math.sin(theta)
         ];
-        gravity = 0.0008; 
+        gravity = 0.001; // Caem rápido após a explosão
       } else if (style === 'neon_corporate') {
         // High-Tech Cyber Explosão (Fitas 3D espessas e Anéis Virtuais)
         type = Math.random() > 0.7 ? 'neon_ring' : 'neon_ribbon';
