@@ -63,18 +63,6 @@ function ChecklistItem({ item, idx, updateChecklist, removeChecklistItem }) {
     </Reorder.Item>
   );
 }
-const getMotivoColor = (className) => {
-  switch (className) {
-    case 'motivo-pedido': return 'var(--accent-blue)';
-    case 'motivo-demissao': return 'var(--accent-orange)';
-    case 'motivo-acordo': return 'var(--accent-yellow)';
-    case 'motivo-justa': return 'var(--accent-red)';
-    case 'motivo-aposentadoria': return 'var(--accent-green)';
-    case 'motivo-termino': return 'var(--accent-purple)';
-    default: return 'var(--text-muted)';
-  }
-};
-
 export function SettingsView() {
   const { state, actions } = useApp();
   const { desligamentos, archivedDesligamentos } = state;
@@ -334,23 +322,12 @@ export function SettingsView() {
                       </div>
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>Cor da Etiqueta Visual</label>
-                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                          <div style={{ 
-                            position: 'absolute', 
-                            left: 12, 
-                            width: 10, 
-                            height: 10, 
-                            borderRadius: '50%', 
-                            background: getMotivoColor(motivo.class),
-                            boxShadow: `0 0 10px ${getMotivoColor(motivo.class)}66`,
-                            pointerEvents: 'none',
-                            transition: 'all 0.2s'
-                          }} />
+                        <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                           <select 
                             className="form-input" 
                             value={motivo.class} 
                             onChange={e => updateMotivo(idx, 'class', e.target.value)} 
-                            style={{ padding: '8px 12px 8px 32px', background: 'var(--bg-card)' }}
+                            style={{ padding: '8px 12px', background: 'var(--bg-card)' }}
                           >
                             <option value="motivo-pedido">🔵 Azul (Padrão/Pedido)</option>
                             <option value="motivo-demissao">🟠 Laranja (Demissão/Alerta)</option>
