@@ -1,30 +1,29 @@
 import confetti from 'canvas-confetti';
 
 /**
- * Dispara uma celebração V2.6 — Show de Fogos de Artifício Reais.
- * Simula rojões subindo e explodindo em cascata.
+ * Dispara uma celebração V2.7 — Show de Fogos de Artifício com Grand Finale Arco-Íris.
+ * Combina elegância corporativa no início com uma explosão de cores vibrantes no final.
  */
 export function fireExtravagantConfetti() {
-  const duration = 8 * 1000;
+  const duration = 9 * 1000; // Estendido para 9 segundos para acomodar o show completo
   const animationEnd = Date.now() + duration;
   
   const appColors = ['#3b82f6', '#6366f1', '#f59e0b', '#ffffff', '#a855f7'];
   const goldColors = ['#f59e0b', '#FFD700', '#ffffff'];
+  const rainbowColors = ['#ff0000', '#ffa500', '#ffff00', '#008000', '#0000ff', '#4b0082', '#ee82ee'];
 
   const randomInRange = (min, max) => Math.random() * (max - min) + min;
 
-  // 1. ROJÕES EM SEQUÊNCIA (O efeito de fogos de artifício real)
+  // 1. SHOW DE FOGOS CORPORATIVOS (Primeiros 7 segundos)
   const fireworkInterval = setInterval(() => {
     const timeLeft = animationEnd - Date.now();
-    if (timeLeft <= 0) return clearInterval(fireworkInterval);
+    // Parar os fogos normais um pouco antes do Grand Finale
+    if (timeLeft <= 2000) return clearInterval(fireworkInterval);
 
-    // Lançamento aleatório
     const x = randomInRange(0.1, 0.9);
     const y = randomInRange(0.1, 0.4);
     
-    // Pequeno atraso para simular a subida
     setTimeout(() => {
-      // Explosão Principal
       confetti({
         particleCount: 150,
         spread: 180,
@@ -38,16 +37,16 @@ export function fireExtravagantConfetti() {
         ticks: 200
       });
 
-      // Brilho Secundário (Crepitar de estrelas)
+      // Efeito de "Crackle" (Estrelinhas brancas)
       setTimeout(() => {
         confetti({
-          particleCount: 50,
+          particleCount: 40,
           spread: 360,
           startVelocity: 20,
           origin: { x, y },
           colors: ['#ffffff'],
           zIndex: 999999,
-          scalar: 0.6,
+          scalar: 0.7,
           shapes: ['star'],
           gravity: 0.4,
           ticks: 100
@@ -56,10 +55,10 @@ export function fireExtravagantConfetti() {
     }, randomInRange(10, 500));
   }, 900);
 
-  // 2. CHUVA LATERAL CONSTANTE (Para preencher a tela)
+  // 2. CHUVA LATERAL (Para preencher o fundo)
   const rainInterval = setInterval(function() {
     const timeLeft = animationEnd - Date.now();
-    if (timeLeft <= 0) return clearInterval(rainInterval);
+    if (timeLeft <= 2500) return clearInterval(rainInterval);
 
     confetti({
       particleCount: 20,
@@ -82,25 +81,45 @@ export function fireExtravagantConfetti() {
       scalar: 1,
       gravity: 1.2
     });
-  }, 400);
+  }, 450);
 
-  // 3. O GRANDE FINAL ÉPICO (Barragem de Fogos)
+  // 3. O GRANDE FINAL ARCO-ÍRIS (Barragem de cores vibrantes)
+  // Ativa nos últimos 2 segundos da animação
   setTimeout(() => {
-    const finish = (x) => {
-      confetti({
-        particleCount: 400,
-        spread: 360,
-        startVelocity: 60,
-        origin: { x, y: 0.5 },
-        colors: goldColors,
-        zIndex: 999999,
-        scalar: 2,
-        ticks: 300
-      });
+    const burstRainbow = (x, delay) => {
+      setTimeout(() => {
+        confetti({
+          particleCount: 500,
+          spread: 360,
+          startVelocity: 70,
+          origin: { x, y: 0.5 },
+          colors: rainbowColors,
+          zIndex: 999999,
+          scalar: 2.2,
+          ticks: 400,
+          gravity: 0.9,
+          shapes: ['circle', 'star']
+        });
+      }, delay);
     };
 
-    finish(0.2);
-    finish(0.5);
-    finish(0.8);
+    // Sequência final de explosões massivas
+    burstRainbow(0.2, 0);      // Explosão Esquerda
+    burstRainbow(0.8, 400);    // Explosão Direita
+    burstRainbow(0.5, 800);    // Explosão Central (O Clímax)
+    
+    // Chuva de encerramento
+    setTimeout(() => {
+      confetti({
+        particleCount: 200,
+        spread: 160,
+        origin: { y: 0.3 }, // Caindo bem de cima
+        colors: rainbowColors,
+        zIndex: 999999,
+        scalar: 1.5,
+        gravity: 0.5
+      });
+    }, 1200);
+    
   }, 7000);
 }
