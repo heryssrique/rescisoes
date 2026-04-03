@@ -7,6 +7,7 @@ import { NotificationCenter } from './components/NotificationCenter';
 import { AuthView } from './components/AuthView';
 import { differenceInDays, parseISO, startOfDay } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
+import { CelebrationCanvas3D } from './components/CelebrationCanvas3D';
 import {
   LayoutList, Columns, Plus, Users, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut, HelpCircle, FileText, Sun, Moon, Calendar, History, Link, Monitor
 } from 'lucide-react';
@@ -254,6 +255,7 @@ function AppContent() {
       </div>
       {showNew && <ModalNovoDesligamento onClose={() => setShowNew(false)} />}
       {showImport && <ModalImportarPlanilha onClose={() => setShowImport(false)} />}
+      <CelebrationCanvas3D active={state.activeCelebration} />
     </div>
   );
 }

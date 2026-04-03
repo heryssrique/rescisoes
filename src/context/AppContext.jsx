@@ -152,6 +152,8 @@ function reducer(state, action) {
       return { ...s, [action.configName]: action.payload };
     case 'TRIGGER_CONFETTI':
       return { ...s, triggerConfetti: action.value };
+    case 'SET_CELEBRATION':
+      return { ...s, activeCelebration: action.payload };
     default:
       return s;
   }
@@ -192,6 +194,7 @@ function getInitialState() {
       checklistTemplate: getConfig('desligest_checklist', DEFAULT_CHECKLIST_TEMPLATE),
       linksUteis: getConfig('desligest_links', DEFAULT_LINKS_UTEIS),
       triggerConfetti: false,
+      activeCelebration: null,
     };
   } catch (e) {
     console.error("Error initializing state", e);
@@ -201,6 +204,7 @@ function getInitialState() {
       loading: true, error: null, offline: false, notifications: [], readNotificationIds: [],
       coligadas: {}, motivos: [], statusFlow: [], checklistTemplate: [], linksUteis: [],
       triggerConfetti: false,
+      activeCelebration: null,
     };
   }
 }
@@ -665,6 +669,10 @@ export function AppProvider({ children }) {
       },
       toggleTheme: () => dispatch({ type: 'TOGGLE_THEME' }),
       updateConfig,
+      triggerCelebration: (style) => {
+        dispatch({ type: 'SET_CELEBRATION', payload: style });
+        setTimeout(() => dispatch({ type: 'SET_CELEBRATION', payload: null }), 12000);
+      },
     },
   }), [state, uiDispatch, fetchAll, fetchArchived, addDesligamento, updateDesligamento, archiveDesligamento, unarchiveDesligamento, deleteDesligamento, bulkArchive, bulkDelete, toggleChecklist, toggleNaoAplicavel, markNotificationRead, requestNotificationPermission, addHistorico, changeStatus, login, register, logout, updateConfig]);
 

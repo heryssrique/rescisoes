@@ -88,8 +88,9 @@ export function DetailView({ id }) {
     try {
       await actions.changeStatus(d, newStatus);
       if (newStatus === 'pago') {
-        const style = localStorage.getItem('desligest_confetti_style') || 'firework';
-        fireExtravagantConfetti(style);
+        const style = localStorage.getItem('desligest_confetti_style') || 'royal_gold';
+        actions.triggerCelebration(style);
+        fireExtravagantConfetti(style); // Fallback 2D para preenchimento extra
         toast('🎉 Processo concluído e pago!', 'success');
       }
     } catch {

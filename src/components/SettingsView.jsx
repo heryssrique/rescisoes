@@ -123,6 +123,7 @@ export function SettingsView() {
   };
 
   const handlePreviewConfetti = () => {
+    actions.triggerCelebration(confettiStyle);
     fireExtravagantConfetti(confettiStyle);
   };
 
