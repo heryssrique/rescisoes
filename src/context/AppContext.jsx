@@ -1,6 +1,13 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo } from 'react';
 import * as api from '../services/api';
 import { format } from 'date-fns';
+import { 
+  DEFAULT_COLIGADAS, 
+  DEFAULT_MOTIVOS, 
+  DEFAULT_STATUS_FLOW, 
+  DEFAULT_CHECKLIST_TEMPLATE, 
+  DEFAULT_LINKS_UTEIS 
+} from '../data/initialData';
 
 const AppContext = createContext();
 
@@ -163,7 +170,6 @@ function getInitialState() {
       } catch { return fallback; }
     };
 
-    const { DEFAULT_COLIGADAS, DEFAULT_MOTIVOS, DEFAULT_STATUS_FLOW, DEFAULT_CHECKLIST_TEMPLATE, DEFAULT_LINKS_UTEIS } = require('../data/initialData');
     return {
       user: null,
       isAuthChecked: false,
