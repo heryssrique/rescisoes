@@ -302,7 +302,8 @@ export function ListView({ data: injectedData }) {
     const ok = await showConfirm(`Deseja marcar os ${selectedIds.length} processos como PAGOS?`, { title: 'Marcar como Pago', confirmText: 'Confirmar' });
     if (ok) {
       await actions.bulkUpdateStatus(selectedIds, 'pago');
-      fireExtravagantConfetti();
+      const style = localStorage.getItem('desligest_confetti_style') || 'firework';
+      fireExtravagantConfetti(style);
       toast('🎉 Processos concluídos e pagos em lote!', 'success');
       setSelectedIds([]);
     }

@@ -88,7 +88,8 @@ export function DetailView({ id }) {
     try {
       await actions.changeStatus(d, newStatus);
       if (newStatus === 'pago') {
-        fireExtravagantConfetti();
+        const style = localStorage.getItem('desligest_confetti_style') || 'firework';
+        fireExtravagantConfetti(style);
         toast('🎉 Processo concluído e pago!', 'success');
       }
     } catch {

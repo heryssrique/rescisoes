@@ -6,6 +6,8 @@ import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion
 import { format } from 'date-fns';
 import * as api from '../services/api';
 import { DEFAULT_COLIGADAS, DEFAULT_MOTIVOS, DEFAULT_CHECKLIST_TEMPLATE, DEFAULT_STATUS_FLOW, DEFAULT_LINKS_UTEIS } from '../data/initialData';
+import { fireExtravagantConfetti } from '../utils/confettiHelper';
+import { Sparkles, Zap, Trophy, PartyPopper } from 'lucide-react';
 
 function ChecklistItem({ item, idx, updateChecklist, removeChecklistItem }) {
   const controls = useDragControls();
@@ -109,6 +111,20 @@ export function SettingsView() {
       return saved ? JSON.parse(saved) : DEFAULT_LINKS_UTEIS;
     } catch { return DEFAULT_LINKS_UTEIS; }
   });
+
+  const [confettiStyle, setConfettiStyle] = useState(() => {
+    return localStorage.getItem('desligest_confetti_style') || 'firework';
+  });
+
+  const handleSaveConfettiStyle = (style) => {
+    setConfettiStyle(style);
+    localStorage.setItem('desligest_confetti_style', style);
+    toast('Estilo de comemoração salvo!');
+  };
+
+  const handlePreviewConfetti = () => {
+    fireExtravagantConfetti(confettiStyle);
+  };
 
   const handleSaveMotivos = () => {
     const valid = motivosList.filter(m => m.value.trim() && m.label.trim());
@@ -300,6 +316,13 @@ export function SettingsView() {
             onClick={() => handleTabChange('links')}
           >
             <Link size={16} /> Links Úteis
+          </button>
+          <button 
+            className={`btn ${activeTab === 'celebration' ? 'btn-primary' : ''}`}
+            style={{ justifyContent: 'flex-start', padding: '12px 16px', background: activeTab === 'celebration' ? 'var(--accent-pink)' : 'transparent', color: activeTab === 'celebration' ? '#fff' : 'var(--text-secondary)', border: 'none', boxShadow: 'none' }}
+            onClick={() => handleTabChange('celebration')}
+          >
+            <PartyPopper size={16} /> Estilo de Comemoração
           </button>
           <button 
             className={`btn ${activeTab === 'sistema' ? 'btn-primary' : ''}`}
@@ -631,6 +654,65 @@ export function SettingsView() {
                   <button className="btn" onClick={handleSaveLinks} style={{ background: 'var(--accent-blue)', color: '#fff', padding: '10px 24px', fontWeight: 600, boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)' }}>
                     <Save size={16} /> Salvar Links
                   </button>
+                </div>
+              </motion.section>
+            )}
+
+            {activeTab === 'celebration' && (
+              <motion.section 
+                key="celebration" 
+                initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}
+                style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
+              >
+                <div className="card" style={{ padding: 32, borderColor: 'transparent', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                  <div style={{ marginBottom: 24 }}>
+                    <h3 style={{ fontSize: 22, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                      <PartyPopper size={24} color="var(--accent-pink)" />
+                      Personalização da Celebração
+                    </h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+                      Escolha o estilo visual para comemorar quando um processo é marcado como pago.
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16, marginBottom: 32 }}>
+                    {[
+                      { id: 'firework', name: 'Fogos de Artifício (v3.0)', desc: 'Morteiros reais e estrelas.', icon: <Sparkles size={20} />, color: 'var(--accent-orange)' },
+                      { id: 'gold_rain', name: 'Chuva de Ouro', desc: 'Elegância com brilhos constantes.', icon: <Trophy size={20} />, color: 'var(--accent-yellow)' },
+                      { id: 'neon', name: 'Explosão Neon', desc: 'Alta energia e cores vibrantes.', icon: <Zap size={20} />, color: 'var(--accent-pink)' },
+                      { id: 'classic', name: 'Canhões Clássicos', desc: 'O estouro tradicional do RH.', icon: <PartyPopper size={20} />, color: 'var(--accent-blue)' },
+                      { id: 'random', name: 'Modo Aleatório', desc: 'Uma surpresa a cada pagamento!', icon: <Settings size={20} />, color: 'var(--text-secondary)' },
+                    ].map(style => (
+                      <div 
+                        key={style.id}
+                        onClick={() => handleSaveConfettiStyle(style.id)}
+                        style={{ 
+                          padding: 20, 
+                          borderRadius: 16, 
+                          border: `2px solid ${confettiStyle === style.id ? style.color : 'var(--border)'}`,
+                          background: confettiStyle === style.id ? `${style.color}08` : 'var(--bg-secondary)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <div style={{ width: 40, height: 40, borderRadius: 10, background: `${style.color}15`, color: style.color, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                          {style.icon}
+                        </div>
+                        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>{style.name}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4 }}>{style.desc}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-start', borderTop: '1px solid var(--border)', paddingTop: 24 }}>
+                    <button 
+                      className="btn" 
+                      onClick={handlePreviewConfetti} 
+                      style={{ background: 'var(--accent-pink)', color: '#fff', padding: '12px 28px', fontWeight: 700, boxShadow: '0 4px 15px rgba(236, 72, 153, 0.3)', gap: 10 }}
+                    >
+                      <Zap size={18} /> Testar Efeito Agora
+                    </button>
+                  </div>
                 </div>
               </motion.section>
             )}
