@@ -8,7 +8,7 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const mongoSanitize = require('mongo-sanitize');
-const xss = require('xss-clean');
+// xss-clean removido — incompatível com Express 5 (req.query é read-only)
 const hpp = require('hpp');
 
 const logger = require('./utils/logger');
@@ -42,15 +42,14 @@ app.use(express.json({ limit: '10kb' })); // Body limit to prevent DoS
 app.use(express.urlencoded({ limit: '10kb', extended: true }));
 
 // Data sanitization against NoSQL query injection
+// No Express 5, req.query e req.params são read-only (getters),
+// então sanitizamos apenas req.body (principal vetor de injeção NoSQL).
 app.use((req, res, next) => {
-  req.body = mongoSanitize(req.body);
-  req.query = mongoSanitize(req.query);
-  req.params = mongoSanitize(req.params);
+  if (req.body && typeof req.body === 'object') {
+    req.body = mongoSanitize(req.body);
+  }
   next();
 });
-
-// Data sanitization against XSS
-app.use(xss());
 
 // Prevent HTTP parameter pollution
 app.use(hpp());
