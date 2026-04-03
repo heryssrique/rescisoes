@@ -1,41 +1,62 @@
-const CACHE_NAME = 'desligest-v2.2';
-const ASSETS = [
+const CACHE_NAME = 'desligest-v2.3';
+const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/vite.svg',
   '/manifest.json'
 ];
 
-// Otimização para forçar a atualização (Network First para HTML)
 self.addEventListener('install', (event) => {
-  self.skipWaiting(); // Quando houver nova versão, instala imediatamente
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
   );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((name) => {
-          if (name !== CACHE_NAME) {
-            return caches.delete(name);
-          }
-        })
-      );
-    })
+    caches.keys().then((keys) => Promise.all(
+      keys.map((key) => {
+        if (key !== CACHE_NAME) return caches.delete(key);
+      })
+    )).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', (event) => {
-  // Estratégia: Network First (Tenta a rede, cai no cache se offline)
-  // Isso garante que o usuário sempre veja a versão mais nova ao dar F5 online.
+  // Ignorar requisições para a API e extensões de navegador
+  if (event.request.url.includes('/api/') || !event.request.url.startsWith('http')) {
+    return;
+  }
+
+  // Estratégia customizada para evitar stale (velho) no HTML principal
+  const isHtml = event.request.mode === 'navigate';
+
+  if (isHtml) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Estratégia Stale-While-Revalidate para outros assets (JS, CSS, Imagens)
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
+    caches.match(event.request).then((cached) => {
+      const networked = fetch(event.request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => {});
+
+      return cached || networked;
     })
   );
 });
