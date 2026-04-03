@@ -276,6 +276,8 @@ function CelebrationScene({ style = 'royal_gold' }) {
         color, 
         position, 
         velocity, 
+        burstVelocity,
+        delay,
         gravity,
         damping,
         rotation,
