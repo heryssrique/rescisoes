@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo, useRef, useState } from 'react';
 import * as api from '../services/api';
 import { format } from 'date-fns';
 import { 
@@ -204,6 +204,8 @@ function getInitialState() {
 // ─── Provider ─────────────────────────────────────────────────────────────
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, null, getInitialState);
+  const loadingRef = useRef(false);
+  const archivedLoadingRef = useRef(false);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', state.theme);
@@ -211,6 +213,8 @@ export function AppProvider({ children }) {
 
   // ── Carrega lista ao montar ──────────────────────────────────────────────
   const fetchAll = useCallback(async () => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     dispatch({ type: 'SET_LOADING', value: true });
     try {
       const res = await api.getDesligamentos({ arquivado: false });
@@ -232,11 +236,14 @@ export function AppProvider({ children }) {
         message: '⚠️ API offline — dados carregados do cache local.',
       });
     } finally {
+      loadingRef.current = false;
       dispatch({ type: 'SET_LOADING', value: false });
     }
   }, []);
 
   const fetchArchived = useCallback(async (searchQuery = '') => {
+    if (archivedLoadingRef.current) return;
+    archivedLoadingRef.current = true;
     dispatch({ type: 'SET_LOADING', value: true });
     try {
       const res = await api.getDesligamentos({ arquivado: true, q: searchQuery });
@@ -258,6 +265,7 @@ export function AppProvider({ children }) {
         : filtered;
       dispatch({ type: 'SET_ARCHIVED', payload: results });
     } finally {
+      archivedLoadingRef.current = false;
       dispatch({ type: 'SET_LOADING', value: false });
     }
   }, []);
@@ -293,7 +301,7 @@ export function AppProvider({ children }) {
   }, [state.desligamentos, state.archivedDesligamentos]);
 
   // IDs já notificados nativamente nesta sessão para evitar spam
-  const notifiedSessionIds = React.useRef(new Set());
+  const notifiedSessionIds = useRef(new Set());
 
   // ── Notificações ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -353,8 +361,10 @@ export function AppProvider({ children }) {
       }
     });
 
-    // Só atualiza se houver mudança real para evitar loops
-    dispatch({ type: 'SET_NOTIFICATIONS', payload: newNotifications });
+    // Só atualiza se houver mudança real para evitar loops (comparação profunda simples)
+    if (JSON.stringify(newNotifications) !== JSON.stringify(state.notifications)) {
+      dispatch({ type: 'SET_NOTIFICATIONS', payload: newNotifications });
+    }
 
     // Tentar notificação nativa para itens não lidos e não notificados nesta sessão
     if (Notification.permission === 'granted') {
