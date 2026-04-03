@@ -154,10 +154,10 @@ function AppContent() {
           width={typeof window !== 'undefined' ? window.innerWidth : 1280}
           height={typeof window !== 'undefined' ? window.innerHeight : 720}
           recycle={false}
-          numberOfPieces={400}
+          numberOfPieces={600}
           gravity={0.15}
           onConfettiComplete={() => dispatch({ type: 'TRIGGER_CONFETTI', value: false })}
-          style={{ zIndex: 10002, position: 'fixed', pointerEvents: 'none' }}
+          style={{ zIndex: 999999, position: 'fixed', top: 0, left: 0, pointerEvents: 'none' }}
         />
       )}
       <nav className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`} aria-label="Navegação principal">
