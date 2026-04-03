@@ -47,3 +47,11 @@
 {"level":"info","message":"Incoming Request: GET /api/desligamentos?arquivado=true&q=","service":"desligest-api","timestamp":"2026-04-03 16:17:25"}
 {"level":"info","message":"Incoming Request: GET /api/desligamentos?arquivado=false","service":"desligest-api","timestamp":"2026-04-03 16:17:25"}
 {"level":"info","message":"Incoming Request: GET /api/desligamentos?arquivado=false","service":"desligest-api","timestamp":"2026-04-03 16:17:25"}
+{"level":"info","message":"Incoming Request: GET /api/auth/me","service":"desligest-api","timestamp":"2026-04-03 16:21:43"}
+{"level":"info","message":"Incoming Request: GET /api/auth/me","service":"desligest-api","timestamp":"2026-04-03 16:21:43"}
+{"level":"info","message":"Incoming Request: GET /api/desligamentos?arquivado=false","service":"desligest-api","timestamp":"2026-04-03 16:21:43"}
+{"level":"info","message":"Incoming Request: GET /api/desligamentos?arquivado=true&q=","service":"desligest-api","timestamp":"2026-04-03 16:21:43"}
+{"level":"info","message":"Incoming Request: GET /api/auth/me","service":"desligest-api","timestamp":"2026-04-03 16:24:17"}
+{"level":"info","message":"Incoming Request: GET /api/auth/me","service":"desligest-api","timestamp":"2026-04-03 16:24:17"}
+{"level":"info","message":"Incoming Request: GET /api/desligamentos?arquivado=true&q=","service":"desligest-api","timestamp":"2026-04-03 16:24:17"}
+{"level":"info","message":"Incoming Request: GET /api/desligamentos?arquivado=false","service":"desligest-api","timestamp":"2026-04-03 16:24:17"}

@@ -53,8 +53,8 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, burstVe
       vel.current.y -= 0.002; // Gravidade pesada inicial para atingir o ápice 
       vel.current.multiplyScalar(0.985); // Atrito da bala de ar
       
-      // CHEGOU NO APOGEU: BUM! (Velocidade vertical sumiu)
-      if (vel.current.y <= 0.03) {
+      // CHEGOU NO APOGEU ou TRAVA DE ALTURA: BUM!
+      if (vel.current.y <= 0.08 || pos.current.y > 2) {
         vel.current.set(...burstVelocity);
         hasBurst.current = true;
       }
@@ -223,21 +223,16 @@ function CelebrationScene({ style = 'royal_gold' }) {
         ];
         color = isCrackle ? '#ffffff' : diversedColors[i % diversedColors.length];
         
-        // 4 Lançadores Sincronizados de Projéteis 
-        const launcherIdx = i % 4;
-        const launchers = [
-          { x: -10, delay: 0 },    // Esq: Começa Instante 0
-          { x: 5,   delay: 60 },   // Central Dir: 1 segundo depois
-          { x: -5,  delay: 130 },  // Central Esq: 2 segundos depois
-          { x: 12,  delay: 35 }    // Ponta Dir: 0.5 seg depois
-        ];
-        const launcher = launchers[launcherIdx];
+        // LANÇADORES INDIVIDUAIS: Agora cada partícula é seu próprio rojão completo!
+        // Criamos "clusters" de explosão (várias partículas saem juntas em tempos aleatórios)
+        const clusterId = Math.floor(i / 15); // Grupos de 15 partículas por explosão
+        const clusterX = THREE.MathUtils.randFloatSpread(30);
+        const clusterDelay = Math.random() * 250; // Começam sparalhados em 4 segundos
         
-        // Todos do mesmo array sharem a posição inferior exata para mascarar um tiro único
-        position = [launcher.x, -16, 0];
+        position = [clusterX + THREE.MathUtils.randFloatSpread(0.5), -18, THREE.MathUtils.randFloatSpread(5)];
         
-        // Disparo idêntico para o bloco (O rastro do projetil) com MUITA potência
-        velocity = [0, 0.55 + (launcherIdx * 0.05), 0]; 
+        // Velocidade vertical com pequena variação para não sobreporem
+        velocity = [THREE.MathUtils.randFloatSpread(0.02), 0.5 + Math.random() * 0.2, 0]; 
         
         // A matemática da explosão na meia vida (Boom)
         const speed = isCrackle ? (0.05 + Math.random() * 0.05) : (0.12 + Math.random() * 0.08); 
@@ -249,8 +244,8 @@ function CelebrationScene({ style = 'royal_gold' }) {
           speed * Math.sin(phi) * Math.sin(theta)
         ];
         
-        delay = launcher.delay;
-        gravity = 0.0005; // Pequeníssima gravidade no pós-bomba
+        delay = clusterDelay + (Math.random() * 20); // Variação de tempo dentro do mesmo rojão
+        gravity = 0.0005; 
         damping = 0.975;
       } else if (style === 'neon_corporate') {
         // "Vibrant, high-energy explosions of neon cyan, magenta... bursting from the center"
