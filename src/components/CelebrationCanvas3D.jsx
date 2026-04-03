@@ -4,6 +4,23 @@ import { Stars, PerspectiveCamera, Environment, Sparkles } from '@react-three/dr
 import * as THREE from 'three';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// SILENCIAR CONSOLE FLOOD (Previne congelamento por logs de depreciação repetitivos)
+if (typeof window !== 'undefined') {
+  const originalWarn = console.warn;
+  console.warn = (...args) => {
+    if (args[0] && typeof args[0] === 'string' && args[0].includes('THREE.Clock: This module has been deprecated')) {
+      return;
+    }
+    originalWarn(...args);
+  };
+}
+
+// GEOMETRIAS COMPARTILHADAS (Otimização de Memória)
+const COIN_GEOM = new THREE.CylinderGeometry(1, 1, 0.1, 32);
+const DIAMOND_GEOM = new THREE.IcosahedronGeometry(0.7, 0);
+const BOX_GEOM = new THREE.BoxGeometry(1, 1, 1);
+const SPARKLE_GEOM = new THREE.SphereGeometry(0.5, 16, 16);
+
 // 1. COMPONENTE BASE: ITEM COM FÍSICA 3D
 function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity = 0.005 }) {
   const mesh = useRef();
@@ -37,37 +54,26 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
     }
   });
 
-  const getGeometry = () => {
-    if (type === 'coin') return <cylinderGeometry args={[1, 1, 0.1, 32]} />;
-    if (type === 'box') return <boxGeometry args={[1, 1, 1]} />;
-    if (type === 'sparkle') return <sphereGeometry args={[0.5, 16, 16]} />;
-    return <icosahedronGeometry args={[0.7, 0]} />;
-  };
+  // Memoizar geometria baseada no tipo para economizar GPU
+  const geometry = useMemo(() => {
+    if (type === 'coin') return COIN_GEOM;
+    if (type === 'box') return BOX_GEOM;
+    if (type === 'sparkle') return SPARKLE_GEOM;
+    return DIAMOND_GEOM;
+  }, [type]);
 
-  const getMaterial = () => {
-    if (type === 'diamond') return (
-      <meshPhysicalMaterial 
-        color={color} metalness={0.1} roughness={0} 
-        transmission={1} thickness={1} ior={2.4} 
-        iridescence={0.5} reflectivity={1} 
-      />
-    );
-    return (
-      <meshStandardMaterial 
-        color={color} 
-        metalness={type === 'coin' ? 0.9 : 0.5} 
-        roughness={0.2} 
-        emissive={color} 
-        emissiveIntensity={type === 'box' || type === 'sparkle' ? 2 : 0.2} 
-      />
-    );
-  };
+  // Memoizar material para evitar re-alocação a cada frame
+  const material = useMemo(() => {
+    if (type === 'diamond') return new THREE.MeshPhysicalMaterial({ 
+      color, metalness: 0.1, roughness: 0, transmission: 1, thickness: 1, ior: 2.4, iridescence: 0.5, reflectivity: 1 
+    });
+    return new THREE.MeshStandardMaterial({ 
+      color, metalness: type === 'coin' ? 0.9 : 0.5, roughness: 0.2, emissive: color, emissiveIntensity: type === 'box' || type === 'sparkle' ? 2 : 0.2 
+    });
+  }, [type, color]);
 
   return (
-    <mesh ref={mesh} position={position} scale={type === 'sparkle' ? scale * 0.3 : type === 'box' ? scale * 0.5 : scale}>
-      {getGeometry()}
-      {getMaterial()}
-    </mesh>
+    <mesh ref={mesh} geometry={geometry} material={material} position={position} scale={type === 'sparkle' ? scale * 0.3 : type === 'box' ? scale * 0.5 : scale} />
   );
 }
 
