@@ -20,8 +20,10 @@ const COIN_GEOM = new THREE.CylinderGeometry(1, 1, 0.1, 32);
 const DIAMOND_GEOM = new THREE.IcosahedronGeometry(0.7, 0);
 const BOX_GEOM = new THREE.BoxGeometry(1, 1, 1);
 const SPARKLE_GEOM = new THREE.SphereGeometry(0.5, 16, 16);
-const NEON_RIBBON_GEOM = new THREE.BoxGeometry(0.08, 1.5, 0.2); // Fitas de confetti 3D
+const NEON_RIBBON_GEOM = new THREE.BoxGeometry(0.08, 1.5, 0.2); // Fitas cibernéticas
 const NEON_RING_GEOM = new THREE.TorusGeometry(0.5, 0.08, 8, 24); // Anéis cibernéticos
+const CONFETTI_RECT_GEOM = new THREE.BoxGeometry(0.8, 0.4, 0.02); // Confetes retangulares tradicionais
+const CONFETTI_SQUARE_GEOM = new THREE.BoxGeometry(0.5, 0.5, 0.02); // Confetes quadrados
 
 // 1. COMPONENTE BASE: ITEM COM FÍSICA 3D
 function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity = 0.005, damping = 0.992 }) {
@@ -33,54 +35,63 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
   useFrame(() => {
     if (!mesh.current) return;
     
-    // Aplicar gravidade à velocidade
+    // Aplicar gravidade
     vel.current.y -= gravity;
     
-    // Damping customizável (Amortecimento aerodinâmico)
+    // Damping (Amortecimento aerodinâmico)
     vel.current.multiplyScalar(damping);
     
-    // Atualizar posição (cinemática ou linear dependendo do damping)
-    const timeScale = damping < 0.99 ? 1 : 0.5; // Se não houver mto damping, rola rapido, senão cinematico
+    // Escala de tempo: se o construtor indicar um "slow motion" leve. (Damping alto = lenta, baixo = frenética)
+    const timeScale = damping < 0.985 ? 1 : 0.5; 
+    
     pos.current.x += vel.current.x * timeScale;
     pos.current.y += vel.current.y * timeScale;
     pos.current.z += vel.current.z * timeScale;
     
-    // Atualizar rotação
-    mesh.current.rotation.x += rot.current.x * (timeScale === 1 ? 1 : 0.1);
-    mesh.current.rotation.y += rot.current.y * (timeScale === 1 ? 1 : 0.1);
-    mesh.current.rotation.z += rot.current.z * (timeScale === 1 ? 1 : 0.1);
+    // Rotação: papel e neo turbilhonam; câmera super lenta roda em slowmotion
+    const rotScale = timeScale === 1 ? 1 : 0.15;
+    mesh.current.rotation.x += rot.current.x * rotScale;
+    mesh.current.rotation.y += rot.current.y * rotScale;
+    mesh.current.rotation.z += rot.current.z * rotScale;
     
     mesh.current.position.copy(pos.current);
 
-    // Reset ou morte (se sair muito da tela)
-    if (pos.current.y < -20) {
-      pos.current.y = 20; 
+    // Reset loop
+    if (pos.current.y < -25) {
+      pos.current.y = 25; 
       vel.current.y = velocity[1];
     }
   });
 
-  // Memoizar geometria baseada no tipo para economizar GPU
   const geometry = useMemo(() => {
     if (type === 'coin') return COIN_GEOM;
     if (type === 'box') return BOX_GEOM;
     if (type === 'sparkle') return SPARKLE_GEOM;
     if (type === 'neon_ribbon') return NEON_RIBBON_GEOM;
     if (type === 'neon_ring') return NEON_RING_GEOM;
+    if (type === 'confetti_rect') return CONFETTI_RECT_GEOM;
+    if (type === 'confetti_square') return CONFETTI_SQUARE_GEOM;
     return DIAMOND_GEOM;
   }, [type]);
 
-  // Memoizar material para evitar re-alocação a cada frame
   const material = useMemo(() => {
+    // Shader Cristal / Diamante de Alta Refracao
     if (type === 'diamond') return new THREE.MeshPhysicalMaterial({ 
       color: 0xffffff, metalness: 0, roughness: 0, transmission: 1, thickness: 1.5, ior: 2.417, iridescence: 0.3, reflectivity: 1, clearcoat: 1, envMapIntensity: 2
     });
+    
+    // Papel Convencional Fosco
+    if (type === 'confetti_rect' || type === 'confetti_square') return new THREE.MeshStandardMaterial({
+      color, metalness: 0, roughness: 0.8 // papel não reflete
+    });
+
     const isNeon = type.includes('neon');
     return new THREE.MeshStandardMaterial({ 
       color, 
       metalness: type === 'coin' ? 0.9 : 0.2, 
       roughness: isNeon ? 0 : 0.2, 
       emissive: color, 
-      emissiveIntensity: isNeon ? 8 : (type === 'sparkle' ? 2 : 0.2) 
+      emissiveIntensity: isNeon ? 8 : (type === 'sparkle' ? 2 : 0) // Faíscas brilham menos que Neon
     });
   }, [type, color]);
 
@@ -91,7 +102,7 @@ function PhysicsItem({ type, position, rotation, scale, color, velocity, gravity
 
 // 2. CENA DE CELEBRAÇÃO ESPECIALIZADA
 function CelebrationScene({ style = 'royal_gold' }) {
-  const count = style === 'midnight_fireworks' ? 180 : (style === 'neon_corporate' ? 150 : 80);
+  const count = style === 'midnight_fireworks' ? 180 : (style === 'classic_rh' || style === 'neon_corporate' ? 150 : 80);
   
   const elements = useMemo(() => {
     const rainbowColors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#8b00ff'];
@@ -110,22 +121,32 @@ function CelebrationScene({ style = 'royal_gold' }) {
       let position = [0, 0, 0];
       let velocity = [0, 0, 0];
       let gravity = 0.005;
-      let damping = 0.992;
+      let damping = 0.992; // Damping base para gravidade zero cinemática
       let rotation = [Math.random() * 0.1, Math.random() * 0.1, Math.random() * 0.1];
 
       if (style === 'royal_gold') {
+        // Cascata Imponente
         type = Math.random() > 0.4 ? 'coin' : 'diamond';
         color = goldColors[i % goldColors.length];
-        position = [THREE.MathUtils.randFloatSpread(25), 15 + Math.random() * 10, THREE.MathUtils.randFloatSpread(10)];
-        velocity = [Math.random() * 0.005 - 0.0025, -0.005 - Math.random() * 0.01, 0];
-        gravity = 0.0004;
+        position = [THREE.MathUtils.randFloatSpread(25), 15 + Math.random() * 20, THREE.MathUtils.randFloatSpread(10)];
+        velocity = [Math.random() * 0.01 - 0.005, -0.01 - Math.random() * 0.02, 0];
+        rotation = [Math.random() * 0.5, Math.random() * 0.5, Math.random() * 0.5];
+        gravity = 0.0003; 
+        damping = 0.995; // Flutua demais, muito elegante
       } else if (style === 'classic_rh') {
-        type = Math.random() > 0.5 ? 'coin' : 'sparkle';
-        color = ['#3b82f6', '#6366f1', '#f59e0b', '#ffffff'][i % 4];
+        // Canhões Tradicionais de Confete de Papel
+        type = Math.random() > 0.5 ? 'confetti_rect' : 'confetti_square';
+        color = ['#3b82f6', '#6366f1', '#f59e0b', '#ffffff', '#10b981', '#ec4899'][i % 6];
         const fromLeft = i % 2 === 0;
-        position = [fromLeft ? -15 : 15, -10, 0];
-        velocity = [fromLeft ? 0.04 + Math.random() * 0.03 : -0.04 - Math.random() * 0.03, 0.08 + Math.random() * 0.08, Math.random() * 0.02 - 0.01];
-        gravity = 0.0006;
+        position = [fromLeft ? -15 : 15, -12, THREE.MathUtils.randFloatSpread(10)]; // Nascem dos cantos inferiores
+        velocity = [
+          fromLeft ? 0.2 + Math.random() * 0.15 : -0.2 - Math.random() * 0.15, // Disparo em X pro meio da tela
+          0.4 + Math.random() * 0.3, // Impulso pra cima
+          THREE.MathUtils.randFloatSpread(0.15) // Dispersão em Z
+        ];
+        rotation = [Math.random() * 0.8, Math.random() * 0.8, Math.random() * 0.8]; // Papel gira muito rapido
+        gravity = 0.006; // Gravidade realista de papel
+        damping = 0.98; // Atrito real aerodinâmico (velocidade real 1:1 ativada)
       } else if (style === 'midnight_fireworks') {
         type = 'sparkle';
         color = ['#ff0055', '#FFD700', '#00f2ff', '#ff00ea'][i % 4];
