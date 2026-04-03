@@ -1,6 +1,6 @@
-import React, { useState, useMemo, Suspense, lazy } from 'react';
+import React, { useState, useMemo, Suspense, lazy, useEffect, useRef } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
-import { ToastProvider } from './components/Toast';
+import { ToastProvider, useToast } from './components/Toast';
 import { ModalNovoDesligamento } from './components/Modals';
 import { ModalImportarPlanilha } from './components/ImportModal';
 import { NotificationCenter } from './components/NotificationCenter';
@@ -67,6 +67,25 @@ function AppContent() {
   const [showNew, setShowNew] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const { toast } = useToast();
+  const notifiedPrazos = useRef(new Set());
+
+  useEffect(() => {
+    actions.fetchAll();
+    actions.fetchArchived();
+  }, [actions]);
+
+  // Toast de Prazos (Substituindo Notificações do Navegador)
+  useEffect(() => {
+    if (state.notifications && state.notifications.length > 0) {
+      state.notifications.forEach(n => {
+        if (!n.read && !notifiedPrazos.current.has(n.id)) {
+          toast(n.message, n.severity || 'info');
+          notifiedPrazos.current.add(n.id);
+        }
+      });
+    }
+  }, [state.notifications, toast]);
 
   const processedData = useMemo(() => {
     const activeRaw = applyColigadaFilter(desligamentos || [], globalColigadaFilter);

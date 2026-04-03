@@ -355,19 +355,6 @@ export function AppProvider({ children }) {
 
     // Só atualiza se houver mudança real para evitar loops
     dispatch({ type: 'SET_NOTIFICATIONS', payload: newNotifications });
-
-    // Tentar notificação nativa para itens não lidos e não notificados nesta sessão
-    if (Notification.permission === 'granted') {
-      newNotifications.forEach(n => {
-        if (!n.read && !notifiedSessionIds.current.has(n.id)) {
-          new Notification('Alerta de Prazo', {
-            body: n.message,
-            icon: '/vite.svg'
-          });
-          notifiedSessionIds.current.add(n.id);
-        }
-      });
-    }
   }, [state.desligamentos, state.readNotificationIds]);
 
   useEffect(() => {
