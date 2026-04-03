@@ -151,8 +151,8 @@ function AppContent() {
     <div className="app-layout">
       {state.triggerConfetti && (
         <ReactConfetti
-          width={window.innerWidth}
-          height={window.innerHeight}
+          width={typeof window !== 'undefined' ? window.innerWidth : 1280}
+          height={typeof window !== 'undefined' ? window.innerHeight : 720}
           recycle={false}
           numberOfPieces={400}
           gravity={0.15}

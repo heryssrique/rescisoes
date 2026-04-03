@@ -191,6 +191,7 @@ function getInitialState() {
       statusFlow: getConfig('desligest_status_flow', DEFAULT_STATUS_FLOW),
       checklistTemplate: getConfig('desligest_checklist', DEFAULT_CHECKLIST_TEMPLATE),
       linksUteis: getConfig('desligest_links', DEFAULT_LINKS_UTEIS),
+      triggerConfetti: false,
     };
   } catch (e) {
     console.error("Error initializing state", e);
@@ -199,6 +200,7 @@ function getInitialState() {
       view: 'lista', selected: null, theme: 'dark', globalColigadaFilter: 'todas',
       loading: true, error: null, offline: false, notifications: [], readNotificationIds: [],
       coligadas: {}, motivos: [], statusFlow: [], checklistTemplate: [], linksUteis: [],
+      triggerConfetti: false,
     };
   }
 }
