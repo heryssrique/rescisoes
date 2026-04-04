@@ -1,227 +1,358 @@
-import React, { useMemo, useRef, useState, useEffect, Suspense } from 'react';
+import React, { useRef, useMemo, useState, useEffect, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Environment, PerspectiveCamera } from '@react-three/drei';
+import { Stars, PerspectiveCamera, Environment, Sparkles } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
-import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
+import { motion, AnimatePresence } from 'framer-motion';
 
-/**
- * ROYAL CELEBRATION ENGINE - 100% 3D FANTASTIC VERSION
- */
+// SILENCIAR CONSOLE FLOOD (Previne congelamento por logs de depreciação repetitivos)
+if (typeof window !== 'undefined') {
+  const originalWarn = console.warn;
+  console.warn = (...args) => {
+    if (args[0] && typeof args[0] === 'string' && args[0].includes('THREE.Clock: This module has been deprecated')) {
+      return;
+    }
+    originalWarn(...args);
+  };
+}
 
-const DIAMOND_GEOM = new THREE.IcosahedronGeometry(0.5, 0); 
-const COIN_GEOM = new THREE.CylinderGeometry(0.5, 0.5, 0.12, 32); 
+// GEOMETRIAS COMPARTILHADAS (Otimização de Memória)
+const COIN_GEOM = new THREE.CylinderGeometry(1, 1, 0.1, 32);
+const DIAMOND_GEOM = new THREE.IcosahedronGeometry(0.7, 0); // Jóia Grande
+const STAR_GEOM = new THREE.IcosahedronGeometry(0.3, 0); // Pearl-White Stars do Prompt
+const BOX_GEOM = new THREE.BoxGeometry(1, 1, 1);
+const SPARKLE_GEOM = new THREE.SphereGeometry(0.15, 8, 8); // Pequena faísca crepitante (crackle)
+const NEON_RIBBON_GEOM = new THREE.BoxGeometry(0.08, 1.5, 0.2); 
+const NEON_RING_GEOM = new THREE.TorusGeometry(0.5, 0.08, 8, 24); 
+const CONFETTI_RECT_GEOM = new THREE.BoxGeometry(0.8, 0.4, 0.02); 
+const CONFETTI_SQUARE_GEOM = new THREE.BoxGeometry(0.5, 0.5, 0.02); 
+const FIREWORK_GEOM = new THREE.BoxGeometry(0.05, 0.05, 1.5); // Rastro luminoso
 
-// ─── 1. ROYAL GOLD & DIAMONDS ────────────────────────────
-function RoyalScene({ trigger }) {
-  const cRef = useRef();
-  const dRef = useRef();
-  const dummy = useMemo(() => new THREE.Object3D(), []);
-  const TOTAL = 400;
-  
-  const parts = useMemo(() => {
-    const t = [];
-    for (let i = 0; i < TOTAL; i++) {
-        const type = Math.random() > 0.45 ? 'coin' : 'diam';
-        t.push({
-          type,
-          pos: new THREE.Vector3((Math.random() - 0.5) * 1.5, 8.0, (Math.random() - 0.5) * 2),
-          vel: new THREE.Vector3((Math.random() - 0.5) * 0.45, -(Math.random() * 0.15 + 0.05), (Math.random() - 0.5) * 0.25),
-          rot: new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI),
-          rv: new THREE.Euler((Math.random() - 0.5) * 0.12, (Math.random() - 0.5) * 0.15, (Math.random() - 0.5) * 0.12),
-          scale: type === 'coin' ? 1.6 + Math.random() * 0.6 : 1.1 + Math.random() * 0.5,
-          age: 0,
-          delay: Math.random() * 0.6,
-        });
+// 1. COMPONENTE BASE: ITEM COM FÍSICA 3D
+function PhysicsItem({ type, position, rotation, scale, color, velocity, burstVelocity = null, delay = 0, gravity = 0.005, damping = 0.992 }) {
+  const mesh = useRef();
+  const vel = useRef(new THREE.Vector3(...velocity));
+  const pos = useRef(new THREE.Vector3(...position));
+  const rot = useRef(new THREE.Vector3(...rotation));
+  const age = useRef(0);
+  const hasBurst = useRef(!burstVelocity);
+
+  useFrame(() => {
+    if (!mesh.current) return;
+    
+    age.current++;
+    if (age.current < delay) {
+      mesh.current.visible = false;
+      return;
+    }
+    mesh.current.visible = true;
+
+    // FASE 1: PROJETIL SUBINDO vs FASE 2: EXPLOSÃO 
+    if (!hasBurst.current && burstVelocity) {
+      // É um projetil em ascensão (casca de fogo de artifício)
+      vel.current.y -= 0.002; // Gravidade pesada inicial para atingir o ápice 
+      vel.current.multiplyScalar(0.985); // Atrito da bala de ar
+      
+      // CHEGOU NO APOGEU: BUM! (Velocidade vertical sumiu)
+      if (vel.current.y <= 0.03) {
+        vel.current.set(...burstVelocity);
+        hasBurst.current = true;
       }
-      return t;
-    }, [trigger]);
+    } else {
+      // FÍSICA DE QUEDA/EXPANSÃO NORMAL
+      vel.current.y -= gravity;
+      vel.current.multiplyScalar(damping);
+    }
+    
+    // TIME SCALE: Manter a lógica original de suavização das outras cenas
+    const timeScale = (damping < 0.985 && type !== 'firework' && type !== 'sparkle') ? 1 : 0.5; 
+    
+    pos.current.x += vel.current.x * timeScale;
+    pos.current.y += vel.current.y * timeScale;
+    pos.current.z += vel.current.z * timeScale;
+    
+    if (type === 'firework' || type === 'neon_laser' || (type === 'sparkle' && !hasBurst.current)) {
+      // Motion blur lookAt do projetil/luz
+      const target = pos.current.clone().add(vel.current);
+      mesh.current.lookAt(target); 
+      const speed = vel.current.length();
+      mesh.current.scale.z = Math.max(0.1, speed * (type === 'neon_laser' ? 4 : 12)); 
+    } else {
+      const rotScale = timeScale === 1 ? 1 : 0.15;
+      mesh.current.rotation.x += rot.current.x * rotScale;
+      mesh.current.rotation.y += rot.current.y * rotScale;
+      mesh.current.rotation.z += rot.current.z * rotScale;
+    }
+    
+    mesh.current.position.copy(pos.current);
 
-  useFrame((state, delta) => {
-    let ci = 0, di = 0;
-    const spd = Math.min(delta, 0.1) * 60;
-    parts.forEach((p) => {
-      p.age += delta;
-      if (p.age < p.delay) {
-        dummy.position.set(0, 100, 0);
-        dummy.scale.setScalar(0);
+    const dist = pos.current.length();
+    const speed = vel.current.length();
+    
+    // RENASCER CONTÍNUO: Elimina o "vazio / estático" 
+    if (pos.current.y < -30 || dist > 60 || ((type === 'neon_laser') && speed < 0.02)) {
+      if (type === 'confetti_rect' || type === 'confetti_square') {
+        const fromLeft = pos.current.x < 0;
+        pos.current.set(fromLeft ? -15 : 15, -12, THREE.MathUtils.randFloatSpread(10));
+        vel.current.set(
+          fromLeft ? 0.08 + Math.random() * 0.08 : -0.08 - Math.random() * 0.08, 
+          0.15 + Math.random() * 0.2, 
+          THREE.MathUtils.randFloatSpread(0.1)
+        );
+      } else if (type === 'neon_laser') {
+        pos.current.set(0,0,0);
+        const newSpeed = 0.5 + Math.random() * 0.8; 
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos((Math.random() * 2) - 1); 
+        vel.current.set(
+          newSpeed * Math.sin(phi) * Math.cos(theta),
+          newSpeed * Math.cos(phi), 
+          newSpeed * Math.sin(phi) * Math.sin(theta)
+        );
+      } else if (type === 'coin' || type === 'diamond' || type === 'pearl_star') {
+        // Apenas Gold volta lá pra cima
+        pos.current.y = 30; 
+        vel.current.y = velocity[1];
+      }
+    }
+  });
+
+  const geometry = useMemo(() => {
+    if (type === 'coin') return COIN_GEOM;
+    if (type === 'box') return BOX_GEOM;
+    if (type === 'sparkle') return SPARKLE_GEOM;
+    if (type === 'neon_ribbon' || type === 'neon_laser') return NEON_RIBBON_GEOM;
+    if (type === 'neon_ring') return NEON_RING_GEOM;
+    if (type === 'confetti_rect') return CONFETTI_RECT_GEOM;
+    if (type === 'confetti_square') return CONFETTI_SQUARE_GEOM;
+    if (type === 'firework') return FIREWORK_GEOM;
+    if (type === 'pearl_star') return STAR_GEOM;
+    return DIAMOND_GEOM;
+  }, [type]);
+
+  const material = useMemo(() => {
+    if (type === 'diamond') return new THREE.MeshPhysicalMaterial({ 
+      color: 0xffffff, metalness: 0, roughness: 0, transmission: 1, thickness: 1.5, ior: 2.417, iridescence: 0.3, reflectivity: 1, clearcoat: 1, envMapIntensity: 2
+    });
+    
+    // Pearl-White Stars (Branco com iridescência metálica leve)
+    if (type === 'pearl_star') return new THREE.MeshStandardMaterial({
+      color: 0xffffff, metalness: 0.8, roughness: 0.1, emissive: 0x444444
+    });
+    
+    // Luz pura intensa que dispara o componente BLOOM 
+    if (type === 'firework' || type === 'sparkle' || type === 'neon_laser') {
+      return new THREE.MeshBasicMaterial({ color: new THREE.Color(color).multiplyScalar(2.5) }); // Intensificado para brilhar
+    }
+
+    if (type === 'confetti_rect' || type === 'confetti_square') return new THREE.MeshStandardMaterial({
+      color, metalness: 0, roughness: 0.8 
+    });
+
+    const isNeon = type.includes('neon');
+    return new THREE.MeshStandardMaterial({ 
+      color, 
+      metalness: type === 'coin' ? 1.0 : 0.2, // Full ouro metálico
+      roughness: type === 'coin' ? 0.3 : (isNeon ? 0 : 0.2), 
+      emissive: color, 
+      emissiveIntensity: isNeon ? 4 : 0 // Glow base para neons que reagem à luz
+    });
+  }, [type, color]);
+
+  const baseScale = type === 'coin' ? scale * 0.8 : (type === 'diamond' ? scale * 0.6 : scale);
+  return (
+    <mesh ref={mesh} geometry={geometry} material={material} position={position} scale={baseScale} />
+  );
+}
+
+// 2. CENA DE CELEBRAÇÃO ESPECIALIZADA
+function CelebrationScene({ style = 'royal_gold' }) {
+  const count = style.includes('firework') ? 300 : (style.includes('rh') || style.includes('neon') ? 200 : 120);
+  
+  const elements = useMemo(() => {
+    const goldColors = ['#FFD700', '#DAA520', '#F8E231', '#B8860B'];
+    const neonColors = ['#00f2ff', '#ff00ea', '#39ff14']; // Cyan, Magenta, Electric Lime Green do Prompt
+    const rainbowColors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#8b00ff'];
+    
+    return new Array(count).fill().map((_, i) => {
+      let type = 'diamond';
+      let color = '#ffffff';
+      let position = [0, 0, 0];
+      let velocity = [0, 0, 0];
+      let burstVelocity = null;
+      let delay = 0;
+      let gravity = 0.005;
+      let damping = 0.992; 
+      let rotation = [Math.random() * 0.1, Math.random() * 0.1, Math.random() * 0.1];
+
+      if (style.includes('gold')) {
+        const rand = Math.random();
+        type = rand > 0.6 ? 'coin' : (rand > 0.3 ? 'diamond' : 'pearl_star'); // Ouro, Cristais e Estrelas de Pérola
+        color = type === 'pearl_star' ? '#ffffff' : goldColors[i % goldColors.length];
+        position = [THREE.MathUtils.randFloatSpread(35), 15 + Math.random() * 20, THREE.MathUtils.randFloatSpread(15)];
+        velocity = [THREE.MathUtils.randFloatSpread(0.01), -0.01 - Math.random() * 0.02, 0];
+        rotation = [Math.random() * 0.4, Math.random() * 0.4, Math.random() * 0.4];
+        gravity = 0.0003; 
+        damping = 0.995; // Queda elegante de luxo
+      } else if (style.includes('rh')) {
+        type = Math.random() > 0.5 ? 'confetti_rect' : 'confetti_square';
+        color = ['#3b82f6', '#6366f1', '#f59e0b', '#ffffff', '#10b981', '#ec4899'][i % 6];
+        const fromLeft = i % 2 === 0;
+        position = [fromLeft ? -15 : 15, -12, THREE.MathUtils.randFloatSpread(10)]; 
+        velocity = [
+          fromLeft ? 0.08 + Math.random() * 0.08 : -0.08 - Math.random() * 0.08, 
+          0.15 + Math.random() * 0.2, 
+          THREE.MathUtils.randFloatSpread(0.1) 
+        ];
+        rotation = [Math.random() * 0.8, Math.random() * 0.8, Math.random() * 0.8]; 
+        gravity = 0.002; 
+        damping = 0.98; 
+      } else if (style.includes('firework')) {
+        const isCrackle = Math.random() > 0.7; 
+        type = isCrackle ? 'sparkle' : 'firework';
+        
+        const diversedColors = [
+          '#ff0055', '#FFD700', '#00f2ff', '#ff00ea', 
+          '#00ff66', '#ff8800', '#ff0044', '#7d00ff', 
+          '#ffffff', '#0044ff'
+        ];
+        color = isCrackle ? '#ffffff' : diversedColors[i % diversedColors.length];
+        
+        // 4 Lançadores Sincronizados de Projéteis 
+        const launcherIdx = i % 4;
+        const launchers = [
+          { x: -10, delay: 0 },    // Esq: Começa Instante 0
+          { x: 5,   delay: 60 },   // Central Dir: 1 segundo depois
+          { x: -5,  delay: 130 },  // Central Esq: 2 segundos depois
+          { x: 12,  delay: 35 }    // Ponta Dir: 0.5 seg depois
+        ];
+        const launcher = launchers[launcherIdx];
+        
+        // Todos do mesmo array sharem a posição inferior exata para mascarar um tiro único
+        position = [launcher.x, -25, 0];
+        
+        // Disparo idêntico para o bloco (O rastro do projetil)
+        velocity = [0, 0.45 + (launcherIdx * 0.02), 0]; 
+        
+        // A matemática da explosão na meia vida (Boom)
+        const speed = isCrackle ? (0.05 + Math.random() * 0.05) : (0.1 + Math.random() * 0.1); 
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos((Math.random() * 2) - 1); 
+        burstVelocity = [
+          speed * Math.sin(phi) * Math.cos(theta),
+          speed * Math.cos(phi), 
+          speed * Math.sin(phi) * Math.sin(theta)
+        ];
+        
+        delay = launcher.delay;
+        gravity = 0.0005; // Pequeníssima gravidade no pós-bomba
+        damping = 0.97;
+      } else if (style.includes('neon')) {
+        // "Vibrant, high-energy explosions of neon cyan, magenta... bursting from the center"
+        type = 'neon_laser';
+        color = neonColors[i % neonColors.length];
+        
+        position = [0, 0, 0]; // Bursting from the center
+        const speed = 0.5 + Math.random() * 0.8; // Energia vibrante violentíssima
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos((Math.random() * 2) - 1); 
+        vel = [
+          speed * Math.sin(phi) * Math.cos(theta),
+          speed * Math.cos(phi), 
+          speed * Math.sin(phi) * Math.sin(theta)
+        ];
+        velocity = vel;
+        rotation = [0, 0, 0]; // Alinhado ao vetor
+        gravity = 0; // Voa sem peso
+        damping = 0.99; // Lento atrito p viajar longe da tela
       } else {
-        p.vel.x *= 0.985; p.vel.z *= 0.985;
-        p.vel.y -= 0.0025 * spd;
-        p.pos.addScaledVector(p.vel, spd);
-        p.rot.x += p.rv.x * spd; p.rot.y += p.rv.y * spd;
-        dummy.position.copy(p.pos);
-        dummy.rotation.copy(p.rot);
-        let s = p.scale;
-        if (p.pos.y < -12) s *= Math.max(0, 1 - ((-12 - p.pos.y) / 6));
-        dummy.scale.setScalar(s);
+        type = 'diamond';
+        color = rainbowColors[i % rainbowColors.length];
+        position = [THREE.MathUtils.randFloatSpread(25), 15, THREE.MathUtils.randFloatSpread(10)];
+        velocity = [0, -0.01 - Math.random() * 0.01, 0];
+        gravity = 0.0003;
       }
-      dummy.updateMatrix();
-      if (p.type === 'coin') cRef.current?.setMatrixAt(ci++, dummy.matrix);
-      else dRef.current?.setMatrixAt(di++, dummy.matrix);
+
+      return {
+        type, 
+        color, 
+        position, 
+        velocity, 
+        burstVelocity,
+        delay,
+        gravity,
+        damping,
+        rotation,
+        scale: Math.random() * 0.5 + 0.4
+      };
     });
-    if (cRef.current) { cRef.current.count = ci; cRef.current.instanceMatrix.needsUpdate = true; }
-    if (dRef.current) { dRef.current.count = di; dRef.current.instanceMatrix.needsUpdate = true; }
-  });
+  }, [count, style]);
 
   return (
-    <group>
-      <instancedMesh ref={cRef} args={[COIN_GEOM, null, TOTAL]}>
-        <meshStandardMaterial color="#FFD700" metalness={1.0} roughness={0.15} emissive="#B8860B" emissiveIntensity={0.1} />
-      </instancedMesh>
-      <instancedMesh ref={dRef} args={[DIAMOND_GEOM, null, TOTAL]}>
-        <meshPhysicalMaterial color="#ffffff" metalness={0.2} roughness={0} transparent opacity={0.8} transmission={0.9} thickness={0.5} emissive="#E0F7FA" emissiveIntensity={0.1} />
-      </instancedMesh>
-    </group>
+    <Suspense fallback={null}>
+      <ambientLight intensity={0.4} />
+      <pointLight position={[10, 10, 10]} intensity={3.0} color="#ffffff" />
+      <pointLight position={[-10, 5, 5]} intensity={2.0} color={style.includes('gold') ? '#FFD700' : '#ffffff'} />
+      
+      {/* Cinematic Lighting & Bloom para o High-Level Corporate Success */}
+      <EffectComposer disableNormalPass>
+        <Bloom luminanceThreshold={0.5} mipmapBlur intensity={1.5} />
+      </EffectComposer>
+      
+      <Stars radius={100} depth={50} count={3000} factor={4} saturation={0} fade speed={1} />
+      <Sparkles count={100} scale={30} size={2} speed={0.2} opacity={0.5} color={style.includes('gold') ? '#FFD700' : '#ffffff'} />
+      
+      {elements.map((el, i) => (
+        <PhysicsItem key={`${style}-${i}`} {...el} />
+      ))}
+      
+      <Environment preset="city" />
+    </Suspense>
   );
 }
 
-// ─── 2. MIDNIGHT FIREWORKS (3D LIGHT BURST) ──────────────
-const FW_GEOM = new THREE.SphereGeometry(0.12, 4, 4);
-
-function FireworkScene({ trigger }) {
-  const meshRef = useRef();
-  const dummy = useMemo(() => new THREE.Object3D(), []);
-  const PART_COUNT = 450;
-  const colors = ['#3b82f6', '#6366f1', '#a855f7', '#ffffff', '#ffd700', '#ec4899'];
-  
-  const bursts = useMemo(() => {
-    const b = [];
-    for (let i = 0; i < 6; i++) {
-        const origin = new THREE.Vector3((Math.random() - 0.5) * 16, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 4);
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        const delay = i * 1.0;
-        for (let j = 0; j < 75; j++) {
-            const phi = Math.acos(-1 + (2 * j) / 75);
-            const theta = Math.sqrt(75 * Math.PI) * phi;
-            b.push({
-                pos: origin.clone(),
-                vel: new THREE.Vector3(Math.cos(theta) * Math.sin(phi), Math.sin(theta) * Math.sin(phi), Math.cos(phi)).multiplyScalar(0.4 + Math.random() * 0.3),
-                color: new THREE.Color(color),
-                age: 0,
-                delay: delay
-            });
-        }
-    }
-    return b;
-  }, [trigger]);
-
-  useFrame((state, delta) => {
-    if (!meshRef.current) return;
-    const spd = Math.min(delta, 0.1) * 60;
-    bursts.forEach((p, i) => {
-        p.age += delta;
-        if (p.age < p.delay) {
-            dummy.scale.setScalar(0);
-        } else {
-            p.vel.multiplyScalar(0.965);
-            p.vel.y -= 0.005 * spd;
-            p.pos.addScaledVector(p.vel, spd);
-            dummy.position.copy(p.pos);
-            const life = 1.0 - ((p.age - p.delay) / 4.5);
-            dummy.scale.setScalar(Math.max(0, life * 1.8));
-        }
-        dummy.updateMatrix();
-        meshRef.current.setMatrixAt(i, dummy.matrix);
-    });
-    meshRef.current.instanceMatrix.needsUpdate = true;
-  });
-
-  return (
-    <instancedMesh ref={meshRef} args={[FW_GEOM, null, PART_COUNT]}>
-        <meshStandardMaterial emissive="#FFFFFF" emissiveIntensity={10} />
-    </instancedMesh>
-  );
-}
-
-// ─── 3. RH PRIDE (3D RAINBOW CRYSTALS) ───────────────────
-function PrideScene({ trigger }) {
-  const meshRef = useRef();
-  const dummy = useMemo(() => new THREE.Object3D(), []);
-  const TOTAL = 400;
-  const PRIDE_COLORS = ['#ff0000', '#ff8700', '#ffd300', '#deff0a', '#a1ff0a', '#0aff99', '#0aefff', '#147df5', '#580aff', '#be0aff'];
-
-  const parts = useMemo(() => {
-    const t = [];
-    for (let i = 0; i < TOTAL; i++) {
-        t.push({
-            pos: new THREE.Vector3((Math.random() - 0.5) * 22, 10, (Math.random() - 0.5) * 5),
-            vel: new THREE.Vector3((Math.random() - 0.5) * 0.1, -(Math.random() * 0.12 + 0.05), (Math.random() - 0.5) * 0.1),
-            rot: new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI),
-            delay: Math.random() * 6,
-            age: 0
-        });
-    }
-    return t;
-  }, [trigger]);
-
-  useFrame((state, delta) => {
-    if (!meshRef.current) return;
-    const spd = Math.min(delta, 0.1) * 60;
-    parts.forEach((p, i) => {
-        p.age += delta;
-        if (p.age < p.delay) {
-            dummy.scale.setScalar(0);
-        } else {
-            p.pos.addScaledVector(p.vel, spd);
-            p.rot.x += 0.05; p.rot.y += 0.05;
-            dummy.position.copy(p.pos);
-            dummy.rotation.copy(p.rot);
-            dummy.scale.setScalar(0.9);
-            if (p.pos.y < -14) p.pos.y = 12; 
-        }
-        dummy.updateMatrix();
-        meshRef.current.setMatrixAt(i, dummy.matrix);
-    });
-    meshRef.current.instanceMatrix.needsUpdate = true;
-  });
-
-  return (
-    <instancedMesh ref={meshRef} args={[DIAMOND_GEOM, null, TOTAL]}>
-        <meshStandardMaterial emissive="#FFFFFF" emissiveIntensity={0.8} />
-    </instancedMesh>
-  );
-}
-
-export const CelebrationCanvas3D = ({ mode }) => {
-  const [active, setActive] = useState(null);
-  const [trigger, setTrigger] = useState(0);
+// 3. WRAPPER CONTAINER (Truly Persistent Canvas)
+export function CelebrationCanvas3D({ mode: active }) {
+  // Mantemos a cena renderizando mesmo após o active ser nulo para evitar o "congelamento de último frame" 
+  // O Canvas vai "fazer o fade out" enquanto a cena continua viva por baixo.
+  const [activeScene, setActiveScene] = useState(active);
 
   useEffect(() => {
-    if (mode) {
-      setActive(mode.toLowerCase());
-      setTrigger(t => t + 1);
-      const timer = setTimeout(() => setActive(null), 12500);
-      return () => clearTimeout(timer);
+    if (active) {
+      setActiveScene(active);
+    } else {
+      const timeout = setTimeout(() => setActiveScene(null), 1200);
+      return () => clearTimeout(timeout);
     }
-  }, [mode]);
-
-  if (!active) return null;
+  }, [active]);
 
   return (
-    <AnimatePresence>
-      <motion.div 
-        key="celebration-overlay"
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 99999, background: 'radial-gradient(circle at center, rgba(0,0,0,0) 20%, rgba(0,0,0,0.4) 100%)' }}
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: active ? 1 : 0 }} // Desaparece suavemente
+      transition={{ duration: 0.8 }}
+      style={{ 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        width: '100vw', 
+        height: '100vh', 
+        zIndex: 999999, 
+        pointerEvents: 'none',
+        display: activeScene ? 'block' : 'none'
+      }}
+    >
+      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(3px)' }} />
+
+      <Canvas 
+        shadows 
+        dpr={[1, 1.5]} 
+        gl={{ antialias: false, alpha: true }} 
+        camera={{ position: [0, 0, 15], fov: 55 }}
+        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
       >
-        <Canvas gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }} dpr={[1, 1.5]}>
-          <PerspectiveCamera makeDefault position={[0, 0, 18]} fov={55} />
-          <Suspense fallback={null}>
-            <Environment preset="city" />
-            <ambientLight intensity={0.5} />
-            <spotLight position={[5, 15, 10]} intensity={200} color="#FFD700" />
-            
-            {active.includes('gold') && <RoyalScene trigger={trigger} />}
-            {active.includes('firework') && <FireworkScene trigger={trigger} />}
-            {active.includes('rh') && <PrideScene trigger={trigger} />}
-            
-            <EffectComposer multisampling={0}>
-              <Bloom intensity={1.8} luminanceThreshold={0.5} mipmapBlur={true} />
-            </EffectComposer>
-          </Suspense>
-        </Canvas>
-      </motion.div>
-    </AnimatePresence>
+        {activeScene && <CelebrationScene style={activeScene.toLowerCase()} />}
+      </Canvas>
+    </motion.div>
   );
 }
