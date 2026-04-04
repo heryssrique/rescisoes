@@ -11,18 +11,18 @@ import { Sparkles, Zap, Trophy, PartyPopper } from 'lucide-react';
 
 function ChecklistItem({ item, idx, updateChecklist, removeChecklistItem }) {
   const controls = useDragControls();
-  
+
   return (
-    <Reorder.Item 
-      key={item.id} 
+    <Reorder.Item
+      key={item.id}
       value={item}
       dragListener={false}
       dragControls={controls}
-      style={{ 
-        display: 'flex', 
-        gap: 12, 
-        alignItems: 'center', 
-        padding: '10px 12px', 
+      style={{
+        display: 'flex',
+        gap: 12,
+        alignItems: 'center',
+        padding: '10px 12px',
         background: 'var(--bg-card)',
         borderRadius: '8px',
         border: '1px solid var(--border)',
@@ -30,27 +30,27 @@ function ChecklistItem({ item, idx, updateChecklist, removeChecklistItem }) {
         userSelect: 'none'
       }}
     >
-      <div 
+      <div
         style={{ cursor: 'grab', color: 'var(--text-muted)', padding: '4px' }}
         onPointerDown={(e) => controls.start(e)}
       >
         <GripVertical size={18} />
       </div>
       <div style={{ flex: 2 }}>
-        <input 
-          className="form-input" 
-          placeholder="Descreva a tarefa..." 
-          value={item.label} 
-          onChange={e => updateChecklist(idx, 'label', e.target.value)} 
-          style={{ padding: '10px 14px', fontSize: 14, background: 'var(--bg-secondary)', border: 'none', width: '100%' }} 
+        <input
+          className="form-input"
+          placeholder="Descreva a tarefa..."
+          value={item.label}
+          onChange={e => updateChecklist(idx, 'label', e.target.value)}
+          style={{ padding: '10px 14px', fontSize: 14, background: 'var(--bg-secondary)', border: 'none', width: '100%' }}
         />
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
         <span style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Fase:</span>
-        <select 
-          className="form-input" 
-          value={item.etapa} 
-          onChange={e => updateChecklist(idx, 'etapa', e.target.value)} 
+        <select
+          className="form-input"
+          value={item.etapa}
+          onChange={e => updateChecklist(idx, 'etapa', e.target.value)}
           style={{ padding: '8px 12px', fontSize: 13, background: 'var(--bg-card)' }}
         >
           <option value="comunicado">1. Comunicado</option>
@@ -77,7 +77,7 @@ export function SettingsView() {
     try {
       const saved = localStorage.getItem('desligest_coligadas');
       if (saved) coligadosObj = JSON.parse(saved);
-    } catch (e) {}
+    } catch (e) { }
     return Object.entries(coligadosObj).map(([code, data]) => ({ code, nome: data.nome, color: data.color }));
   });
 
@@ -162,7 +162,7 @@ export function SettingsView() {
       desligamentos,
       archivedDesligamentos,
     };
-    
+
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
@@ -187,7 +187,7 @@ export function SettingsView() {
       { title: 'Arquivamento em Lote', confirmText: 'Arquivar', type: 'warning' }
     );
     if (!ok) return;
-    
+
     setIsMigrating(true);
     try {
       const res = await api.migrateArchiveOld();
@@ -263,7 +263,7 @@ export function SettingsView() {
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="page-content"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -280,52 +280,52 @@ export function SettingsView() {
       </div>
 
       <div style={{ display: 'flex', gap: 32, flex: 1, minHeight: 0 }}>
-        
+
         {/* Settings Sidebar (Tabs) */}
         <div style={{ width: 260, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <button 
+          <button
             className={`btn ${activeTab === 'empresas' ? 'btn-primary' : ''}`}
             style={{ justifyContent: 'flex-start', padding: '12px 16px', background: activeTab === 'empresas' ? 'var(--accent-blue)' : 'transparent', color: activeTab === 'empresas' ? '#fff' : 'var(--text-secondary)', border: 'none', boxShadow: 'none' }}
             onClick={() => handleTabChange('empresas')}
           >
             <Users size={16} /> Padrões de Empresas
           </button>
-          <button 
+          <button
             className={`btn ${activeTab === 'motivos' ? 'btn-primary' : ''}`}
             style={{ justifyContent: 'flex-start', padding: '12px 16px', background: activeTab === 'motivos' ? 'var(--accent-indigo)' : 'transparent', color: activeTab === 'motivos' ? '#fff' : 'var(--text-secondary)', border: 'none', boxShadow: 'none' }}
             onClick={() => handleTabChange('motivos')}
           >
             <FileText size={16} /> Motivos de Desligamento
           </button>
-          <button 
+          <button
             className={`btn ${activeTab === 'checklist' ? 'btn-primary' : ''}`}
             style={{ justifyContent: 'flex-start', padding: '12px 16px', background: activeTab === 'checklist' ? 'var(--accent-green)' : 'transparent', color: activeTab === 'checklist' ? '#fff' : 'var(--text-secondary)', border: 'none', boxShadow: 'none' }}
             onClick={() => handleTabChange('checklist')}
           >
             <ListChecks size={16} /> Checklist Automático
           </button>
-          <button 
+          <button
             className={`btn ${activeTab === 'fluxo' ? 'btn-primary' : ''}`}
             style={{ justifyContent: 'flex-start', padding: '12px 16px', background: activeTab === 'fluxo' ? 'var(--accent-orange)' : 'transparent', color: activeTab === 'fluxo' ? '#fff' : 'var(--text-secondary)', border: 'none', boxShadow: 'none' }}
             onClick={() => handleTabChange('fluxo')}
           >
             <Columns size={16} /> Etapas do Kanban
           </button>
-          <button 
+          <button
             className={`btn ${activeTab === 'links' ? 'btn-primary' : ''}`}
             style={{ justifyContent: 'flex-start', padding: '12px 16px', background: activeTab === 'links' ? 'var(--accent-blue)' : 'transparent', color: activeTab === 'links' ? '#fff' : 'var(--text-secondary)', border: 'none', boxShadow: 'none' }}
             onClick={() => handleTabChange('links')}
           >
             <Link size={16} /> Links Úteis
           </button>
-          <button 
+          <button
             className={`btn ${activeTab === 'celebration' ? 'btn-primary' : ''}`}
             style={{ justifyContent: 'flex-start', padding: '12px 16px', background: activeTab === 'celebration' ? 'var(--accent-pink)' : 'transparent', color: activeTab === 'celebration' ? '#fff' : 'var(--text-secondary)', border: 'none', boxShadow: 'none' }}
             onClick={() => handleTabChange('celebration')}
           >
             <PartyPopper size={16} /> Estilo de Comemoração
           </button>
-          <button 
+          <button
             className={`btn ${activeTab === 'sistema' ? 'btn-primary' : ''}`}
             style={{ justifyContent: 'flex-start', padding: '12px 16px', background: activeTab === 'sistema' ? 'var(--accent-purple)' : 'transparent', color: activeTab === 'sistema' ? '#fff' : 'var(--text-secondary)', border: 'none', boxShadow: 'none' }}
             onClick={() => handleTabChange('sistema')}
@@ -338,8 +338,8 @@ export function SettingsView() {
         <div style={{ flex: 1, overflowY: 'auto', paddingRight: 16, paddingBottom: 40 }}>
           <AnimatePresence mode="wait">
             {activeTab === 'empresas' && (
-              <motion.section 
-                key="empresas" 
+              <motion.section
+                key="empresas"
                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}
                 className="card" style={{ padding: 32, borderColor: 'transparent', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}
               >
@@ -352,7 +352,7 @@ export function SettingsView() {
                     Cadastre os códigos internos, razão social/fantasia e a cor de marca que irá representar cada unidade de negócio nos gráficos e cartões Kanban.
                   </p>
                 </div>
-                
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 24 }}>
                   {coligadasList.map((coligada, idx) => (
                     <div key={idx} style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'var(--bg-secondary)', padding: 12, borderRadius: 12, border: '1px solid var(--border)' }}>
@@ -378,7 +378,7 @@ export function SettingsView() {
                     </div>
                   ))}
                 </div>
-                
+
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: 24 }}>
                   <button className="btn" onClick={addColigada} style={{ background: 'transparent', border: '1px dashed var(--border)', color: 'var(--text-secondary)' }}>
                     <Plus size={16} /> Adicionar Nova Unidade
@@ -391,8 +391,8 @@ export function SettingsView() {
             )}
 
             {activeTab === 'motivos' && (
-              <motion.section 
-                key="motivos" 
+              <motion.section
+                key="motivos"
                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}
                 className="card" style={{ padding: 32, borderColor: 'transparent', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}
               >
@@ -405,7 +405,7 @@ export function SettingsView() {
                     Mapeie as opções de motivos que o RH poderá escolher ao abrir um processo. Você pode agrupar ou recriar tipos de rescisão à vontade.
                   </p>
                 </div>
-                
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
                   {motivosList.map((motivo, idx) => (
                     <div key={idx} style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'var(--bg-secondary)', padding: '12px 16px', borderRadius: 12 }}>
@@ -420,10 +420,10 @@ export function SettingsView() {
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>Cor da Etiqueta Visual</label>
                         <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                          <select 
-                            className="form-input" 
-                            value={motivo.class} 
-                            onChange={e => updateMotivo(idx, 'class', e.target.value)} 
+                          <select
+                            className="form-input"
+                            value={motivo.class}
+                            onChange={e => updateMotivo(idx, 'class', e.target.value)}
                             style={{ padding: '8px 12px', background: 'var(--bg-card)' }}
                           >
                             <option value="motivo-pedido">🔵 Azul (Padrão/Pedido)</option>
@@ -443,7 +443,7 @@ export function SettingsView() {
                     </div>
                   ))}
                 </div>
-                
+
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: 24 }}>
                   <button className="btn" onClick={addMotivo} style={{ background: 'transparent', border: '1px dashed var(--border)', color: 'var(--text-secondary)' }}>
                     <Plus size={16} /> Adicionar Nova Categoria
@@ -456,8 +456,8 @@ export function SettingsView() {
             )}
 
             {activeTab === 'checklist' && (
-              <motion.section 
-                key="checklist" 
+              <motion.section
+                key="checklist"
                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}
                 className="card" style={{ padding: 32, borderColor: 'transparent', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}
               >
@@ -470,24 +470,24 @@ export function SettingsView() {
                     Configure os "To-Dos" que o sistema vai exigir que a equipe marque como concluído ao longo do andamento do Kanban.
                   </p>
                 </div>
-                
-                <Reorder.Group 
-                  axis="y" 
-                  values={checklistList} 
+
+                <Reorder.Group
+                  axis="y"
+                  values={checklistList}
                   onReorder={setChecklistList}
                   style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}
                 >
                   {checklistList.map((item, idx) => (
-                    <ChecklistItem 
-                      key={item.id} 
-                      item={item} 
-                      idx={idx} 
-                      updateChecklist={updateChecklist} 
-                      removeChecklistItem={removeChecklistItem} 
+                    <ChecklistItem
+                      key={item.id}
+                      item={item}
+                      idx={idx}
+                      updateChecklist={updateChecklist}
+                      removeChecklistItem={removeChecklistItem}
                     />
                   ))}
                 </Reorder.Group>
-                
+
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: 24 }}>
                   <button className="btn" onClick={addChecklistItem} style={{ background: 'transparent', border: '1px dashed var(--border)', color: 'var(--text-secondary)' }}>
                     <Plus size={16} /> Inserir Tarefa
@@ -500,8 +500,8 @@ export function SettingsView() {
             )}
 
             {activeTab === 'fluxo' && (
-              <motion.section 
-                key="fluxo" 
+              <motion.section
+                key="fluxo"
                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}
                 className="card" style={{ padding: 32, borderColor: 'transparent', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}
               >
@@ -519,18 +519,18 @@ export function SettingsView() {
                     <Plus size={16} /> Nova Etapa
                   </button>
                 </div>
-                
+
                 <Reorder.Group axis="y" values={statusFlowList} onReorder={setStatusFlowList} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
                   {statusFlowList.map((step, idx) => (
-                    <Reorder.Item 
-                      key={step.key} 
+                    <Reorder.Item
+                      key={step.key}
                       value={step}
-                      style={{ 
-                        display: 'flex', 
-                        gap: 12, 
-                        alignItems: 'center', 
-                        background: 'var(--bg-secondary)', 
-                        padding: '12px 16px', 
+                      style={{
+                        display: 'flex',
+                        gap: 12,
+                        alignItems: 'center',
+                        background: 'var(--bg-secondary)',
+                        padding: '12px 16px',
                         borderRadius: 12,
                         border: '1px solid var(--border)',
                         boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
@@ -558,19 +558,19 @@ export function SettingsView() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>Cor</label>
                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                          <div style={{ 
-                            position: 'absolute', 
-                            left: 10, 
-                            width: 10, 
-                            height: 10, 
-                            borderRadius: '50%', 
+                          <div style={{
+                            position: 'absolute',
+                            left: 10,
+                            width: 10,
+                            height: 10,
+                            borderRadius: '50%',
                             background: step.color,
                             boxShadow: `0 0 8px ${step.color}66`,
                             pointerEvents: 'none'
                           }} />
-                          <select 
-                            className="form-input" 
-                            value={step.color} 
+                          <select
+                            className="form-input"
+                            value={step.color}
                             onChange={e => updateStatusFlow(idx, 'color', e.target.value)}
                             style={{ padding: '7px 10px 7px 28px', fontSize: 13, background: 'var(--bg-card)', minWidth: 110 }}
                           >
@@ -593,7 +593,7 @@ export function SettingsView() {
                     </Reorder.Item>
                   ))}
                 </Reorder.Group>
-                
+
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 24 }}>
                   <button className="btn" onClick={handleSaveStatusFlow} style={{ background: 'var(--accent-orange)', color: '#fff', padding: '10px 24px', fontWeight: 600, boxShadow: '0 4px 12px rgba(249, 115, 22, 0.3)' }}>
                     <Save size={16} /> Salvar Fluxo do Kanban
@@ -603,8 +603,8 @@ export function SettingsView() {
             )}
 
             {activeTab === 'links' && (
-              <motion.section 
-                key="links" 
+              <motion.section
+                key="links"
                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}
                 className="card" style={{ padding: 32, borderColor: 'transparent', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}
               >
@@ -622,7 +622,7 @@ export function SettingsView() {
                     <Plus size={16} /> Novo Link
                   </button>
                 </div>
-                
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
                   {linksList.map((link, idx) => (
                     <div key={link.id} style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'var(--bg-secondary)', padding: '12px 16px', borderRadius: 12 }}>
@@ -650,7 +650,7 @@ export function SettingsView() {
                     </div>
                   ))}
                 </div>
-                
+
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 24 }}>
                   <button className="btn" onClick={handleSaveLinks} style={{ background: 'var(--accent-blue)', color: '#fff', padding: '10px 24px', fontWeight: 600, boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)' }}>
                     <Save size={16} /> Salvar Links
@@ -660,8 +660,8 @@ export function SettingsView() {
             )}
 
             {activeTab === 'celebration' && (
-              <motion.section 
-                key="celebration" 
+              <motion.section
+                key="celebration"
                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}
                 style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
               >
@@ -678,20 +678,20 @@ export function SettingsView() {
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 18, marginBottom: 32 }}>
                     {[
-                      { id: 'royal_gold', name: 'Royal Gold & Diamonds', desc: 'O ápice do luxo: ouro e diamantes cascateantes.', icon: <Trophy size={20} />, color: 'var(--accent-yellow)' },
+                      { id: 'ROYAL_GOLD', name: 'Royal Gold & Diamonds', desc: 'O ápice do luxo: ouro e diamantes cascateantes.', icon: <Trophy size={20} />, color: 'var(--accent-yellow)' },
                       { id: 'midnight_fireworks', name: 'Midnight Fireworks', desc: 'Física realista de morteiros profissionais.', icon: <Sparkles size={20} />, color: 'var(--accent-blue)' },
                       { id: 'neon_corporate', name: 'Neon Corporate High-Tech', desc: 'Inovação pura com cores elétricas rápidas.', icon: <Zap size={20} />, color: 'var(--accent-pink)' },
                       { id: 'classic_rh', name: 'Classic RH Pride', desc: 'Canhões clássicos unificados com cores da marca.', icon: <PartyPopper size={20} />, color: 'var(--accent-indigo)' },
                       { id: 'random', name: 'Surpresa Aleatória', desc: 'Alterna entre todos os estilos premium.', icon: <Settings size={20} />, color: 'var(--text-secondary)' },
                     ].map(style => (
-                      <motion.div 
+                      <motion.div
                         key={style.id}
                         whileHover={{ y: -4, scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleSaveConfettiStyle(style.id)}
-                        style={{ 
-                          padding: 24, 
-                          borderRadius: 20, 
+                        style={{
+                          padding: 24,
+                          borderRadius: 20,
                           border: `2px solid ${confettiStyle === style.id ? style.color : 'var(--border)'}`,
                           background: confettiStyle === style.id ? `${style.color}08` : 'var(--bg-card)',
                           cursor: 'pointer',
@@ -712,9 +712,9 @@ export function SettingsView() {
                   </div>
 
                   <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-start', borderTop: '1px solid var(--border)', paddingTop: 24 }}>
-                    <button 
-                      className="btn" 
-                      onClick={handlePreviewConfetti} 
+                    <button
+                      className="btn"
+                      onClick={handlePreviewConfetti}
                       style={{ background: 'var(--accent-pink)', color: '#fff', padding: '12px 28px', fontWeight: 700, boxShadow: '0 4px 15px rgba(236, 72, 153, 0.3)', gap: 10 }}
                     >
                       <Zap size={18} /> Testar Efeito Agora
@@ -725,8 +725,8 @@ export function SettingsView() {
             )}
 
             {activeTab === 'sistema' && (
-              <motion.section 
-                key="sistema" 
+              <motion.section
+                key="sistema"
                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}
                 style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
               >
@@ -776,9 +776,9 @@ export function SettingsView() {
                     <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>
                       Arquiva em lote todos os processos com data de pagamento anterior a 01/03/2026 e marca o item de "Comprovante de pagamento" como concluído.
                     </p>
-                    <button 
-                      className="btn" 
-                      onClick={handleMigrateOld} 
+                    <button
+                      className="btn"
+                      onClick={handleMigrateOld}
                       disabled={isMigrating}
                       style={{ background: 'var(--accent-orange)', color: '#fff', fontWeight: 600, opacity: isMigrating ? 0.7 : 1 }}
                     >
@@ -795,8 +795,8 @@ export function SettingsView() {
                   <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>
                     Esta ação purgará 100% dos dados dos caches. Não afeta as configurações mestras (Empresas/Motivos), apenas limpa Kanban, Dashboard e Arquivados.
                   </p>
-                  <button 
-                    className="btn" 
+                  <button
+                    className="btn"
                     style={{ background: '#ef4444', color: '#fff', fontWeight: 600 }}
                     onClick={async () => {
                       const ok = await showConfirm(

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, Suspense, lazy, useEffect, useRef } from 'react';
-import { AppProvider, useApp } from './context/AppContext';
+import { AppProvider, useApp } from './context/AppContext'; // refresh-0129384752103
 import { ToastProvider, useToast } from './components/Toast';
 import { ModalNovoDesligamento } from './components/Modals';
 import { ModalImportarPlanilha } from './components/ImportModal';
@@ -12,7 +12,6 @@ import {
   LayoutList, Columns, Plus, Users, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut, HelpCircle, FileText, Sun, Moon, Calendar, History, Link, Monitor
 } from 'lucide-react';
 
-// Lazy Load Views for better performance and to avoid initialization race conditions
 const Dashboard = lazy(() => import('./components/Dashboard').then(m => ({ default: m.Dashboard })));
 const ListView = lazy(() => import('./components/ListView').then(m => ({ default: m.ListView })));
 const KanbanView = lazy(() => import('./components/KanbanView').then(m => ({ default: m.KanbanView })));
@@ -255,7 +254,6 @@ function AppContent() {
       </div>
       {showNew && <ModalNovoDesligamento onClose={() => setShowNew(false)} />}
       {showImport && <ModalImportarPlanilha onClose={() => setShowImport(false)} />}
-      <CelebrationCanvas3D active={state.activeCelebration} />
     </div>
   );
 }
@@ -265,7 +263,15 @@ export default function App() {
     <AppProvider>
       <ToastProvider>
         <AppContent />
+        <CelebrationTriggerWrapper />
       </ToastProvider>
     </AppProvider>
   );
 }
+
+function CelebrationTriggerWrapper() {
+  const { state } = useApp();
+  return <CelebrationCanvas3D mode={state.activeCelebration} />;
+}
+
+

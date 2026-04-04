@@ -10,21 +10,12 @@ createRoot(document.getElementById('root')).render(
 )
 
 // Register Service Worker
+// Clear Service Worker in Dev
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then((registration) => {
-      registration.update();
-    }).catch(err => {
-      console.log('SW registration failed: ', err);
-    });
-  });
-
-  // Recarrega a página automaticamente quando o novo service worker assume o controle
-  let refreshing = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!refreshing) {
-      refreshing = true;
-      window.location.reload();
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    for (const registration of registrations) {
+      registration.unregister();
     }
   });
 }
+

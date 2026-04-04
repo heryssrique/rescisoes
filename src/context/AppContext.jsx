@@ -1,23 +1,19 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo, useRef, useState } from 'react';
 import * as api from '../services/api';
 import { format } from 'date-fns';
-import { 
-  DEFAULT_COLIGADAS, 
-  DEFAULT_MOTIVOS, 
-  DEFAULT_STATUS_FLOW, 
-  DEFAULT_CHECKLIST_TEMPLATE, 
-  DEFAULT_LINKS_UTEIS 
+import {
+  DEFAULT_COLIGADAS,
+  DEFAULT_MOTIVOS,
+  DEFAULT_STATUS_FLOW,
+  DEFAULT_CHECKLIST_TEMPLATE,
+  DEFAULT_LINKS_UTEIS
 } from '../data/initialData';
+import { fireExtravagantConfetti } from '../utils/confettiHelper';
 
 const AppContext = createContext();
 
 // ─── Reducer ──────────────────────────────────────────────────────────────
-// O reducer agora gerencia apenas estado local de UI e os dados já
-// processados pela API. Mutações reais acontecem na API, e o resultado
-// retornado da API é o que atualiza o estado local.
-
 function reducer(state, action) {
-  // Defensive guard: ensure arrays are ALWAYS defined before any .map()/.filter()
   const s = {
     ...state,
     desligamentos: state.desligamentos || [],
@@ -26,7 +22,6 @@ function reducer(state, action) {
     readNotificationIds: state.readNotificationIds || [],
   };
   switch (action.type) {
-    // Dados
     case 'SET_DESLIGAMENTOS':
       return { ...s, desligamentos: action.payload, loading: false };
     case 'SET_ARCHIVED':
@@ -54,11 +49,7 @@ function reducer(state, action) {
           }),
         };
       });
-      return {
-        ...s,
-        desligamentos: updateList(s.desligamentos),
-        archivedDesligamentos: updateList(s.archivedDesligamentos),
-      };
+      return { ...s, desligamentos: updateList(s.desligamentos), archivedDesligamentos: updateList(s.archivedDesligamentos) };
     }
     case 'TOGGLE_NAO_APLICAVEL_OPTIMISTIC': {
       const updateList = (list) => list.map(d => {
@@ -72,11 +63,7 @@ function reducer(state, action) {
           }),
         };
       });
-      return {
-        ...s,
-        desligamentos: updateList(s.desligamentos),
-        archivedDesligamentos: updateList(s.archivedDesligamentos),
-      };
+      return { ...s, desligamentos: updateList(s.desligamentos), archivedDesligamentos: updateList(s.archivedDesligamentos) };
     }
     case 'ARCHIVE_DESLIGAMENTO':
       return {
@@ -113,6 +100,7 @@ function reducer(state, action) {
     case 'SET_USER':
       return { ...s, user: action.payload };
     case 'LOGOUT':
+      localStorage.removeItem('token');
       localStorage.removeItem('desligest_auth_user');
       localStorage.removeItem('desligest_view');
       localStorage.removeItem('desligest_selected');
@@ -150,8 +138,20 @@ function reducer(state, action) {
     case 'UPDATE_CONFIG':
       localStorage.setItem(action.key, JSON.stringify(action.payload));
       return { ...s, [action.configName]: action.payload };
-    case 'TRIGGER_CONFETTI':
-      return { ...s, triggerConfetti: action.value };
+    case 'UPDATE_MULTIPLE': {
+      const updatedIds = action.payload.map(d => d.id);
+      return {
+        ...s,
+        desligamentos: s.desligamentos.map(d => {
+          const up = action.payload.find(x => x.id === d.id);
+          return up ? up : d;
+        }),
+        archivedDesligamentos: s.archivedDesligamentos.map(d => {
+          const up = action.payload.find(x => x.id === d.id);
+          return up ? up : d;
+        }),
+      };
+    }
     case 'SET_CELEBRATION':
       return { ...s, activeCelebration: action.payload };
     default:
@@ -159,14 +159,13 @@ function reducer(state, action) {
   }
 }
 
-
 function getInitialState() {
   try {
     const savedView = localStorage.getItem('desligest_view') || 'lista';
     const savedSelected = localStorage.getItem('desligest_selected') || null;
     const view = (savedView === 'detalhe' && !savedSelected) ? 'lista' : savedView;
     const readIds = (() => { try { return JSON.parse(localStorage.getItem('readNotificationIds') || '[]') || []; } catch { return []; } })();
-    
+
     const getConfig = (key, fallback) => {
       try {
         const data = localStorage.getItem(key);
@@ -197,7 +196,6 @@ function getInitialState() {
       activeCelebration: null,
     };
   } catch (e) {
-    console.error("Error initializing state", e);
     return {
       user: null, isAuthChecked: false, desligamentos: [], archivedDesligamentos: [],
       view: 'lista', selected: null, theme: 'dark', globalColigadaFilter: 'todas',
@@ -209,7 +207,6 @@ function getInitialState() {
   }
 }
 
-// ─── Provider ─────────────────────────────────────────────────────────────
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, null, getInitialState);
   const loadingRef = useRef(false);
@@ -219,7 +216,6 @@ export function AppProvider({ children }) {
     document.documentElement.setAttribute('data-theme', state.theme);
   }, [state.theme]);
 
-  // ── Carrega lista ao montar ──────────────────────────────────────────────
   const fetchAll = useCallback(async () => {
     if (loadingRef.current) return;
     loadingRef.current = true;
@@ -227,22 +223,11 @@ export function AppProvider({ children }) {
     try {
       const res = await api.getDesligamentos({ arquivado: false });
       const raw = res.data ?? res;
-      const data = Array.isArray(raw) ? raw : [];
-      dispatch({ type: 'SET_DESLIGAMENTOS', payload: data });
+      dispatch({ type: 'SET_DESLIGAMENTOS', payload: Array.isArray(raw) ? raw : [] });
       dispatch({ type: 'SET_ERROR', message: null });
     } catch (err) {
-      if (err.message.includes('401')) {
-        localStorage.removeItem('token');
-        dispatch({ type: 'SET_USER', payload: null });
-        return;
-      }
-      console.warn('[AppContext] API indisponível, usando localStorage como fallback.', err.message);
       const saved = loadFromStorage();
       dispatch({ type: 'SET_DESLIGAMENTOS', payload: saved.filter(d => !d.arquivado) });
-      dispatch({
-        type: 'SET_ERROR',
-        message: '⚠️ API offline — dados carregados do cache local.',
-      });
     } finally {
       loadingRef.current = false;
       dispatch({ type: 'SET_LOADING', value: false });
@@ -256,21 +241,11 @@ export function AppProvider({ children }) {
     try {
       const res = await api.getDesligamentos({ arquivado: true, q: searchQuery });
       const raw = res.data ?? res;
-      const data = Array.isArray(raw) ? raw : [];
-      dispatch({ type: 'SET_ARCHIVED', payload: data });
+      dispatch({ type: 'SET_ARCHIVED', payload: Array.isArray(raw) ? raw : [] });
     } catch (err) {
-      if (err.message.includes('401')) {
-        localStorage.removeItem('token');
-        dispatch({ type: 'SET_USER', payload: null });
-        return;
-      }
-      console.warn('[AppContext] Falha ao buscar arquivados da API.', err.message);
       const saved = loadFromStorage();
       const filtered = saved.filter(d => d.arquivado);
-      const searchTerm = searchQuery.toLowerCase();
-      const results = searchQuery 
-        ? filtered.filter(d => d.nome?.toLowerCase().includes(searchTerm)) 
-        : filtered;
+      const results = searchQuery ? filtered.filter(d => d.nome?.toLowerCase().includes(searchQuery.toLowerCase())) : filtered;
       dispatch({ type: 'SET_ARCHIVED', payload: results });
     } finally {
       archivedLoadingRef.current = false;
@@ -297,412 +272,164 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (state.user) {
       fetchAll();
-      fetchArchived(); // Carrega arquivados também para o Calendário e Histórico Global
+      fetchArchived();
     }
   }, [state.user, fetchAll, fetchArchived]);
 
   useEffect(() => {
-    // Persiste no localStorage sempre que houver novos dados para garantir o modo offline
     if (state.desligamentos.length > 0 || state.archivedDesligamentos.length > 0) {
       saveToStorage([...state.desligamentos, ...state.archivedDesligamentos]);
     }
   }, [state.desligamentos, state.archivedDesligamentos]);
 
-  // IDs já notificados nativamente nesta sessão para evitar spam
   const notifiedSessionIds = useRef(new Set());
-
-  // ── Notificações ────────────────────────────────────────────────────────
-  useEffect(() => {
-    localStorage.setItem('readNotificationIds', JSON.stringify(state.readNotificationIds));
-  }, [state.readNotificationIds]);
 
   const generateNotifications = useCallback(() => {
     const { desligamentos, readNotificationIds } = state;
     if (!desligamentos || !desligamentos.length) return;
-
-    const now = new Date();
-    // Normalizar 'agora' para ser 00:00:00 para comparação de dias inteiros
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const newNotifications = [];
 
     desligamentos.forEach(d => {
-      // Ignorar processos já pagos, cancelados ou com depósito realizado (p1)
       const isPaidChecklist = d.checklist?.some(c => c.id === 'p1' && c.done);
       if (d.status === 'pago' || d.status === 'cancelado' || isPaidChecklist || !d.dataPagamento) return;
-
       const [year, month, day] = d.dataPagamento.split('-').map(Number);
       const paymentDate = new Date(year, month - 1, day);
-      
-      const diffTime = paymentDate - today;
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const diffDays = Math.ceil((paymentDate - today) / (1000 * 60 * 60 * 24));
 
-      let type = '';
-      let message = '';
-      let severity = '';
-
-      if (diffDays < 0) {
-        type = 'vencido';
-        message = `O prazo de pagamento de ${d.nome} venceu em ${day}/${month}.`;
-        severity = 'error';
-      } else if (diffDays === 0) {
-        type = 'vence_hoje';
-        message = `O prazo de pagamento de ${d.nome} vence hoje!`;
-        severity = 'warning';
-      } else if (diffDays <= 3) {
-        type = 'proximo';
-        message = `Faltam ${diffDays} dias para o pagamento de ${d.nome}.`;
-        severity = 'info';
-      }
+      let type = '', message = '', severity = '';
+      if (diffDays < 0) { type = 'vencido'; message = `Venceu em ${day}/${month}`; severity = 'error'; }
+      else if (diffDays === 0) { type = 'vence_hoje'; message = `Vence hoje!`; severity = 'warning'; }
+      else if (diffDays <= 3) { type = 'proximo'; message = `Faltam ${diffDays} dias`; severity = 'info'; }
 
       if (type) {
         const notifId = `${d.id}-${type}`;
-        newNotifications.push({
-          id: notifId,
-          desligamentoId: d.id,
-          type,
-          message,
-          severity,
-          date: new Date().toISOString(),
-          read: readNotificationIds.includes(notifId)
-        });
+        newNotifications.push({ id: notifId, desligamentoId: d.id, type, message, severity, date: new Date().toISOString(), read: readNotificationIds.includes(notifId) });
       }
     });
 
-    // Só atualiza se houver mudança real para evitar loops (comparação profunda simples)
     if (JSON.stringify(newNotifications) !== JSON.stringify(state.notifications)) {
       dispatch({ type: 'SET_NOTIFICATIONS', payload: newNotifications });
     }
-
-    // Tentar notificação nativa para itens não lidos e não notificados nesta sessão
-    if (Notification.permission === 'granted') {
-      newNotifications.forEach(n => {
-        if (!n.read && !notifiedSessionIds.current.has(n.id)) {
-          new Notification('Alerta de Prazo', {
-            body: n.message,
-            icon: '/vite.svg'
-          });
-          notifiedSessionIds.current.add(n.id);
-        }
-      });
-    }
   }, [state.desligamentos, state.readNotificationIds]);
 
-  useEffect(() => {
-    generateNotifications();
-  }, [state.desligamentos, state.readNotificationIds]);
-
-  function markNotificationRead(id) {
-    dispatch({ type: 'MARK_NOTIFICATION_READ', id });
-  }
-
-  function requestNotificationPermission() {
-    if ('Notification' in window) {
-      Notification.requestPermission();
-    }
-  }
-
-  // ── Ações (chamam a API e atualizam estado local com a resposta) ─────────
-
-  async function addDesligamento(formData) {
-    try {
-      const doc = await api.createDesligamento(formData);
-      dispatch({ type: 'ADD_DESLIGAMENTO', payload: doc });
-      return doc;
-    } catch (err) {
-      console.warn('[AppContext] API offline — criando registro localmente.', err.message);
-      const localDoc = { 
-        ...formData, 
-        id: 'local-' + Date.now(),
-        checklist: formData.checklist || [],
-        historico: formData.historico || [],
-        arquivado: false 
-      };
-      dispatch({ type: 'ADD_DESLIGAMENTO', payload: localDoc });
-      dispatch({ type: 'SET_ERROR', message: '⚠️ Servidor offline — processo criado apenas localmente neste navegador.' });
-      return localDoc;
-    }
-  }
-
-  async function updateDesligamento(data) {
-    try {
-      const doc = await api.updateDesligamento(data.id, data);
-      dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: doc });
-      return doc;
-    } catch (err) {
-      console.warn('[AppContext] API offline — atualizando registro localmente.', err.message);
-      dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: data });
-      dispatch({ type: 'SET_ERROR', message: '⚠️ Servidor offline — alteração salva apenas localmente.' });
-      return data;
-    }
-  }
-
-  async function archiveDesligamento(id) {
-    const desligamento = state.desligamentos.find(d => d.id === id);
-    if (!desligamento) return;
-    
-    const historyEntry = {
-      data: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
-      acao: 'Processo arquivado',
-      nota: '',
-    };
-    
-    const updated = { 
-      ...desligamento, 
-      arquivado: true,
-      historico: [...(desligamento.historico || []), historyEntry]
-    };
-
-    try {
-      const doc = await api.updateDesligamento(id, updated);
-      dispatch({ type: 'ARCHIVE_DESLIGAMENTO', payload: doc });
-    } catch (err) {
-      console.warn('[AppContext] API offline — arquivando localmente.', err.message);
-      dispatch({ type: 'ARCHIVE_DESLIGAMENTO', payload: updated });
-      dispatch({ type: 'SET_ERROR', message: '⚠️ Servidor offline — arquivado localmente.' });
-    }
-  }
-
-  async function unarchiveDesligamento(id) {
-    const desligamento = state.archivedDesligamentos.find(d => d.id === id);
-    if (!desligamento) return;
-
-    const historyEntry = {
-      data: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
-      acao: 'Processo reativado',
-      nota: '',
-    };
-
-    const updated = { 
-      ...desligamento, 
-      arquivado: false,
-      historico: [...(desligamento.historico || []), historyEntry]
-    };
-
-    try {
-      const doc = await api.updateDesligamento(id, updated);
-      dispatch({ type: 'UNARCHIVE_DESLIGAMENTO', payload: doc });
-    } catch (err) {
-      console.warn('[AppContext] API offline — reativando localmente.', err.message);
-      dispatch({ type: 'UNARCHIVE_DESLIGAMENTO', payload: updated });
-      dispatch({ type: 'SET_ERROR', message: '⚠️ Servidor offline — reativado localmente.' });
-    }
-  }
-
-  async function deleteDesligamento(id) {
-    try {
-      await api.deleteDesligamento(id);
-      dispatch({ type: 'DELETE_DESLIGAMENTO', id });
-    } catch (err) {
-      console.warn('[AppContext] API offline — excluindo registro localmente.', err.message);
-      dispatch({ type: 'DELETE_DESLIGAMENTO', id });
-      dispatch({ type: 'SET_ERROR', message: '⚠️ Servidor offline — item removido apenas localmente.' });
-    }
-  }
-
-  async function bulkArchive(ids) {
-    try {
-      const res = await api.bulkArchive(ids);
-      dispatch({ type: 'ARCHIVE_MULTIPLE', payload: res.docs });
-    } catch (err) {
-      console.warn('[AppContext] API offline — arquivando em lote localmente.', err.message);
-      const now = format(new Date(), "yyyy-MM-dd'T'HH:mm:ss");
-      const toArchive = state.desligamentos
-        .filter(d => ids.includes(d.id) && (d.status === 'pago' || d.status === 'cancelado'))
-        .map(d => ({
-          ...d,
-          arquivado: true,
-          historico: [...(d.historico || []), { data: now, acao: 'Arquivado em lote (offline)', nota: '' }]
-        }));
-      
-      dispatch({ type: 'ARCHIVE_MULTIPLE', payload: toArchive });
-      dispatch({ type: 'SET_ERROR', message: `⚠️ Servidor offline — ${toArchive.length} itens arquivados localmente.` });
-    }
-  }
-
-  async function bulkDelete(ids) {
-    try {
-      await api.bulkDelete(ids);
-      ids.forEach(id => dispatch({ type: 'DELETE_DESLIGAMENTO', id }));
-    } catch (err) {
-      dispatch({ type: 'SET_ERROR', message: `Erro na exclusão em lote: ${err.message}` });
-    }
-  }
-
-  async function bulkUpdateStatus(ids, status) {
-    try {
-      await api.bulkUpdateStatus(ids, status);
-      // Recarrega tudo para garantir sincronia correta do estado complexo (checklist/history)
-      await fetchAll();
-      await fetchArchived();
-    } catch (err) {
-      dispatch({ type: 'SET_ERROR', message: `Erro na atualização em lote: ${err.message}` });
-    }
-  }
-
-  async function toggleChecklist(desligamentoId, itemId) {
-    // 1. Atualiza a UI imediatamente (optimistic update)
-    dispatch({ type: 'TOGGLE_CHECKLIST_OPTIMISTIC', desligamentoId, itemId });
-
-    try {
-      // 2. Sincroniza com o servidor em segundo plano
-      const doc = await api.toggleChecklistItem(desligamentoId, itemId);
-      // 3. Confirma com os dados reais do servidor (ex: doneAt preciso)
-      dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: doc });
-      return doc;
-    } catch (err) {
-      // 4. Reverte o estado se falhar
-      dispatch({ type: 'TOGGLE_CHECKLIST_OPTIMISTIC', desligamentoId, itemId });
-      dispatch({ type: 'SET_ERROR', message: `Erro no checklist: ${err.message}` });
-      throw err;
-    }
-  }
-
-  async function toggleNaoAplicavel(desligamentoId, itemId) {
-    // Optimistic update
-    dispatch({ type: 'TOGGLE_NAO_APLICAVEL_OPTIMISTIC', desligamentoId, itemId });
-
-    try {
-      const doc = await api.toggleChecklistNaoAplicavel(desligamentoId, itemId);
-      dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: doc });
-      return doc;
-    } catch (err) {
-      dispatch({ type: 'TOGGLE_NAO_APLICAVEL_OPTIMISTIC', desligamentoId, itemId });
-      dispatch({ type: 'SET_ERROR', message: `Erro ao marcar N/A: ${err.message}` });
-      throw err;
-    }
-  }
-
-  async function addHistorico(desligamentoId, entry) {
-    try {
-      const doc = await api.addHistorico(desligamentoId, entry);
-      dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: doc });
-      return doc;
-    } catch (err) {
-      console.warn('[AppContext] API offline — adicionando histórico localmente.', err.message);
-      const d = state.desligamentos.find(x => x.id === desligamentoId) || state.archivedDesligamentos?.find(x => x.id === desligamentoId);
-      if (d) {
-        const updated = { ...d, historico: [...(d.historico || []), entry] };
-        dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: updated });
-        return updated;
-      }
-      dispatch({ type: 'SET_ERROR', message: `Erro ao registrar histórico: ${err.message}` });
-      throw err;
-    }
-  }
-
-  async function changeStatus(desligamento, newStatus) {
-    const historyEntry = {
-      data: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
-      acao: `Status alterado para: ${newStatus}`,
-      nota: '',
-    };
-    const updated = { 
-      ...desligamento, 
-      status: newStatus,
-      historico: [...(desligamento.historico || []), historyEntry]
-    };
-    await updateDesligamento(updated);
-  }
-
-  // ── Auth Actions ────────────────────────────────────────────────────────
-  async function login(email, password) {
-    const res = await api.login(email, password);
-    localStorage.setItem('token', res.token);
-    dispatch({ type: 'SET_USER', payload: res.user });
-  }
-
-  async function register(name, email, password) {
-    const res = await api.register(name, email, password);
-    localStorage.setItem('token', res.token);
-    dispatch({ type: 'SET_USER', payload: res.user });
-  }
-
-  function logout() {
-    localStorage.removeItem('token');
-    dispatch({ type: 'LOGOUT' });
-  }
-
-  function updateConfig(configName, key, payload) {
-    dispatch({ type: 'UPDATE_CONFIG', configName, key, payload });
-  }
-
-  // Mantém compatibilidade com o dispatch direto p/ navegação de UI
-  const uiDispatch = (action) => {
-    if (['SET_VIEW', 'SET_SELECTED', 'CLEAR_ERROR', 'SET_GLOBAL_COLIGADA_FILTER'].includes(action.type)) {
-      dispatch(action);
-    }
-  };
+  useEffect(() => { generateNotifications(); }, [generateNotifications]);
 
   const value = useMemo(() => ({
     state,
-    dispatch: uiDispatch,
+    dispatch: (action) => dispatch(action),
     actions: {
       fetchAll,
       fetchArchived,
-      addDesligamento,
-      updateDesligamento,
-      archiveDesligamento,
-      unarchiveDesligamento,
-      deleteDesligamento,
-      bulkArchive,
-      bulkDelete,
-      bulkUpdateStatus,
-      toggleChecklist,
-      toggleNaoAplicavel,
-      markNotificationRead,
-      requestNotificationPermission,
-      addHistorico,
-      changeStatus,
-      login,
-      register,
-      logout,
-      importDesligamentos: async (data) => {
-        try {
-          const res = await api.importDesligamentos(data);
-          await fetchAll(); // Recarrega tudo para garantir sincronia
-          return res;
-        } catch (err) {
-          dispatch({ type: 'SET_ERROR', message: `Erro na importação: ${err.message}` });
-          throw err;
-        }
+      addDesligamento: async (data) => {
+        const doc = await api.createDesligamento(data);
+        dispatch({ type: 'ADD_DESLIGAMENTO', payload: doc });
+        return doc;
+      },
+      updateDesligamento: async (data) => {
+        const doc = await api.updateDesligamento(data.id, data);
+        dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: doc });
+        return doc;
+      },
+      archiveDesligamento: async (id) => {
+        const d = state.desligamentos.find(x => x.id === id);
+        const updated = { ...d, arquivado: true, historico: [...(d.historico || []), { data: new Date().toISOString(), acao: 'Arquivado' }] };
+        const doc = await api.updateDesligamento(id, updated);
+        dispatch({ type: 'ARCHIVE_DESLIGAMENTO', payload: doc });
+      },
+      unarchiveDesligamento: async (id) => {
+        const d = state.archivedDesligamentos.find(x => x.id === id);
+        const updated = { ...d, arquivado: false, historico: [...(d.historico || []), { data: new Date().toISOString(), acao: 'Reativado' }] };
+        const doc = await api.updateDesligamento(id, updated);
+        dispatch({ type: 'UNARCHIVE_DESLIGAMENTO', payload: doc });
+      },
+      deleteDesligamento: async (id) => {
+        await api.deleteDesligamento(id);
+        dispatch({ type: 'DELETE_DESLIGAMENTO', id });
+      },
+      toggleChecklist: async (desligamentoId, itemId) => {
+        dispatch({ type: 'TOGGLE_CHECKLIST_OPTIMISTIC', desligamentoId, itemId });
+        const doc = await api.toggleChecklistItem(desligamentoId, itemId);
+        dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: doc });
+      },
+      toggleNaoAplicavel: async (desligamentoId, itemId) => {
+        dispatch({ type: 'TOGGLE_NAO_APLICAVEL_OPTIMISTIC', desligamentoId, itemId });
+        const doc = await api.toggleChecklistNaoAplicavel(desligamentoId, itemId);
+        dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: doc });
+      },
+      addHistorico: async (desligamentoId, entry) => {
+        const doc = await api.addHistorico(desligamentoId, entry);
+        dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: doc });
+      },
+      login: async (e, p) => {
+        const res = await api.login(e, p);
+        localStorage.setItem('token', res.token);
+        dispatch({ type: 'SET_USER', payload: res.user });
+      },
+      logout: () => {
+        localStorage.removeItem('token');
+        dispatch({ type: 'LOGOUT' });
       },
       toggleTheme: () => dispatch({ type: 'TOGGLE_THEME' }),
-      updateConfig,
-      triggerCelebration: (style) => {
-        dispatch({ type: 'SET_CELEBRATION', payload: style });
-        
-        let duration = 12000;
-        if (style === 'neon_corporate') duration = 5000;
-        else if (style === 'midnight_fireworks') duration = 9000;
-        
-        setTimeout(() => dispatch({ type: 'SET_CELEBRATION', payload: null }), duration);
+      updateConfig: (name, key, payload) => dispatch({ type: 'UPDATE_CONFIG', configName: name, key, payload }),
+      changeStatus: async (d, newStatus) => {
+        const updated = {
+          ...d,
+          status: newStatus,
+          historico: [...(d.historico || []), {
+            data: new Date().toISOString(),
+            acao: `Status alterado para ${newStatus.toUpperCase()}`,
+            nota: `Alteração via detalhe`
+          }]
+        };
+        const doc = await api.updateDesligamento(d.id, updated);
+        dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: doc });
+        return doc;
       },
-    },
-  }), [state, uiDispatch, fetchAll, fetchArchived, addDesligamento, updateDesligamento, archiveDesligamento, unarchiveDesligamento, deleteDesligamento, bulkArchive, bulkDelete, toggleChecklist, toggleNaoAplicavel, markNotificationRead, requestNotificationPermission, addHistorico, changeStatus, login, register, logout, updateConfig]);
+      bulkArchive: async (ids) => {
+        await api.bulkArchive(ids);
+        // Refresh full state to be safe after bulk
+        fetchAll();
+        fetchArchived();
+      },
+      bulkDelete: async (ids) => {
+        await api.bulkDelete(ids);
+        dispatch({ type: 'DELETE_MULTIPLE', ids });
+      },
+      bulkUpdateStatus: async (ids, status) => {
+        const res = await api.bulkUpdateStatus(ids, status);
+        // A API bulkUpdateStatus deve retornar a lista de docs atualizados ou fazemos fetch
+        if (res && Array.isArray(res)) {
+          dispatch({ type: 'UPDATE_MULTIPLE', payload: res });
+        } else {
+          fetchAll();
+        }
+      },
+      triggerCelebration: (style) => {
+        // Ativa o motor clássico (RH Pride, Fogos, etc)
+        fireExtravagantConfetti(style);
+        
+        // Se for ouro, ativa também o motor 3D de luxo
+        if (style && style.toLowerCase().includes('gold')) {
+          dispatch({ type: 'SET_CELEBRATION', payload: style });
+        }
+
+        let duration = 9000;
+        if (style === 'neon_corporate') duration = 8000;
+        else if (style === 'midnight_fireworks') duration = 15000;
+        else if (style === 'classic_rh') duration = 10000;
+
+        setTimeout(() => dispatch({ type: 'SET_CELEBRATION', payload: null }), duration);
+      }
+    }
+  }), [state, fetchAll, fetchArchived]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
-export function useApp() {
-  return useContext(AppContext);
-}
+export function useApp() { return useContext(AppContext); }
 
-// ─── Helpers localStorage (fallback offline) ──────────────────────────────
 const LS_KEY = 'desligest_cache_v2';
-
-function loadFromStorage() {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
-}
-
-function saveToStorage(data) {
-  try {
-    localStorage.setItem(LS_KEY, JSON.stringify(data));
-  } catch (err) {
-    console.warn('[AppContext] Erro ao salvar no localStorage', err);
-  }
-}
+function loadFromStorage() { try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch { return []; } }
+function saveToStorage(data) { try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch { } }
