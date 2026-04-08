@@ -169,6 +169,7 @@ export function ListView({ data: injectedData }) {
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [page, setPage] = useState(1);
   const itemsPerPage = 50;
+  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, typed: '' });
 
   // Reset page when filters change
   React.useEffect(() => {
@@ -310,12 +311,14 @@ export function ListView({ data: injectedData }) {
     }
   }
 
-  async function handleBulkDelete() {
-    const ok = await showConfirm(`Deseja apagar os ${selectedIds.length} processos selecionados? Esta ação é permanente.`, { title: 'Exclusão Permanente', confirmText: 'Excluir', type: 'danger' });
-    if (ok) {
-      await actions.bulkDelete(selectedIds);
-      setSelectedIds([]);
-    }
+  function handleBulkDelete() {
+    setDeleteConfirm({ open: true, typed: '' });
+  }
+
+  async function confirmBulkDelete() {
+    setDeleteConfirm({ open: false, typed: '' });
+    await actions.bulkDelete(selectedIds);
+    setSelectedIds([]);
   }
 
   return (
@@ -515,6 +518,101 @@ export function ListView({ data: injectedData }) {
           </div>
         </div>
       )}
+
+      {/* Modal de confirmação de exclusão com digitação obrigatória */}
+      <AnimatePresence>
+        {deleteConfirm.open && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 9999,
+              background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}
+            onClick={() => setDeleteConfirm({ open: false, typed: '' })}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--accent-red)',
+                borderRadius: 'var(--radius-xl)',
+                padding: 32,
+                maxWidth: 460,
+                width: '90%',
+                boxShadow: '0 0 40px rgba(239,68,68,0.25)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                <div style={{
+                  width: 44, height: 44, borderRadius: '50%',
+                  background: 'rgba(239,68,68,0.15)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                }}>
+                  <Trash2 size={20} color="var(--accent-red)" />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 17, color: 'var(--text-primary)' }}>Exclusão Permanente</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{selectedIds.length} processo(s) selecionado(s)</div>
+                </div>
+              </div>
+
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.6 }}>
+                Esta ação é <strong style={{ color: 'var(--accent-red)' }}>irreversível</strong>. Os dados serão
+                permanentemente removidos do banco de dados e não poderão ser recuperados.
+              </p>
+
+              <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, padding: '12px 16px', marginBottom: 20 }}>
+                <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8 }}>
+                  Para confirmar, digite <strong style={{ color: 'var(--accent-red)', letterSpacing: 1 }}>EXCLUIR</strong> abaixo:
+                </div>
+                <input
+                  autoFocus
+                  type="text"
+                  value={deleteConfirm.typed}
+                  onChange={e => setDeleteConfirm(s => ({ ...s, typed: e.target.value }))}
+                  onKeyDown={e => { if (e.key === 'Enter' && deleteConfirm.typed === 'EXCLUIR') confirmBulkDelete(); }}
+                  placeholder="EXCLUIR"
+                  style={{
+                    width: '100%', padding: '10px 14px', borderRadius: 8,
+                    border: `1px solid ${deleteConfirm.typed === 'EXCLUIR' ? 'var(--accent-red)' : 'var(--border)'}`,
+                    background: 'var(--bg-secondary)', color: 'var(--text-primary)',
+                    fontSize: 15, fontWeight: 700, letterSpacing: 2,
+                    outline: 'none', boxSizing: 'border-box',
+                    transition: 'border-color 0.2s'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setDeleteConfirm({ open: false, typed: '' })}
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="btn btn-danger"
+                  disabled={deleteConfirm.typed !== 'EXCLUIR'}
+                  onClick={confirmBulkDelete}
+                  style={{
+                    opacity: deleteConfirm.typed === 'EXCLUIR' ? 1 : 0.4,
+                    cursor: deleteConfirm.typed === 'EXCLUIR' ? 'pointer' : 'not-allowed',
+                    transition: 'opacity 0.2s'
+                  }}
+                >
+                  <Trash2 size={14} /> Excluir Permanentemente
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {activeFiltered.length === 0 ? (
         <div className="empty-state">

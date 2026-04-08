@@ -85,17 +85,112 @@ app.get('/api/health', (req, res) => {
 });
 
 // ── Endpoint temporário de bootstrap (apenas em desenvolvimento) ───────────
-// Usado para promover usuários existentes a admin quando não há nenhum admin ainda.
-// Remover após o primeiro uso em produção.
 if (process.env.NODE_ENV !== 'production') {
   const User = require('./models/User');
+  const Desligamento = require('./models/Desligamento');
+
   app.post('/api/bootstrap-admin', async (req, res) => {
     try {
       const result = await User.updateMany({}, { role: 'admin' });
       const users = await User.find().select('name email role');
-      res.json({ 
-        message: `${result.modifiedCount} usuário(s) promovido(s) para admin.`,
-        users
+      res.json({ message: `${result.modifiedCount} usuário(s) promovido(s) para admin.`, users });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ── Recuperação de dados deletados acidentalmente ──────────────────────
+  app.post('/api/recover-deleted', async (req, res) => {
+    try {
+      const PROCESSOS = [
+        {
+          nome: 'Alexandre Costa da Silva', coligada: '1',
+          cargo: 'Coletor de Lixo Domiciliar', departamento: 'Coleta de Lixo Varzea Grande MT',
+          matricula: '00001892', dataAdmissao: '2026-02-05', dataComunicado: '2026-03-08',
+          dataDesligamento: '2026-04-05', dataPagamento: '2026-04-15', prazoPagamento: '10',
+          motivo: 'termino_contrato', avisoPrevio: 'nao_aplicavel', status: 'comunicado',
+          responsavel: 'Henrique Silva', arquivado: false, checklist: [], historico: [
+            { data: new Date().toISOString(), acao: 'Processo recuperado', nota: 'Reinserido a partir de print — término de contrato' }
+          ]
+        },
+        {
+          nome: 'Elyelton do Nascimento Souza', coligada: '1',
+          cargo: 'Coletor de Lixo Domiciliar', departamento: 'Coleta de Lixo Varzea Grande MT',
+          matricula: '00001890', dataAdmissao: '2026-02-05', dataComunicado: '2026-04-03',
+          dataDesligamento: '2026-04-05', dataPagamento: '2026-04-15', prazoPagamento: '10',
+          motivo: 'termino_contrato', avisoPrevio: 'nao_aplicavel', status: 'comunicado',
+          responsavel: 'Henrique Silva', arquivado: false, checklist: [], historico: [
+            { data: new Date().toISOString(), acao: 'Processo recuperado', nota: 'Reinserido a partir de print — término de contrato' }
+          ]
+        },
+        {
+          nome: 'Elyelton do Nascimento Souza', coligada: '1',
+          cargo: 'Coletor de Lixo Domiciliar', departamento: 'Coleta de Lixo Varzea Grande MT',
+          matricula: '00001890', dataAdmissao: '2026-02-05', dataComunicado: '2026-04-06',
+          dataDesligamento: '2026-04-05', dataPagamento: '2026-04-15', prazoPagamento: '10',
+          motivo: 'termino_contrato', avisoPrevio: 'nao_aplicavel', status: 'comunicado',
+          responsavel: 'Henrique Silva', arquivado: false, checklist: [], historico: [
+            { data: new Date().toISOString(), acao: 'Processo recuperado', nota: 'Reinserido a partir de print — término de contrato' }
+          ]
+        },
+        {
+          nome: 'Elton da Silva Soares', coligada: '4',
+          cargo: 'Serviços Gerais', departamento: 'BR-060/MS - Sidrolândia MS',
+          matricula: '00000787', dataAdmissao: '2026-02-20', dataComunicado: '2026-04-06',
+          dataDesligamento: '2026-04-06', dataPagamento: '2026-04-16', prazoPagamento: '10',
+          motivo: 'termino_empregado', avisoPrevio: 'nao_aplicavel', status: 'documentacao',
+          responsavel: 'Henrique Silva', arquivado: false, checklist: [], historico: [
+            { data: new Date().toISOString(), acao: 'Processo recuperado', nota: 'Reinserido a partir de print — término antecipado pelo empregado' }
+          ]
+        },
+        {
+          nome: 'Juan Marx Siqueira Moreira', coligada: '4',
+          cargo: 'Assistente de Gestão de Pessoas', departamento: 'Financeiro',
+          matricula: '00000726', dataAdmissao: '2025-06-23', dataComunicado: '2026-04-06',
+          dataDesligamento: '2026-04-06', dataPagamento: '2026-04-16', prazoPagamento: '10',
+          motivo: 'demissao', avisoPrevio: 'indenizado', diasAvisoTrabalhado: '30',
+          status: 'comunicado', responsavel: 'Henrique Silva', arquivado: false, checklist: [], historico: [
+            { data: new Date().toISOString(), acao: 'Processo recuperado', nota: 'Reinserido a partir de print — demissão sem justa causa, aviso indenizado 30d' }
+          ]
+        },
+        {
+          nome: 'Gabriel Campos Teles', coligada: '4',
+          cargo: 'Aux. Administrativo', departamento: 'Oficina',
+          matricula: '00000561', dataAdmissao: '2024-09-16', dataComunicado: '2026-04-29',
+          dataDesligamento: '2026-04-29', dataPagamento: '2026-05-08', prazoPagamento: '10',
+          motivo: 'termino_contrato', avisoPrevio: 'nao_aplicavel', status: 'comunicado',
+          responsavel: 'Henrique Silva', arquivado: false, checklist: [], historico: [
+            { data: new Date().toISOString(), acao: 'Processo recuperado', nota: 'Reinserido a partir de print — término de contrato' }
+          ]
+        },
+        {
+          nome: 'Leonardo Vinicius de Souza', coligada: '4',
+          cargo: 'Auxiliar de Logística', departamento: 'Financeiro',
+          matricula: '00000560', dataAdmissao: '2024-09-16', dataComunicado: '2026-04-29',
+          dataDesligamento: '2026-04-29', dataPagamento: '2026-05-08', prazoPagamento: '10',
+          motivo: 'termino_contrato', avisoPrevio: 'nao_aplicavel', status: 'comunicado',
+          responsavel: 'Henrique Silva', arquivado: false, checklist: [], historico: [
+            { data: new Date().toISOString(), acao: 'Processo recuperado', nota: 'Reinserido a partir de print — término de contrato' }
+          ]
+        },
+        {
+          nome: 'Flavio Carlos de Souza Ortega', coligada: '4',
+          cargo: 'Serviços Gerais', departamento: 'BR-060/MS - Pedra',
+          matricula: '00000656', dataAdmissao: '2025-02-24', dataComunicado: '2026-04-02',
+          dataDesligamento: '2026-05-02', dataPagamento: '2026-05-12', prazoPagamento: '10',
+          motivo: 'demissao', avisoPrevio: 'trabalhado', diasAvisoTrabalhado: '30',
+          status: 'comunicado', responsavel: 'Henrique Silva',
+          observacoes: 'Aviso prévio trabalhado (30d) + 3d a pagar',
+          arquivado: false, checklist: [], historico: [
+            { data: new Date().toISOString(), acao: 'Processo recuperado', nota: 'Reinserido a partir de print — demissão sem justa causa, aviso trabalhado 30d + 3d' }
+          ]
+        },
+      ];
+
+      const docs = await Desligamento.insertMany(PROCESSOS, { runValidators: true });
+      res.json({
+        message: `✅ ${docs.length} processos recuperados com sucesso.`,
+        processos: docs.map(d => ({ id: d._id, nome: d.nome, coligada: d.coligada, status: d.status, dataPagamento: d.dataPagamento }))
       });
     } catch (err) {
       res.status(500).json({ error: err.message });
