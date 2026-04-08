@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -26,6 +26,15 @@ export function AuditLogView({ data }) {
     // Sort by most recent
     return logs.sort((a, b) => b.timestamp - a.timestamp);
   }, [data]);
+
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 50;
+  const totalPages = Math.ceil(allLogs.length / itemsPerPage);
+
+  const paginatedLogs = useMemo(() => {
+    const start = (page - 1) * itemsPerPage;
+    return allLogs.slice(start, start + itemsPerPage);
+  }, [allLogs, page]);
 
   const openDetail = (id) => {
     dispatch({ type: 'SET_SELECTED', id });
@@ -68,8 +77,8 @@ export function AuditLogView({ data }) {
               </tr>
             </thead>
             <tbody>
-              {allLogs.length > 0 ? (
-                allLogs.map((log, i) => (
+              {paginatedLogs.length > 0 ? (
+                paginatedLogs.map((log, i) => (
                   <tr key={i} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                     <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                       <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{format(log.timestamp, 'dd MMM yyyy', { locale: ptBR })}</div>
@@ -111,6 +120,40 @@ export function AuditLogView({ data }) {
             </tbody>
           </table>
         </div>
+
+        {/* Paginação */}
+        {totalPages > 1 && (
+          <div style={{ 
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, 
+            padding: '16px 24px', background: 'var(--bg-secondary)', borderTop: '1px solid var(--border)' 
+          }}>
+            <button 
+              className="btn btn-secondary" 
+              disabled={page === 1} 
+              onClick={() => {
+                setPage(p => Math.max(1, p - 1));
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              style={{ height: 32, padding: '0 12px', fontSize: 12 }}
+            >
+              Anterior
+            </button>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+              Página {page} de {totalPages}
+            </span>
+            <button 
+              className="btn btn-secondary" 
+              disabled={page === totalPages} 
+              onClick={() => {
+                setPage(p => Math.min(totalPages, p + 1));
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              style={{ height: 32, padding: '0 12px', fontSize: 12 }}
+            >
+              Próxima
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
