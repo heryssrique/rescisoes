@@ -50,7 +50,7 @@ export function AuditLogView({ data }) {
   };
 
   return (
-    <div className="audit-log-container" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div className="page-content audit-log-container" style={{ display: 'flex', flexDirection: 'column', gap: 20, flex: 1 }}>
       {/* Search and Summary */}
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 200, padding: 16, background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
