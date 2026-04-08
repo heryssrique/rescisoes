@@ -38,7 +38,10 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // ── Middlewares Globais ──────────────────────────────────────────────────
-app.use(helmet()); // Secure HTTP headers
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false, // Desabilitado para simplificar conexão com Atlas e Vercel temporariamente
+}));
 
 // ── Rate Limiting ──────────────────────────────────────────────────────────
 const limiter = rateLimit({
