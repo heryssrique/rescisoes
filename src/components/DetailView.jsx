@@ -34,6 +34,26 @@ export function DetailView({ id }) {
   const [acaoNote, setAcaoNote] = useState('');
   const [showNoteInput, setShowNoteInput] = useState(false);
 
+  // Mover hooks para antes do early return para evitar Erro #300 do React
+  const idsToRemove = useMemo(() => ['d4', 'd5', 'h6', 'h7'], []);
+  const checklist = useMemo(() => (d?.checklist || []).filter(c => !idsToRemove.includes(c.id)), [d?.checklist, idsToRemove]);
+  
+  const checklistByEtapa = useMemo(() => ({
+    comunicado: checklist.filter(c => c.etapa === 'comunicado'),
+    documentacao: checklist.filter(c => c.etapa === 'documentacao'),
+    homologacao: checklist.filter(c => c.etapa === 'homologacao'),
+    aguardando: checklist.filter(c => c.etapa === 'aguardando'),
+    pago: checklist.filter(c => c.etapa === 'pago'),
+  }), [checklist]);
+
+  const etapaLabels = useMemo(() => ({
+    comunicado: 'Comunicado',
+    documentacao: 'Documentação',
+    homologacao: 'Homologação',
+    aguardando: 'Pagamento',
+    pago: 'Conclusão',
+  }), []);
+
   if (!d) return null;
 
   const isArchived = d.arquivado === true;
@@ -142,26 +162,6 @@ export function DetailView({ id }) {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   }
-
-  // Group checklist by etapa
-  const idsToRemove = ['d4', 'd5', 'h6', 'h7'];
-  const checklist = useMemo(() => (d.checklist || []).filter(c => !idsToRemove.includes(c.id)), [d.checklist]);
-  
-  const checklistByEtapa = useMemo(() => ({
-    comunicado: checklist.filter(c => c.etapa === 'comunicado'),
-    documentacao: checklist.filter(c => c.etapa === 'documentacao'),
-    homologacao: checklist.filter(c => c.etapa === 'homologacao'),
-    aguardando: checklist.filter(c => c.etapa === 'aguardando'),
-    pago: checklist.filter(c => c.etapa === 'pago'),
-  }), [checklist]);
-
-  const etapaLabels = {
-    comunicado: 'Comunicado',
-    documentacao: 'Documentação',
-    homologacao: 'Homologação',
-    aguardando: 'Pagamento',
-    pago: 'Conclusão',
-  };
 
   const handleFileUpload = (e) => {
     const files = Array.from(e.target.files);
