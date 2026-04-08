@@ -145,6 +145,29 @@ router.patch('/:id/checklist/:itemId', auth, async (req, res, next) => {
   }
 });
 
+// ── PATCH /api/desligamentos/:id/checklist/:itemId/nao-aplicavel ────────────
+router.patch('/:id/checklist/:itemId/nao-aplicavel', auth, async (req, res, next) => {
+  try {
+    const doc = await Desligamento.findById(req.params.id);
+    if (!doc) throw new ApiError(404, 'Processo não encontrado');
+
+    const item = doc.checklist.find(c => c.id === req.params.itemId);
+    if (!item) throw new ApiError(404, 'Item de checklist não encontrado');
+
+    item.notApplicable = !item.notApplicable;
+    if (item.notApplicable) {
+      // Marcar como N/A limpa o done
+      item.done = false;
+      item.doneAt = null;
+    }
+
+    await doc.save();
+    res.json(doc);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ── PATCH /api/desligamentos/:id/historico ─────────────────────────────────
 router.patch('/:id/historico', auth, async (req, res, next) => {
   try {

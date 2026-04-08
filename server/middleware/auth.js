@@ -7,7 +7,7 @@ const auth = async (req, res, next) => {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     if (!token) throw new ApiError(401, 'Por favor, autentique-se.');
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'super_secret_desligest');
     const user = await User.findOne({ _id: decoded.id });
 
     if (!user) throw new ApiError(401, 'Usuário não encontrado.');

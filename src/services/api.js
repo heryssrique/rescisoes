@@ -135,3 +135,20 @@ export function register(name, email, password) {
 export function checkAuth() {
   return request('GET', '/auth/me');
 }
+
+// ─── Links Úteis ──────────────────────────────────────────────────────────
+export function getLinks() {
+  return request('GET', '/links');
+}
+export function createLink(data) {
+  return request('POST', '/links', data);
+}
+export function updateLink(id, data) {
+  return request('PUT', `/links/${id}`, data);
+}
+export function deleteLink(id) {
+  return request('DELETE', `/links/${id}`);
+}
+export function seedLinks() {
+  return request('POST', '/links/seed');
+}

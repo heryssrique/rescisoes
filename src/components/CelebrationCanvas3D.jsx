@@ -5,14 +5,30 @@ import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// SILENCIAR CONSOLE FLOOD (Previne congelamento por logs de depreciação repetitivos)
+// SILENCIAR CONSOLE FLOOD (Previne congelamento por logs de depreciação/avisos repetitivos do Three.js)
 if (typeof window !== 'undefined') {
-  const originalWarn = console.warn;
+  const _origWarn = console.warn;
+  const _origError = console.error;
+
+  const SUPPRESSED_PATTERNS = [
+    'THREE.Clock: This module has been deprecated',
+    'THREE.WebGLProgram: Program Info Log',  // Avisos X4122 de precisão de shader (GPU/DirectX)
+    'warning X4122',                          // HLSL double-precision float warnings
+    'THREE.WebGLRenderer:',
+    'THREE.WebGL',
+  ];
+
+  const shouldSuppress = (args) =>
+    args[0] && typeof args[0] === 'string' &&
+    SUPPRESSED_PATTERNS.some(p => args[0].includes(p));
+
   console.warn = (...args) => {
-    if (args[0] && typeof args[0] === 'string' && args[0].includes('THREE.Clock: This module has been deprecated')) {
-      return;
-    }
-    originalWarn(...args);
+    if (shouldSuppress(args)) return;
+    _origWarn(...args);
+  };
+  console.error = (...args) => {
+    if (shouldSuppress(args)) return;
+    _origError(...args);
   };
 }
 

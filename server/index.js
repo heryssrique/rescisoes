@@ -15,6 +15,7 @@ const logger = require('./utils/logger');
 const { errorHandler, ApiError } = require('./middleware/errorMiddleware');
 const desligamentosRouter = require('./routes/desligamentos');
 const authRouter = require('./routes/auth');
+const linksRouter = require('./routes/links');
 const { initCron } = require('./services/cronService');
 
 const app = express();
@@ -73,6 +74,7 @@ app.use((req, res, next) => {
 // ── Rotas ─────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRouter);
 app.use('/api/desligamentos', desligamentosRouter);
+app.use('/api/links', linksRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({
@@ -81,6 +83,25 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// ── Endpoint temporário de bootstrap (apenas em desenvolvimento) ───────────
+// Usado para promover usuários existentes a admin quando não há nenhum admin ainda.
+// Remover após o primeiro uso em produção.
+if (process.env.NODE_ENV !== 'production') {
+  const User = require('./models/User');
+  app.post('/api/bootstrap-admin', async (req, res) => {
+    try {
+      const result = await User.updateMany({}, { role: 'admin' });
+      const users = await User.find().select('name email role');
+      res.json({ 
+        message: `${result.modifiedCount} usuário(s) promovido(s) para admin.`,
+        users
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+}
 
 // 404 Handler
 app.use((req, res, next) => {

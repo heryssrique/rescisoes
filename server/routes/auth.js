@@ -21,7 +21,11 @@ router.post('/register', validate(registerSchema), async (req, res, next) => {
       throw new ApiError(400, 'Usuário já existe. Faça login.');
     }
 
-    user = new User({ name, email, password });
+    // Primeiro usuário cadastrado vira admin automaticamente
+    const userCount = await User.countDocuments();
+    const role = userCount === 0 ? 'admin' : 'hr';
+
+    user = new User({ name, email, password, role });
     await user.save();
 
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
@@ -65,6 +69,35 @@ router.post('/login', validate(loginSchema), async (req, res, next) => {
 router.get('/me', auth, async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
+    res.json(user);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// List all users (admin only)
+router.get('/users', auth, async (req, res, next) => {
+  try {
+    if (req.user.role !== 'admin') throw new ApiError(403, 'Acesso negado.');
+    const users = await User.find().select('-password').sort({ createdAt: 1 });
+    res.json(users);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Promote/change role of a user (admin only)
+router.patch('/users/:id/role', auth, async (req, res, next) => {
+  try {
+    if (req.user.role !== 'admin') throw new ApiError(403, 'Apenas admins podem alterar funções.');
+    const { role } = req.body;
+    if (!['admin', 'hr'].includes(role)) throw new ApiError(400, 'Role inválido. Use: admin ou hr.');
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { role },
+      { new: true }
+    ).select('-password');
+    if (!user) throw new ApiError(404, 'Usuário não encontrado.');
     res.json(user);
   } catch (err) {
     next(err);

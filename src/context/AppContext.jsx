@@ -154,6 +154,8 @@ function reducer(state, action) {
     }
     case 'SET_CELEBRATION':
       return { ...s, activeCelebration: action.payload };
+    case 'SET_LINKS':
+      return { ...s, linksUteis: action.payload };
     default:
       return s;
   }
@@ -269,12 +271,22 @@ export function AppProvider({ children }) {
 
   useEffect(() => { checkAuthStatus(); }, [checkAuthStatus]);
 
+  const fetchLinks = useCallback(async () => {
+    try {
+      const links = await api.getLinks();
+      dispatch({ type: 'SET_LINKS', payload: Array.isArray(links) ? links : [] });
+    } catch (err) {
+      // fallback: manter os links do localStorage
+    }
+  }, []);
+
   useEffect(() => {
     if (state.user) {
       fetchAll();
       fetchArchived();
+      fetchLinks();
     }
-  }, [state.user, fetchAll, fetchArchived]);
+  }, [state.user, fetchAll, fetchArchived, fetchLinks]);
 
   useEffect(() => {
     if (state.desligamentos.length > 0 || state.archivedDesligamentos.length > 0) {
@@ -367,6 +379,11 @@ export function AppProvider({ children }) {
         localStorage.setItem('token', res.token);
         dispatch({ type: 'SET_USER', payload: res.user });
       },
+      register: async (name, email, password) => {
+        const res = await api.register(name, email, password);
+        localStorage.setItem('token', res.token);
+        dispatch({ type: 'SET_USER', payload: res.user });
+      },
       logout: () => {
         localStorage.removeItem('token');
         dispatch({ type: 'LOGOUT' });
@@ -421,9 +438,30 @@ export function AppProvider({ children }) {
         else if (style === 'classic_rh') duration = 10000;
 
         setTimeout(() => dispatch({ type: 'SET_CELEBRATION', payload: null }), duration);
-      }
+      },
+      // ─── Links Úteis (CRUD via API) ───────────────────────────────────
+      fetchLinks,
+      addLink: async (data) => {
+        const doc = await api.createLink(data);
+        await fetchLinks();
+        return doc;
+      },
+      updateLink: async (id, data) => {
+        const doc = await api.updateLink(id, data);
+        await fetchLinks();
+        return doc;
+      },
+      deleteLink: async (id) => {
+        await api.deleteLink(id);
+        await fetchLinks();
+      },
+      seedLinks: async () => {
+        const res = await api.seedLinks();
+        await fetchLinks();
+        return res;
+      },
     }
-  }), [state, fetchAll, fetchArchived]);
+  }), [state, fetchAll, fetchArchived, fetchLinks]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
