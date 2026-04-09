@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useToast } from './Toast';
-import { Bell, Database, Download, FileSpreadsheet, AlertTriangle, ShieldAlert, Users, Plus, X, Save, FileText, ListChecks, Settings, GripVertical, Archive, Columns, Link } from 'lucide-react';
+import { Bell, Database, Download, FileSpreadsheet, AlertTriangle, ShieldAlert, Users, Plus, X, Save, FileText, ListChecks, Settings, GripVertical, Archive, Columns, Link, Monitor, Moon, Sun, ZapOff } from 'lucide-react';
 import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import { format } from 'date-fns';
 import * as api from '../services/api';
@@ -324,6 +324,13 @@ export function SettingsView() {
             onClick={() => handleTabChange('celebration')}
           >
             <PartyPopper size={16} /> Estilo de Comemoração
+          </button>
+          <button
+            className={`btn ${activeTab === 'interface' ? 'btn-primary' : ''}`}
+            style={{ justifyContent: 'flex-start', padding: '12px 16px', background: activeTab === 'interface' ? 'var(--accent-blue)' : 'transparent', color: activeTab === 'interface' ? '#fff' : 'var(--text-secondary)', border: 'none', boxShadow: 'none' }}
+            onClick={() => handleTabChange('interface')}
+          >
+            <Monitor size={16} /> Aparência e Performance
           </button>
           <button
             className={`btn ${activeTab === 'sistema' ? 'btn-primary' : ''}`}
@@ -655,6 +662,68 @@ export function SettingsView() {
                   <button className="btn" onClick={handleSaveLinks} style={{ background: 'var(--accent-blue)', color: '#fff', padding: '10px 24px', fontWeight: 600, boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)' }}>
                     <Save size={16} /> Salvar Links
                   </button>
+                </div>
+              </motion.section>
+            )}
+
+            {activeTab === 'interface' && (
+              <motion.section
+                key="interface"
+                initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}
+                style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
+              >
+                <div className="card" style={{ padding: 32, borderColor: 'transparent', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                  <div style={{ marginBottom: 24 }}>
+                    <h3 style={{ fontSize: 20, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                      <Monitor size={20} color="var(--accent-blue)" />
+                      Aparência e Performance
+                    </h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: 13, lineHeight: 1.5 }}>
+                      Personalize a experiência visual do sistema para melhor conforto ou desempenho em máquinas com recursos limitados.
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                    {/* Theme Preference */}
+                    <div style={{ padding: 20, background: 'var(--bg-secondary)', borderRadius: 16, border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                        <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-blue)' }}>
+                          {state.theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 15 }}>Tema do Sistema</div>
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Escolha entre o modo escuro ou claro.</div>
+                        </div>
+                      </div>
+                      <button className="btn btn-secondary" onClick={actions.toggleTheme} style={{ padding: '8px 20px' }}>
+                        Alternar para o modo {state.theme === 'dark' ? 'Claro' : 'Escuro'}
+                      </button>
+                    </div>
+
+                    {/* Performance Mode Preference */}
+                    <div style={{ padding: 20, background: 'var(--bg-secondary)', borderRadius: 16, border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                        <div style={{ width: 40, height: 40, borderRadius: 10, background: state.performanceMode ? 'rgba(245, 158, 11, 0.1)' : 'rgba(148, 163, 184, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: state.performanceMode ? 'var(--accent-yellow)' : 'var(--text-muted)' }}>
+                          {state.performanceMode ? <Zap size={20} /> : <ZapOff size={20} />}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 15 }}>Modo Leve (Alta Performance)</div>
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Desativa efeitos gráficos pesados e animações. Recomendado para máquinas lentas.</div>
+                        </div>
+                      </div>
+                      <button 
+                        className={`btn ${state.performanceMode ? 'btn-primary' : 'btn-secondary'}`} 
+                        onClick={actions.togglePerformanceMode} 
+                        style={{ 
+                          padding: '8px 20px', 
+                          background: state.performanceMode ? 'var(--accent-yellow)' : '',
+                          color: state.performanceMode ? '#000' : ''
+                        }}
+                      >
+                        {state.performanceMode ? 'Desativar Modo Leve' : 'Ativar Modo Leve'}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </motion.section>
             )}

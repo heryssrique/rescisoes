@@ -6,10 +6,10 @@ import { ModalImportarPlanilha } from './components/ImportModal';
 import { NotificationCenter } from './components/NotificationCenter';
 import { AuthView } from './components/AuthView';
 import { differenceInDays, parseISO, startOfDay } from 'date-fns';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { CelebrationCanvas3D } from './components/CelebrationCanvas3D';
 import {
-  LayoutList, Columns, Plus, Users, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut, HelpCircle, FileText, Sun, Moon, Calendar, History, Link, Monitor
+  LayoutList, Columns, Plus, Users, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut, HelpCircle, FileText, Sun, Moon, Calendar, History, Link, Monitor, Zap, ZapOff
 } from 'lucide-react';
 
 const Dashboard = lazy(() => import('./components/Dashboard').then(m => ({ default: m.Dashboard })));
@@ -147,7 +147,8 @@ function AppContent() {
   };
 
   return (
-    <div className="app-layout">
+    <MotionConfig transition={state.performanceMode ? { duration: 0 } : undefined}>
+      <div className="app-layout">
       <nav className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`} aria-label="Navegação principal">
         <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div className="logo-mark" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -220,6 +221,18 @@ function AppContent() {
       <div className="main-content">
         <header className="topbar"><div style={{ flex: 1 }}><span className="topbar-title">{viewTitles[view]}</span>{viewSubtitle[view] && <span className="topbar-subtitle"> · {viewSubtitle[view]}</span>}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button 
+              className="btn btn-icon" 
+              onClick={actions.togglePerformanceMode} 
+              title={state.performanceMode ? "Desativar Modo Leve (Alta Performance)" : "Ativar Modo Leve (Economia de Recursos)"}
+              style={{ 
+                background: state.performanceMode ? 'rgba(245, 158, 11, 0.1)' : 'var(--bg-card)', 
+                border: '1px solid var(--border)',
+                color: state.performanceMode ? 'var(--accent-yellow)' : 'var(--text-secondary)'
+              }}
+            >
+              {state.performanceMode ? <Zap size={16} /> : <ZapOff size={16} />}
+            </button>
             <button className="btn btn-icon" onClick={actions.toggleTheme} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>{state.theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}</button>
             <NotificationCenter />
             <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
@@ -254,7 +267,8 @@ function AppContent() {
       </div>
       {showNew && <ModalNovoDesligamento onClose={() => setShowNew(false)} />}
       {showImport && <ModalImportarPlanilha onClose={() => setShowImport(false)} />}
-    </div>
+      </div>
+    </MotionConfig>
   );
 }
 
@@ -271,6 +285,7 @@ export default function App() {
 
 function CelebrationTriggerWrapper() {
   const { state } = useApp();
+  if (state.performanceMode) return null;
   return <CelebrationCanvas3D mode={state.activeCelebration} />;
 }
 

@@ -127,6 +127,11 @@ function reducer(state, action) {
       localStorage.setItem('desligest_theme', newTheme);
       return { ...s, theme: newTheme };
     }
+    case 'TOGGLE_PERFORMANCE_MODE': {
+      const newValue = !s.performanceMode;
+      localStorage.setItem('desligest_performance', newValue);
+      return { ...s, performanceMode: newValue };
+    }
     case 'SET_NOTIFICATIONS':
       return { ...s, notifications: action.payload };
     case 'MARK_NOTIFICATION_READ':
@@ -183,6 +188,7 @@ function getInitialState() {
       view,
       selected: savedSelected,
       theme: localStorage.getItem('desligest_theme') || 'dark',
+      performanceMode: localStorage.getItem('desligest_performance') === 'true',
       globalColigadaFilter: 'todas',
       loading: true,
       error: null,
@@ -200,7 +206,7 @@ function getInitialState() {
   } catch (e) {
     return {
       user: null, isAuthChecked: false, desligamentos: [], archivedDesligamentos: [],
-      view: 'lista', selected: null, theme: 'dark', globalColigadaFilter: 'todas',
+      view: 'lista', selected: null, theme: 'dark', performanceMode: false, globalColigadaFilter: 'todas',
       loading: true, error: null, offline: false, notifications: [], readNotificationIds: [],
       coligadas: {}, motivos: [], statusFlow: [], checklistTemplate: [], linksUteis: [],
       triggerConfetti: false,
@@ -217,6 +223,10 @@ export function AppProvider({ children }) {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', state.theme);
   }, [state.theme]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-performance', state.performanceMode);
+  }, [state.performanceMode]);
 
   const fetchAll = useCallback(async () => {
     if (loadingRef.current) return;
@@ -389,6 +399,7 @@ export function AppProvider({ children }) {
         dispatch({ type: 'LOGOUT' });
       },
       toggleTheme: () => dispatch({ type: 'TOGGLE_THEME' }),
+      togglePerformanceMode: () => dispatch({ type: 'TOGGLE_PERFORMANCE_MODE' }),
       updateConfig: (name, key, payload) => dispatch({ type: 'UPDATE_CONFIG', configName: name, key, payload }),
       changeStatus: async (d, newStatus) => {
         const updated = {

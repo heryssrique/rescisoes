@@ -2041,3 +2041,61 @@ select.form-input {
   to   { transform: rotate(360deg); }
 }
 
+/* --- PERFORMANCE MODE (LIGHT VERSION) --- */
+/* Desativa animações, transições, blurs e sombras pesadas para melhor desempenho */
+[data-performance="true"] {
+  --bg-gradient: none !important;
+}
+
+[data-performance="true"] *,
+[data-performance="true"] *::before,
+[data-performance="true"] *::after {
+  animation: none !important;
+  transition: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+[data-performance="true"] html,
+[data-performance="true"] body,
+[data-performance="true"] #root {
+  background-image: none !important;
+  background-color: var(--bg-primary) !important;
+}
+
+[data-performance="true"] .sidebar {
+  background: var(--bg-sidebar) !important;
+}
+
+[data-performance="true"] .card, 
+[data-performance="true"] .term-card,
+[data-performance="true"] .stat-card,
+[data-performance="true"] .modal,
+[data-performance="true"] .search-box,
+[data-performance="true"] .filter-select,
+[data-performance="true"] .btn,
+[data-performance="true"] .nav-item {
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+}
+
+[data-performance="true"] .btn-primary {
+  background: var(--accent-blue) !important;
+}
+
+[data-performance="true"] .loader-glow,
+[data-performance="true"] .bg-blob {
+  display: none !important;
+}
+
+[data-performance="true"] .topbar::after {
+  display: none !important;
+}
+
+/* Permitir apenas animação de loading essencial (spinner) se necessário, 
+   mas aqui desabilitamos quase tudo por padrão */
+[data-performance="true"] .loader svg {
+  animation: spin 1.5s linear infinite !important;
+}
+
