@@ -307,7 +307,7 @@ export function AppProvider({ children }) {
   const notifiedSessionIds = useRef(new Set());
 
   const generateNotifications = useCallback(() => {
-    const { desligamentos, readNotificationIds } = state;
+    const { desligamentos, readNotificationIds, notifications = [] } = state;
     if (!desligamentos || !desligamentos.length) return;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -316,25 +316,47 @@ export function AppProvider({ children }) {
     desligamentos.forEach(d => {
       const isPaidChecklist = d.checklist?.some(c => c.id === 'p1' && c.done);
       if (d.status === 'pago' || d.status === 'cancelado' || isPaidChecklist || !d.dataPagamento) return;
+      
       const [year, month, day] = d.dataPagamento.split('-').map(Number);
       const paymentDate = new Date(year, month - 1, day);
       const diffDays = Math.ceil((paymentDate - today) / (1000 * 60 * 60 * 24));
 
       let type = '', message = '', severity = '';
-      if (diffDays < 0) { type = 'vencido'; message = `Venceu em ${day}/${month}`; severity = 'error'; }
-      else if (diffDays === 0) { type = 'vence_hoje'; message = `Vence hoje!`; severity = 'warning'; }
-      else if (diffDays <= 3) { type = 'proximo'; message = `Faltam ${diffDays} dias`; severity = 'info'; }
+      if (diffDays < 0) { type = 'vencido'; message = `${d.nome}: Venceu em ${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}`; severity = 'error'; }
+      else if (diffDays === 0) { type = 'vence_hoje'; message = `${d.nome}: Vence hoje!`; severity = 'warning'; }
+      else if (diffDays <= 3) { type = 'proximo'; message = `${d.nome}: Vence em ${diffDays} dias`; severity = 'info'; }
 
       if (type) {
         const notifId = `${d.id}-${type}`;
-        newNotifications.push({ id: notifId, desligamentoId: d.id, type, message, severity, date: new Date().toISOString(), read: readNotificationIds.includes(notifId) });
+        
+        // Puxar data da notificação antiga, se existir, para não ficar recriando
+        const existing = notifications.find(n => n.id === notifId);
+        const notifDate = existing ? existing.date : new Date().toISOString();
+        
+        const isRead = readNotificationIds.includes(notifId);
+        newNotifications.push({ id: notifId, desligamentoId: d.id, type, message, severity, date: notifDate, read: isRead });
+
+        // Dispara notificação push nativa se não tiver sido mostrada ainda nesta sessão e não estiver lida
+        if (!notifiedSessionIds.current.has(notifId) && !isRead) {
+          notifiedSessionIds.current.add(notifId);
+          if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            try {
+              new Notification('DesliGest - Alerta de Pagamento', {
+                body: message,
+                icon: '/favicon.ico'
+              });
+            } catch (err) {
+              // Em caso de erro na API do navegador (ex: webview restrito)
+            }
+          }
+        }
       }
     });
 
-    if (JSON.stringify(newNotifications) !== JSON.stringify(state.notifications)) {
+    if (JSON.stringify(newNotifications) !== JSON.stringify(notifications)) {
       dispatch({ type: 'SET_NOTIFICATIONS', payload: newNotifications });
     }
-  }, [state.desligamentos, state.readNotificationIds]);
+  }, [state.desligamentos, state.readNotificationIds, state.notifications]);
 
   useEffect(() => { generateNotifications(); }, [generateNotifications]);
 
