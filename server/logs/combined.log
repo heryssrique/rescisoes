@@ -458,3 +458,8 @@
 {"level":"info","message":"✅ Tarefas agendadas (Cron) inicializadas","service":"desligest-api","timestamp":"2026-04-07 23:06:51"}
 {"level":"info","message":"🚀 API rodada na porta 3001","service":"desligest-api","timestamp":"2026-04-07 23:06:51"}
 {"level":"info","message":"   Health: http://localhost:3001/api/health","service":"desligest-api","timestamp":"2026-04-07 23:06:51"}
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-04-08 00:00:17"}
+{"level":"info","message":"✅ MongoDB conectado com sucesso","service":"desligest-api","timestamp":"2026-04-08 00:00:18"}
+{"level":"info","message":"✅ Tarefas agendadas (Cron) inicializadas","service":"desligest-api","timestamp":"2026-04-08 00:00:18"}
+{"level":"info","message":"🚀 API rodada na porta 3001","service":"desligest-api","timestamp":"2026-04-08 00:00:18"}
+{"level":"info","message":"   Health: http://localhost:3001/api/health","service":"desligest-api","timestamp":"2026-04-08 00:00:18"}

@@ -398,6 +398,7 @@ export function AppProvider({ children }) {
         localStorage.removeItem('token');
         dispatch({ type: 'LOGOUT' });
       },
+      markNotificationRead: (id) => dispatch({ type: 'MARK_NOTIFICATION_READ', id }),
       toggleTheme: () => dispatch({ type: 'TOGGLE_THEME' }),
       togglePerformanceMode: () => dispatch({ type: 'TOGGLE_PERFORMANCE_MODE' }),
       updateConfig: (name, key, payload) => dispatch({ type: 'UPDATE_CONFIG', configName: name, key, payload }),

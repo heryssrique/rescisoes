@@ -5,7 +5,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export function NotificationCenter() {
-  const { state, actions } = useApp();
+  const { state, actions, dispatch } = useApp();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -37,8 +37,9 @@ export function NotificationCenter() {
     setIsOpen(false);
   };
 
-  // Precisamos do dispatch do context para mudar a view
-  const { dispatch } = useApp();
+  const handleRequestPermission = async () => {
+    await Notification.requestPermission();
+  };
 
   return (
     <div className="notif-container" ref={dropdownRef}>
@@ -56,10 +57,10 @@ export function NotificationCenter() {
           <div className="notif-header">
             <h3>Notificações</h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {Notification.permission !== 'granted' && (
+              {typeof Notification !== 'undefined' && Notification.permission !== 'granted' && (
                 <button 
                   className="btn-icon-sm" 
-                  onClick={actions.requestNotificationPermission}
+                  onClick={handleRequestPermission}
                   title="Ativar notificações do navegador"
                 >
                   <Bell size={14} />
@@ -87,7 +88,7 @@ export function NotificationCenter() {
                   </div>
                   <div className="notif-body">
                     <p className="notif-message">{n.message}</p>
-                    <span className="notif-time">Há {formatDistanceToNow(new Date(n.date), { locale: ptBR })}</span>
+                    <span className="notif-time">Há {formatDistanceToNow(new Date(n.date), { addSuffix: false, locale: ptBR })}</span>
                   </div>
                   {!n.read && (
                     <button 

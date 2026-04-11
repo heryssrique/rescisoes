@@ -6,6 +6,11 @@
 
 const BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
+// Debug: confirma qual URL está sendo usada (visível no console do browser)
+if (typeof window !== 'undefined') {
+  console.log('[API] BASE_URL:', BASE_URL);
+}
+
 
 async function request(method, endpoint, body) {
   const options = {
@@ -28,7 +33,8 @@ async function request(method, endpoint, body) {
     let message = `HTTP ${res.status}`;
     try {
       const err = await res.json();
-      message = err.detail ? `${err.error || 'Erro'}: ${err.detail}` : (err.error || message);
+      // Backend retorna { status, message } em produção ou { status, error, message, stack } em dev
+      message = err.message || err.error || message;
     } catch {
       // Ignora erro de parsing do JSON
     }
