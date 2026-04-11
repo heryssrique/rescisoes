@@ -327,8 +327,6 @@ export function AppProvider({ children }) {
           const [year, month, day] = parts.map(Number);
           const paymentDate = new Date(year, month - 1, day);
           const diffDays = Math.ceil((paymentDate - today) / (1000 * 60 * 60 * 24));
-          
-          console.log(`[Debug Pgto] ${d.nome} | Date: ${rawDate} | Distância: ${diffDays} dias`);
 
           if (diffDays < 0) { alertas.push({ type: 'vencido', message: `${d.nome}: Pagamento vencido (${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')})`, severity: 'error' }); }
           else if (diffDays === 0) { alertas.push({ type: 'vence_hoje', message: `${d.nome}: Pagamento vence hoje!`, severity: 'warning' }); }
@@ -346,9 +344,6 @@ export function AppProvider({ children }) {
           prazo7Dias.setDate(prazo7Dias.getDate() + 7);
           
           const diff7Dias = Math.ceil((prazo7Dias - today) / (1000 * 60 * 60 * 24));
-          
-          // O usuário pediu "1 dia antes do prazo de 7 dias vencer" (diff7Dias === 1) e também os vencidos/hoje
-          console.log(`[Debug 7Dias] ${d.nome} | Vence em: ${diff7Dias} dias`);
           
           if (diff7Dias < 0 && diff7Dias >= -5) { alertas.push({ type: 'prazo7_vencido', message: `${d.nome}: Prazo de 7 dias VENCIDO!`, severity: 'error' }); }
           else if (diff7Dias === 0) { alertas.push({ type: 'prazo7_hoje', message: `${d.nome}: Prazo de 7 dias vence HOJE!`, severity: 'warning' }); }
