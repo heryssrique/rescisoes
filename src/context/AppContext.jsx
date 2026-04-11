@@ -317,9 +317,17 @@ export function AppProvider({ children }) {
       const isPaidChecklist = d.checklist?.some(c => c.id === 'p1' && c.done);
       if (d.status === 'pago' || d.status === 'cancelado' || isPaidChecklist || !d.dataPagamento) return;
       
-      const [year, month, day] = d.dataPagamento.split('-').map(Number);
+      // Limpeza da data caso o BD tenha salvo como Date ISO (ex: YYYY-MM-DDTHH...)
+      const rawDate = d.dataPagamento.split('T')[0];
+      const parts = rawDate.split('-');
+      if (parts.length !== 3) return;
+
+      const [year, month, day] = parts.map(Number);
       const paymentDate = new Date(year, month - 1, day);
       const diffDays = Math.ceil((paymentDate - today) / (1000 * 60 * 60 * 24));
+
+      // DEBUG Oculto no Console para que você possa entender o que o sistema vê.
+      console.log(`[Debug Notificações] ${d.nome} | Vencimento: ${rawDate} | Distância: ${diffDays} dias`);
 
       let type = '', message = '', severity = '';
       if (diffDays < 0) { type = 'vencido'; message = `${d.nome}: Venceu em ${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}`; severity = 'error'; }
