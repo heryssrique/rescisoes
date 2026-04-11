@@ -314,51 +314,65 @@ export function AppProvider({ children }) {
     const newNotifications = [];
 
     desligamentos.forEach(d => {
+      if (d.status === 'pago' || d.status === 'cancelado') return;
       const isPaidChecklist = d.checklist?.some(c => c.id === 'p1' && c.done);
-      if (d.status === 'pago' || d.status === 'cancelado' || isPaidChecklist || !d.dataPagamento) return;
-      
-      // Limpeza da data caso o BD tenha salvo como Date ISO (ex: YYYY-MM-DDTHH...)
-      const rawDate = d.dataPagamento.split('T')[0];
-      const parts = rawDate.split('-');
-      if (parts.length !== 3) return;
 
-      const [year, month, day] = parts.map(Number);
-      const paymentDate = new Date(year, month - 1, day);
-      const diffDays = Math.ceil((paymentDate - today) / (1000 * 60 * 60 * 24));
+      const alertas = [];
 
-      // DEBUG Oculto no Console para que você possa entender o que o sistema vê.
-      console.log(`[Debug Notificações] ${d.nome} | Vencimento: ${rawDate} | Distância: ${diffDays} dias`);
+      // 1. Alertas de Pagamento (Usando a dataPagamento)
+      if (!isPaidChecklist && d.dataPagamento) {
+        const rawDate = d.dataPagamento.split('T')[0];
+        const parts = rawDate.split('-');
+        if (parts.length === 3) {
+          const [year, month, day] = parts.map(Number);
+          const paymentDate = new Date(year, month - 1, day);
+          const diffDays = Math.ceil((paymentDate - today) / (1000 * 60 * 60 * 24));
+          
+          console.log(`[Debug Pgto] ${d.nome} | Date: ${rawDate} | Distância: ${diffDays} dias`);
 
-      let type = '', message = '', severity = '';
-      if (diffDays < 0) { type = 'vencido'; message = `${d.nome}: Venceu em ${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}`; severity = 'error'; }
-      else if (diffDays === 0) { type = 'vence_hoje'; message = `${d.nome}: Vence hoje!`; severity = 'warning'; }
-      else if (diffDays <= 3) { type = 'proximo'; message = `${d.nome}: Vence em ${diffDays} dias`; severity = 'info'; }
+          if (diffDays < 0) { alertas.push({ type: 'vencido', message: `${d.nome}: Pagamento vencido (${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')})`, severity: 'error' }); }
+          else if (diffDays === 0) { alertas.push({ type: 'vence_hoje', message: `${d.nome}: Pagamento vence hoje!`, severity: 'warning' }); }
+          else if (diffDays <= 3) { alertas.push({ type: 'proximo', message: `${d.nome}: Pag. vence em ${diffDays} dia(s)`, severity: 'info' }); }
+        }
+      }
 
-      if (type) {
-        const notifId = `${d.id}-${type}`;
+      // 2. Alertas de Prazo de 7 Dias (Com base na data de Desligamento)
+      if (d.dataDesligamento) {
+        const rawDesl = d.dataDesligamento.split('T')[0];
+        const partsDesl = rawDesl.split('-');
+        if (partsDesl.length === 3) {
+          const [dy, dm, dd] = partsDesl.map(Number);
+          const prazo7Dias = new Date(dy, dm - 1, dd);
+          prazo7Dias.setDate(prazo7Dias.getDate() + 7);
+          
+          const diff7Dias = Math.ceil((prazo7Dias - today) / (1000 * 60 * 60 * 24));
+          
+          // O usuário pediu "1 dia antes do prazo de 7 dias vencer" (diff7Dias === 1) e também os vencidos/hoje
+          console.log(`[Debug 7Dias] ${d.nome} | Vence em: ${diff7Dias} dias`);
+          
+          if (diff7Dias < 0 && diff7Dias >= -5) { alertas.push({ type: 'prazo7_vencido', message: `${d.nome}: Prazo de 7 dias VENCIDO!`, severity: 'error' }); }
+          else if (diff7Dias === 0) { alertas.push({ type: 'prazo7_hoje', message: `${d.nome}: Prazo de 7 dias vence HOJE!`, severity: 'warning' }); }
+          else if (diff7Dias === 1) { alertas.push({ type: 'prazo7_amanha', message: `${d.nome}: Prazo de 7 dias vence AMANHÃ!`, severity: 'info' }); }
+        }
+      }
+
+      // Processar e registrar todos os alertas gerados para este documento
+      alertas.forEach(alerta => {
+        const notifId = `${d.id}-${alerta.type}`;
         
-        // Puxar data da notificação antiga, se existir, para não ficar recriando
         const existing = notifications.find(n => n.id === notifId);
-        const notifDate = existing ? existing.date : new Date().toISOString();
-        
+        const notifDate = existing ? existing.date : new Date().toISOString();        
         const isRead = readNotificationIds.includes(notifId);
-        newNotifications.push({ id: notifId, desligamentoId: d.id, type, message, severity, date: notifDate, read: isRead });
+        
+        newNotifications.push({ id: notifId, desligamentoId: d.id, type: alerta.type, message: alerta.message, severity: alerta.severity, date: notifDate, read: isRead });
 
-        // Dispara notificação push nativa se não tiver sido mostrada ainda nesta sessão e não estiver lida
         if (!notifiedSessionIds.current.has(notifId) && !isRead) {
           notifiedSessionIds.current.add(notifId);
           if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-            try {
-              new Notification('DesliGest - Alerta de Pagamento', {
-                body: message,
-                icon: '/favicon.ico'
-              });
-            } catch (err) {
-              // Em caso de erro na API do navegador (ex: webview restrito)
-            }
+            try { new Notification('DesliGest Alerta', { body: alerta.message, icon: '/favicon.ico' }); } catch (err) {}
           }
         }
-      }
+      });
     });
 
     if (JSON.stringify(newNotifications) !== JSON.stringify(notifications)) {
