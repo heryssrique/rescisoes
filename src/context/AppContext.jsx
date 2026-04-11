@@ -324,7 +324,7 @@ export function AppProvider({ children }) {
       let type = '', message = '', severity = '';
       if (diffDays < 0) { type = 'vencido'; message = `${d.nome}: Venceu em ${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}`; severity = 'error'; }
       else if (diffDays === 0) { type = 'vence_hoje'; message = `${d.nome}: Vence hoje!`; severity = 'warning'; }
-      else if (diffDays <= 3) { type = 'proximo'; message = `${d.nome}: Vence em ${diffDays} dias`; severity = 'info'; }
+      else if (diffDays <= 7) { type = 'proximo'; message = `${d.nome}: Vence em ${diffDays} dias`; severity = 'info'; }
 
       if (type) {
         const notifId = `${d.id}-${type}`;
