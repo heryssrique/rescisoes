@@ -5,13 +5,6 @@
  */
 
 const BASE_URL = import.meta.env.VITE_API_URL || '/api';
-
-// Debug: confirma qual URL está sendo usada (visível no console do browser)
-if (typeof window !== 'undefined') {
-  console.log('[API] BASE_URL:', BASE_URL);
-}
-
-
 async function request(method, endpoint, body) {
   const options = {
     method,
