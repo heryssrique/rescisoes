@@ -9,11 +9,14 @@ const { ApiError } = require('../middleware/errorMiddleware');
 // ── GET /api/desligamentos (with Pagination) ───────────────────────────────
 router.get('/', auth, async (req, res, next) => {
   try {
-    const { status, motivo, q, sort = 'dataPagamento', arquivado, page = 1, limit = 5000 } = req.query;
+    const { status, motivo, q, sort = 'dataPagamento', order, arquivado, page = 1, limit = 5000 } = req.query;
     const filter = {};
 
     const isArquivado = arquivado === 'true';
     filter.arquivado = isArquivado ? true : { $ne: true };
+
+    // Padroniza ordem: arquivados desc (-1) por padrão, lista ativa asc (1) por padrão
+    const sortOrder = order ? parseInt(order) : (isArquivado ? -1 : 1);
 
     if (status && status !== 'todos') filter.status = status;
     if (motivo && motivo !== 'todos') filter.motivo = motivo;
@@ -32,7 +35,7 @@ router.get('/', auth, async (req, res, next) => {
     
     const [desligamentos, total] = await Promise.all([
       Desligamento.find(filter)
-        .sort({ [sort]: 1 })
+        .sort({ [sort]: sortOrder })
         .skip(skip)
         .limit(parseInt(limit)),
       Desligamento.countDocuments(filter)

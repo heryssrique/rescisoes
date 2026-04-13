@@ -16,7 +16,7 @@ function groupByPaymentDate(desligamentos) {
   return Object.entries(groups).sort(([a], [b]) => {
     if (a === 'sem-data') return 1;
     if (b === 'sem-data') return -1;
-    return a.localeCompare(b);
+    return b.localeCompare(a);
   });
 }
 

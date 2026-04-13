@@ -251,7 +251,7 @@ export function AppProvider({ children }) {
     archivedLoadingRef.current = true;
     dispatch({ type: 'SET_LOADING', value: true });
     try {
-      const res = await api.getDesligamentos({ arquivado: true, q: searchQuery });
+      const res = await api.getDesligamentos({ arquivado: true, q: searchQuery, order: -1 });
       const raw = res.data ?? res;
       dispatch({ type: 'SET_ARCHIVED', payload: Array.isArray(raw) ? raw : [] });
     } catch (err) {
