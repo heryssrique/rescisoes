@@ -244,13 +244,17 @@ export function ListView({ data: injectedData }) {
     // Inclui tanto ativos quanto arquivados para a métrica mensal
     const all = [...state.desligamentos, ...state.archivedDesligamentos];
     return all.filter(d => {
-      // Verifica se o item 'p1' (Depósito da rescisão realizado) está marcado no checklist
-      const isPaidFlag = d.checklist?.some(c => c.id === 'p1' && c.done);
-      if (!isPaidFlag || !d.dataPagamento) return false;
+      // Busca o item p1 no checklist
+      const p1Item = d.checklist?.find(c => c.id === 'p1');
+      
+      // Deve estar marcado como concluído (done: true) e ter a data de conclusão (doneAt)
+      if (!p1Item?.done || !p1Item?.doneAt) return false;
       
       try {
-        const paymentDate = parseISO(d.dataPagamento);
-        const matchesDate = paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
+        // Usamos a data em que o depósito foi realmente marcado como feito (doneAt)
+        // para garantir que a contagem reflita os eventos do mês atual.
+        const doneDate = parseISO(p1Item.doneAt);
+        const matchesDate = doneDate.getMonth() === currentMonth && doneDate.getFullYear() === currentYear;
         
         const matchesColigada = state.globalColigadaFilter === 'todas' || d.coligada === state.globalColigadaFilter;
         
