@@ -236,7 +236,31 @@ export function ListView({ data: injectedData }) {
     return days < 0;
   }).length;
 
-  const pagosNoFiltro = activeFiltered.filter(d => d.status === 'pago').length;
+  const pagosNoMes = useMemo(() => {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
+    // Inclui tanto ativos quanto arquivados para a métrica mensal
+    const all = [...state.desligamentos, ...state.archivedDesligamentos];
+    return all.filter(d => {
+      // Deve estar pago e ter data de pagamento
+      if (d.status !== 'pago' || !d.dataPagamento) return false;
+      
+      try {
+        const paymentDate = parseISO(d.dataPagamento);
+        const matchesDate = paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
+        
+        // Se houver filtro global de coligada, respeitamos ele
+        const matchesColigada = state.globalColigadaFilter === 'todas' || d.coligada === state.globalColigadaFilter;
+        
+        return matchesDate && matchesColigada;
+      } catch (e) {
+        return false;
+      }
+    }).length;
+  }, [state.desligamentos, state.archivedDesligamentos, state.globalColigadaFilter]);
+
 
   const makeGroups = (list) => {
     if (sortBy === 'pagamento') return groupByPaymentDate(list);
@@ -341,8 +365,8 @@ export function ListView({ data: injectedData }) {
           <div className="stat-icon"><AlertCircle size={48} /></div>
         </div>
         <div className="stat-card green">
-          <div className="stat-label">Pagos (Filtro)</div>
-          <div className="stat-value">{pagosNoFiltro}</div>
+          <div className="stat-label">Pagos (Mês)</div>
+          <div className="stat-value">{pagosNoMes}</div>
           <div className="stat-icon"><CheckCircle size={48} /></div>
         </div>
       </div>
