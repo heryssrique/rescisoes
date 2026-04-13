@@ -101,13 +101,17 @@ function AppContent() {
     const mainDesligamentos = activeRaw.filter(d => !isOnlyMissingComprovante(d));
     const mainArquivados = archivedRaw.filter(d => !isOnlyMissingComprovante(d));
     const globalVencidos = mainDesligamentos.filter(d => {
-      if (['pago', 'cancelado', 'pendente_comprovante'].includes(d.status) || !d.dataPagamento) return false;
+      const isPaid = (d.checklist || []).some(c => c.id === 'p1' && c.done);
+      if (['pago', 'cancelado', 'pendente_comprovante'].includes(d.status) || isPaid || !d.dataPagamento) return false;
       try { return differenceInDays(parseISO(d.dataPagamento), startOfDay(new Date())) < 0; } catch (e) { return false; }
     }).length;
     return {
       all: allRaw, mainDesligamentos, mainArquivados, pendentesComprovante, globalVencidos,
       counts: {
-        active: mainDesligamentos.filter(d => d.status !== 'pago').length,
+        active: mainDesligamentos.filter(d => {
+          const isPaid = (d.checklist || []).some(c => c.id === 'p1' && c.done);
+          return !['pago', 'cancelado', 'pendente_comprovante'].includes(d.status) && !isPaid;
+        }).length,
         pending: pendentesComprovante.length,
         archived: mainArquivados.length + mainDesligamentos.filter(d => d.status === 'pago').length
       }

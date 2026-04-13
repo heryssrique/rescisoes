@@ -12,8 +12,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const ARCHIVED_STATUSES = ['pago', 'cancelado', 'pendente_comprovante'];
 
-function getUrgencyClass(dataPagamento, status) {
-  if (ARCHIVED_STATUSES.includes(status) || !dataPagamento) return '';
+function getUrgencyClass(dataPagamento, status, checklist = []) {
+  const isPaid = checklist.some(c => c.id === 'p1' && c.done);
+  if (ARCHIVED_STATUSES.includes(status) || isPaid || !dataPagamento) return '';
   const days = differenceInDays(parseISO(dataPagamento), startOfDay(new Date()));
   if (days < 0) return 'urgency-crit';
   if (days <= 3) return 'urgency-high';
@@ -57,7 +58,7 @@ const TermCard = memo(({ d, onOpen, onArchive, isSelected, onSelect }) => {
       onClick={() => onOpen(d.id)}
       id={`card-${d.id}`}
     >
-      <div className={`urgency-bar ${getUrgencyClass(d.dataPagamento, d.status)}`} />
+      <div className={`urgency-bar ${getUrgencyClass(d.dataPagamento, d.status, d.checklist)}`} />
       
       {/* Botão de Seleção (Checkbox) */}
       <button 
@@ -225,13 +226,15 @@ export function ListView({ data: injectedData }) {
   const filteredCount = activeFiltered.length;
 
   const aVencer = activeFiltered.filter(d => {
-    if (ARCHIVED_STATUSES.includes(d.status) || !d.dataPagamento) return false;
+    const isPaid = (d.checklist || []).some(c => c.id === 'p1' && c.done);
+    if (ARCHIVED_STATUSES.includes(d.status) || isPaid || !d.dataPagamento) return false;
     const days = differenceInDays(parseISO(d.dataPagamento), startOfDay(new Date()));
     return days >= 0 && days <= 5;
   }).length;
 
   const vencidos = activeFiltered.filter(d => {
-    if (ARCHIVED_STATUSES.includes(d.status) || !d.dataPagamento) return false;
+    const isPaid = (d.checklist || []).some(c => c.id === 'p1' && c.done);
+    if (ARCHIVED_STATUSES.includes(d.status) || isPaid || !d.dataPagamento) return false;
     const days = differenceInDays(parseISO(d.dataPagamento), startOfDay(new Date()));
     return days < 0;
   }).length;

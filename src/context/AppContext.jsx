@@ -314,9 +314,9 @@ export function AppProvider({ children }) {
     const newNotifications = [];
 
     desligamentos.forEach(d => {
-      // Suppress notification if paid, cancelled, or in pending-receipt stage (which implies paid)
-      if (['pago', 'cancelado', 'pendente_comprovante'].includes(d.status)) return;
       const isPaidChecklist = d.checklist?.some(c => c.id === 'p1' && c.done);
+      // Suppress notification if paid, cancelled, or in pending-receipt stage (which implies paid)
+      if (['pago', 'cancelado', 'pendente_comprovante'].includes(d.status) || isPaidChecklist) return;
 
       const alertas = [];
 
