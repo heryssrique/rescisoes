@@ -10,7 +10,7 @@ import { getPaymentDate } from '../utils/dateUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 
-const ARCHIVED_STATUSES = ['pago', 'cancelado'];
+const ARCHIVED_STATUSES = ['pago', 'cancelado', 'pendente_comprovante'];
 
 function getUrgencyClass(dataPagamento, status) {
   if (ARCHIVED_STATUSES.includes(status) || !dataPagamento) return '';

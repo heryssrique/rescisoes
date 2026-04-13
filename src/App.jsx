@@ -51,7 +51,7 @@ const isOnlyMissingComprovante = (d) => {
   const checklist = d.checklist || [];
   const p1 = checklist.find(c => c.id === 'p1');
   const p2 = checklist.find(c => c.id === 'p2');
-  const paid = (p1 && p1.done) || d.status === 'pago';
+  const paid = (p1 && p1.done) || d.status === 'pago' || d.status === 'pendente_comprovante';
   const noReceipt = p2 && !p2.done && !p2.notApplicable;
   return paid && noReceipt;
 };
@@ -101,7 +101,7 @@ function AppContent() {
     const mainDesligamentos = activeRaw.filter(d => !isOnlyMissingComprovante(d));
     const mainArquivados = archivedRaw.filter(d => !isOnlyMissingComprovante(d));
     const globalVencidos = mainDesligamentos.filter(d => {
-      if (d.status === 'pago' || d.status === 'cancelado' || !d.dataPagamento) return false;
+      if (['pago', 'cancelado', 'pendente_comprovante'].includes(d.status) || !d.dataPagamento) return false;
       try { return differenceInDays(parseISO(d.dataPagamento), startOfDay(new Date())) < 0; } catch (e) { return false; }
     }).length;
     return {

@@ -12,11 +12,11 @@ const initCron = () => {
       const today = new Date().toISOString().split('T')[0];
       const urgentCount = await Desligamento.countDocuments({
         dataPagamento: today,
-        status: { $nin: ['pago', 'cancelado'] }
+        status: { $nin: ['pago', 'cancelado', 'pendente_comprovante'] }
       });
       
       const pendingCount = await Desligamento.countDocuments({
-        status: { $nin: ['pago', 'cancelado'] }
+        status: { $nin: ['pago', 'cancelado', 'pendente_comprovante'] }
       });
 
       if (urgentCount > 0 || pendingCount > 0) {

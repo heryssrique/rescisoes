@@ -251,7 +251,7 @@ export function AppProvider({ children }) {
     archivedLoadingRef.current = true;
     dispatch({ type: 'SET_LOADING', value: true });
     try {
-      const res = await api.getDesligamentos({ arquivado: true, q: searchQuery, order: -1 });
+      const res = await api.getDesligamentos({ arquivado: true, q: searchQuery });
       const raw = res.data ?? res;
       dispatch({ type: 'SET_ARCHIVED', payload: Array.isArray(raw) ? raw : [] });
     } catch (err) {
@@ -314,7 +314,8 @@ export function AppProvider({ children }) {
     const newNotifications = [];
 
     desligamentos.forEach(d => {
-      if (d.status === 'pago' || d.status === 'cancelado') return;
+      // Suppress notification if paid, cancelled, or in pending-receipt stage (which implies paid)
+      if (['pago', 'cancelado', 'pendente_comprovante'].includes(d.status)) return;
       const isPaidChecklist = d.checklist?.some(c => c.id === 'p1' && c.done);
 
       const alertas = [];
@@ -437,7 +438,6 @@ export function AppProvider({ children }) {
         localStorage.removeItem('token');
         dispatch({ type: 'LOGOUT' });
       },
-      markNotificationRead: (id) => dispatch({ type: 'MARK_NOTIFICATION_READ', id }),
       toggleTheme: () => dispatch({ type: 'TOGGLE_THEME' }),
       togglePerformanceMode: () => dispatch({ type: 'TOGGLE_PERFORMANCE_MODE' }),
       updateConfig: (name, key, payload) => dispatch({ type: 'UPDATE_CONFIG', configName: name, key, payload }),
