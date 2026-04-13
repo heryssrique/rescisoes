@@ -314,14 +314,17 @@ export function AppProvider({ children }) {
     const newNotifications = [];
 
     desligamentos.forEach(d => {
-      const isPaidChecklist = d.checklist?.some(c => c.id === 'p1' && c.done);
-      // Suppress notification if paid, cancelled, or in pending-receipt stage (which implies paid)
-      if (['pago', 'cancelado', 'pendente_comprovante'].includes(d.status) || isPaidChecklist) return;
+      // Is payment done? (Checklist p1: Depósito realizado)
+      const isPaid = (d.checklist || []).some(c => c.id === 'p1' && (c.done || c.notApplicable));
+      // Is signing done? (Checklist h3: TRCT assinado)
+      const isSigned = (d.checklist || []).some(c => c.id === 'h3' && (c.done || c.notApplicable));
+
+      if (['pago', 'cancelado', 'pendente_comprovante'].includes(d.status) || isPaid) return;
 
       const alertas = [];
 
       // 1. Alertas de Pagamento (Usando a dataPagamento)
-      if (!isPaidChecklist && d.dataPagamento) {
+      if (!isPaid && d.dataPagamento) {
         const rawDate = d.dataPagamento.split('T')[0];
         const parts = rawDate.split('-');
         if (parts.length === 3) {
@@ -336,7 +339,8 @@ export function AppProvider({ children }) {
       }
 
       // 2. Alertas de Prazo de 7 Dias (Com base na data de Desligamento)
-      if (d.dataDesligamento) {
+      // Agora vinculado ao checklist h3 (TRCT assinado)
+      if (!isSigned && d.dataDesligamento) {
         const rawDesl = d.dataDesligamento.split('T')[0];
         const partsDesl = rawDesl.split('-');
         if (partsDesl.length === 3) {
@@ -346,7 +350,7 @@ export function AppProvider({ children }) {
           
           const diff7Dias = Math.ceil((prazo7Dias - today) / (1000 * 60 * 60 * 24));
           
-          if (diff7Dias < 0 && diff7Dias >= -5) { alertas.push({ type: 'prazo7_vencido', message: `${d.nome}: Prazo de 7 dias VENCIDO!`, severity: 'error' }); }
+          if (diff7Dias < 0 && diff7Dias >= -5) { alertas.push({ type: 'prazo7_vencido', message: `${d.nome}: Prazo de 7 dias VENCIDO (Docs)!`, severity: 'error' }); }
           else if (diff7Dias === 0) { alertas.push({ type: 'prazo7_hoje', message: `${d.nome}: Prazo de 7 dias vence HOJE!`, severity: 'warning' }); }
           else if (diff7Dias === 1) { alertas.push({ type: 'prazo7_amanha', message: `${d.nome}: Prazo de 7 dias vence AMANHÃ!`, severity: 'info' }); }
         }
