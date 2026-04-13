@@ -244,14 +244,14 @@ export function ListView({ data: injectedData }) {
     // Inclui tanto ativos quanto arquivados para a métrica mensal
     const all = [...state.desligamentos, ...state.archivedDesligamentos];
     return all.filter(d => {
-      // Deve estar pago e ter data de pagamento
-      if (d.status !== 'pago' || !d.dataPagamento) return false;
+      // Verifica se o item 'p1' (Depósito da rescisão realizado) está marcado no checklist
+      const isPaidFlag = d.checklist?.some(c => c.id === 'p1' && c.done);
+      if (!isPaidFlag || !d.dataPagamento) return false;
       
       try {
         const paymentDate = parseISO(d.dataPagamento);
         const matchesDate = paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
         
-        // Se houver filtro global de coligada, respeitamos ele
         const matchesColigada = state.globalColigadaFilter === 'todas' || d.coligada === state.globalColigadaFilter;
         
         return matchesDate && matchesColigada;
