@@ -394,8 +394,26 @@ export function AppProvider({ children }) {
         return doc;
       },
       updateDesligamento: async (data) => {
-        const doc = await api.updateDesligamento(data.id, data);
-        dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: doc });
+        const isCancelado = data.status === 'cancelado';
+        const willArchive = isCancelado && !data.arquivado;
+        
+        let docData = { ...data };
+        if (willArchive) {
+          docData.arquivado = true;
+          docData.historico = [...(docData.historico || []), {
+            data: new Date().toISOString(),
+            acao: 'Arquivado (Automático)',
+            nota: 'Processo cancelado foi arquivado automaticamente'
+          }];
+        }
+
+        const doc = await api.updateDesligamento(docData.id, docData);
+        
+        if (willArchive) {
+          dispatch({ type: 'ARCHIVE_DESLIGAMENTO', payload: doc });
+        } else {
+          dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: doc });
+        }
         return doc;
       },
       archiveDesligamento: async (id) => {
@@ -446,17 +464,35 @@ export function AppProvider({ children }) {
       togglePerformanceMode: () => dispatch({ type: 'TOGGLE_PERFORMANCE_MODE' }),
       updateConfig: (name, key, payload) => dispatch({ type: 'UPDATE_CONFIG', configName: name, key, payload }),
       changeStatus: async (d, newStatus) => {
+        const isCancelado = newStatus === 'cancelado';
+        const willArchive = isCancelado && !d.arquivado;
+
         const updated = {
           ...d,
           status: newStatus,
+          arquivado: d.arquivado || willArchive,
           historico: [...(d.historico || []), {
             data: new Date().toISOString(),
             acao: `Status alterado para ${newStatus.toUpperCase()}`,
             nota: `Alteração via detalhe`
           }]
         };
+
+        if (willArchive) {
+          updated.historico.push({
+            data: new Date().toISOString(),
+            acao: 'Arquivado (Automático)',
+            nota: 'Processo cancelado foi arquivado automaticamente'
+          });
+        }
+
         const doc = await api.updateDesligamento(d.id, updated);
-        dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: doc });
+        
+        if (willArchive) {
+          dispatch({ type: 'ARCHIVE_DESLIGAMENTO', payload: doc });
+        } else {
+          dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: doc });
+        }
         return doc;
       },
       bulkArchive: async (ids) => {
