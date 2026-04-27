@@ -141,6 +141,15 @@ router.patch('/:id/checklist/:itemId', auth, async (req, res, next) => {
     item.doneAt = item.done ? new Date().toISOString() : null;
     if (item.done) item.notApplicable = false;
     
+    if (doc.status === 'concluido' && item.id === 'p2' && item.done && !doc.arquivado) {
+      doc.arquivado = true;
+      doc.historico.push({
+        data: new Date().toISOString(),
+        acao: 'Arquivado (Automático)',
+        nota: 'Comprovante anexado no status Concluído'
+      });
+    }
+
     await doc.save();
     res.json(doc);
   } catch (err) {
@@ -162,6 +171,15 @@ router.patch('/:id/checklist/:itemId/nao-aplicavel', auth, async (req, res, next
       // Marcar como N/A limpa o done
       item.done = false;
       item.doneAt = null;
+    }
+
+    if (doc.status === 'concluido' && item.id === 'p2' && item.notApplicable && !doc.arquivado) {
+      doc.arquivado = true;
+      doc.historico.push({
+        data: new Date().toISOString(),
+        acao: 'Arquivado (Automático)',
+        nota: 'Comprovante marcado como N/A no status Concluído'
+      });
     }
 
     await doc.save();

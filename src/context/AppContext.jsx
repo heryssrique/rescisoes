@@ -30,10 +30,12 @@ function reducer(state, action) {
       return { ...s, desligamentos: [...s.desligamentos, action.payload] };
     case 'UPDATE_DESLIGAMENTO': {
       const updated = action.payload;
+      const allDocs = [...s.desligamentos, ...s.archivedDesligamentos].filter(d => d.id !== updated.id);
+      allDocs.push(updated);
       return {
         ...s,
-        desligamentos: s.desligamentos.map(d => d.id === updated.id ? updated : d),
-        archivedDesligamentos: s.archivedDesligamentos.map(d => d.id === updated.id ? updated : d),
+        desligamentos: allDocs.filter(d => !d.arquivado),
+        archivedDesligamentos: allDocs.filter(d => d.arquivado),
       };
     }
     case 'TOGGLE_CHECKLIST_OPTIMISTIC': {
@@ -471,7 +473,14 @@ export function AppProvider({ children }) {
       updateConfig: (name, key, payload) => dispatch({ type: 'UPDATE_CONFIG', configName: name, key, payload }),
       changeStatus: async (d, newStatus) => {
         const isCancelado = newStatus === 'cancelado';
-        const willArchive = isCancelado && !d.arquivado;
+        let willArchive = isCancelado && !d.arquivado;
+
+        if (newStatus === 'concluido' && !d.arquivado) {
+          const checklist = d.checklist || [];
+          const p2 = checklist.find(c => c.id === 'p2');
+          const hasReceipt = p2 && (p2.done || p2.notApplicable);
+          if (hasReceipt) willArchive = true;
+        }
 
         const updated = {
           ...d,
