@@ -9,7 +9,7 @@ import {
   CheckSquare, Clock, AlertTriangle, MessageSquare, Plus, Loader,
   Archive, RotateCcw, CheckCircle2, Circle, MinusCircle, FileText, Paperclip, X
 } from 'lucide-react';
-import { CHECKLIST_TEMPLATE, STATUS_FLOW } from '../data/initialData';
+import { CHECKLIST_TEMPLATE } from '../data/initialData';
 import { format } from 'date-fns';
 import { getPaymentDate } from '../utils/dateUtils';
 
@@ -130,7 +130,7 @@ export function DetailView({ id }) {
     report += `Data Admissão: ${formatDate(d.dataAdmissao)}\n`;
     report += `Data do Comunicado: ${formatDate(d.dataComunicado)}\n`;
     report += `Data Desligamento: ${formatDate(d.dataDesligamento)}\n`;
-    const statusObj = STATUS_FLOW.find(s => s.key === d.status);
+    const statusObj = (state.statusFlow || []).find(s => s.key === d.status);
     report += `Status: ${statusObj ? statusObj.short : d.status}\n\n`;
 
     report += `CHECKLIST\n`;
@@ -273,7 +273,7 @@ export function DetailView({ id }) {
               Etapa Atual
             </span>
             <div style={{ display: 'flex', gap: 6 }}>
-              {STATUS_FLOW.map(s => (
+              {(state.statusFlow || []).map(s => (
                 <button
                   key={s.key}
                   className={`chip btn-sm ${d.status === s.key ? 'active' : ''}`}

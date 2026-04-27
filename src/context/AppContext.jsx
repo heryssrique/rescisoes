@@ -180,6 +180,12 @@ function getInitialState() {
       } catch { return fallback; }
     };
 
+    const rawFlow = getConfig('desligest_status_flow', DEFAULT_STATUS_FLOW);
+    // Migração: garante que 'concluido' exista mesmo em fluxos salvos antigos
+    const statusFlow = rawFlow.find(s => s.key === 'concluido')
+      ? rawFlow
+      : [...rawFlow, { key: 'concluido', label: 'Concluído', short: 'Concluído', color: '#34d399' }];
+
     return {
       user: null,
       isAuthChecked: false,
@@ -197,7 +203,7 @@ function getInitialState() {
       readNotificationIds: readIds,
       coligadas: getConfig('desligest_coligadas', DEFAULT_COLIGADAS),
       motivos: getConfig('desligest_motivos', DEFAULT_MOTIVOS),
-      statusFlow: getConfig('desligest_status_flow', DEFAULT_STATUS_FLOW),
+      statusFlow,
       checklistTemplate: getConfig('desligest_checklist', DEFAULT_CHECKLIST_TEMPLATE),
       linksUteis: getConfig('desligest_links', DEFAULT_LINKS_UTEIS),
       triggerConfetti: false,
