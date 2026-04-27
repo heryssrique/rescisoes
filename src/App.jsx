@@ -51,7 +51,7 @@ const isOnlyMissingComprovante = (d) => {
   const checklist = d.checklist || [];
   const p1 = checklist.find(c => c.id === 'p1');
   const p2 = checklist.find(c => c.id === 'p2');
-  const paid = (p1 && (p1.done || p1.notApplicable)) || d.status === 'pago' || d.status === 'pendente_comprovante';
+  const paid = (p1 && (p1.done || p1.notApplicable)) || d.status === 'pago' || d.status === 'pendente_comprovante' || d.status === 'concluido';
   const noReceipt = p2 && !p2.done && !p2.notApplicable;
   return paid && noReceipt;
 };
@@ -102,7 +102,7 @@ function AppContent() {
     const mainArquivados = archivedRaw.filter(d => !isOnlyMissingComprovante(d));
     const globalVencidos = mainDesligamentos.filter(d => {
       const isPaid = (d.checklist || []).some(c => c.id === 'p1' && (c.done || c.notApplicable));
-      if (['pago', 'cancelado', 'pendente_comprovante'].includes(d.status) || isPaid || !d.dataPagamento) return false;
+      if (['pago', 'cancelado', 'pendente_comprovante', 'concluido'].includes(d.status) || isPaid || !d.dataPagamento) return false;
       try { return differenceInDays(parseISO(d.dataPagamento), startOfDay(new Date())) < 0; } catch (e) { return false; }
     }).length;
     return {
@@ -110,7 +110,7 @@ function AppContent() {
       counts: {
         active: mainDesligamentos.filter(d => {
           const isPaid = (d.checklist || []).some(c => c.id === 'p1' && (c.done || c.notApplicable));
-          return !['pago', 'cancelado', 'pendente_comprovante'].includes(d.status) && !isPaid;
+          return !['pago', 'cancelado', 'pendente_comprovante', 'concluido'].includes(d.status) && !isPaid;
         }).length,
         pending: pendentesComprovante.length,
         archived: mainArquivados.length + mainDesligamentos.filter(d => d.status === 'pago').length

@@ -319,7 +319,7 @@ export function AppProvider({ children }) {
       // Is signing done? (Checklist h3: TRCT assinado)
       const isSigned = (d.checklist || []).some(c => c.id === 'h3' && (c.done || c.notApplicable));
 
-      if (['pago', 'cancelado', 'pendente_comprovante'].includes(d.status) || isPaid) return;
+      if (['pago', 'cancelado', 'pendente_comprovante', 'concluido'].includes(d.status) || isPaid) return;
 
       const alertas = [];
 

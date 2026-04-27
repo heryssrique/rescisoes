@@ -37,6 +37,7 @@ export const DEFAULT_STATUS_FLOW = [
   { key: 'aguardando', label: 'Ag. Pagamento', short: 'Ag. Pag.', color: 'var(--accent-orange)' },
   { key: 'pago', label: 'Pago', short: 'Pago', color: 'var(--accent-green)' },
   { key: 'pendente_comprovante', label: 'Pend. Comprovante', short: 'P. Comp.', color: 'var(--accent-red)' },
+  { key: 'concluido', label: 'Concluído', short: 'Concluído', color: '#34d399' },
 ];
 
 export const STATUS_FLOW = getConfig('desligest_status_flow', DEFAULT_STATUS_FLOW);
@@ -57,6 +58,8 @@ export const DEFAULT_CHECKLIST_TEMPLATE = [
   { id: 'p1', label: 'Depósito da rescisão realizado', etapa: 'aguardando' },
   { id: 'p2', label: 'Comprovante de pagamento arquivado', etapa: 'pago' },
   { id: 'p3', label: 'Processo encerrado no sistema', etapa: 'pago' },
+  { id: 'f1', label: 'Documentação arquivada fisicamente', etapa: 'concluido' },
+  { id: 'f2', label: 'Processo finalizado e encerrado', etapa: 'concluido' },
 ];
 
 export const CHECKLIST_TEMPLATE = getConfig('desligest_checklist', DEFAULT_CHECKLIST_TEMPLATE);

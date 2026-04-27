@@ -44,6 +44,7 @@ export function DetailView({ id }) {
     homologacao: checklist.filter(c => c.etapa === 'homologacao'),
     aguardando: checklist.filter(c => c.etapa === 'aguardando'),
     pago: checklist.filter(c => c.etapa === 'pago'),
+    concluido: checklist.filter(c => c.etapa === 'concluido'),
   }), [checklist]);
 
   const etapaLabels = useMemo(() => ({
@@ -52,6 +53,7 @@ export function DetailView({ id }) {
     homologacao: 'Homologação',
     aguardando: 'Pagamento',
     pago: 'Conclusão',
+    concluido: 'Concluído',
   }), []);
 
   if (!d) return null;
@@ -233,7 +235,7 @@ export function DetailView({ id }) {
         <div style={{ display: 'flex', gap: 8 }}>
           {!isArchived ? (
             <>
-              {(d.status === 'pago' || d.status === 'cancelado') && (
+              {(d.status === 'pago' || d.status === 'cancelado' || d.status === 'concluido') && (
                 <button className="btn btn-secondary btn-sm" onClick={handleArchive}>
                   <Archive size={13} /> Arquivar
                 </button>

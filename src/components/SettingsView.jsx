@@ -58,6 +58,7 @@ function ChecklistItem({ item, idx, updateChecklist, removeChecklistItem }) {
           <option value="homologacao">3. Homologação</option>
           <option value="aguardando">4. Ag. Pagamento</option>
           <option value="pago">5. Processo Fechado</option>
+          <option value="concluido">6. Concluído</option>
         </select>
       </div>
       <button className="btn btn-icon" onClick={() => removeChecklistItem(idx)} style={{ color: '#ef4444' }}>

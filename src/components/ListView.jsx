@@ -10,7 +10,7 @@ import { getPaymentDate } from '../utils/dateUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 
-const ARCHIVED_STATUSES = ['pago', 'cancelado', 'pendente_comprovante'];
+const ARCHIVED_STATUSES = ['pago', 'cancelado', 'pendente_comprovante', 'concluido'];
 
 function getUrgencyClass(dataPagamento, status, checklist = []) {
   const isPaid = checklist.some(c => c.id === 'p1' && c.done);
@@ -46,7 +46,7 @@ function DateGroupTag({ dataPagamento }) {
 }
 
 const TermCard = memo(({ d, onOpen, onArchive, isSelected, onSelect }) => {
-  const isArchivable = d.status === 'pago' || d.status === 'cancelado';
+  const isArchivable = d.status === 'pago' || d.status === 'cancelado' || d.status === 'concluido';
   return (
     <motion.article
       layout
