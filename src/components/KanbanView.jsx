@@ -6,6 +6,7 @@ import { Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const isOnlyMissingComprovante = (d) => {
+  if (d.status === 'concluido' || d.status === 'cancelado') return false;
   const checklist = d.checklist || [];
   const p1 = checklist.find(c => c.id === 'p1');
   const p2 = checklist.find(c => c.id === 'p2');

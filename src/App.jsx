@@ -48,10 +48,11 @@ const ViewLoader = () => (
 );
 
 const isOnlyMissingComprovante = (d) => {
+  if (d.status === 'concluido' || d.status === 'cancelado') return false;
   const checklist = d.checklist || [];
   const p1 = checklist.find(c => c.id === 'p1');
   const p2 = checklist.find(c => c.id === 'p2');
-  const paid = (p1 && (p1.done || p1.notApplicable)) || d.status === 'pago' || d.status === 'pendente_comprovante' || d.status === 'concluido';
+  const paid = (p1 && (p1.done || p1.notApplicable)) || d.status === 'pago' || d.status === 'pendente_comprovante';
   const noReceipt = p2 && !p2.done && !p2.notApplicable;
   return paid && noReceipt;
 };

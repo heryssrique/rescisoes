@@ -115,8 +115,9 @@ export function DetailView({ id }) {
 
         toast('🎉 Processo concluído e pago!', 'success');
       }
-    } catch {
-      // Erro gerenciado via AppContext (state.error)
+    } catch (err) {
+      console.error('Erro ao alterar status:', err);
+      toast('Erro ao alterar status: ' + err.message, 'error');
     }
   }
 
