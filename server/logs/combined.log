@@ -585,3 +585,8 @@
 {"level":"info","message":"Incoming Request: POST /api/auth/login","service":"desligest-api","timestamp":"2026-04-08 16:21:53"}
 {"level":"error","message":"[POST] /api/auth/login - Error: E-mail ou senha incorretos","service":"desligest-api","stack":"Error: E-mail ou senha incorretos\n    at C:\\Users\\concr\\.gemini\\antigravity\\scratch\\desligamento-app\\server\\routes\\auth.js:49:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)","timestamp":"2026-04-08 16:21:53"}
 >>>>>>> Stashed changes
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-04-27 12:18:44"}
+{"level":"info","message":"✅ MongoDB conectado com sucesso","service":"desligest-api","timestamp":"2026-04-27 12:18:44"}
+{"level":"info","message":"✅ Tarefas agendadas (Cron) inicializadas","service":"desligest-api","timestamp":"2026-04-27 12:18:44"}
+{"level":"info","message":"🚀 API rodada na porta 3001","service":"desligest-api","timestamp":"2026-04-27 12:18:44"}
+{"level":"info","message":"   Health: http://localhost:3001/api/health","service":"desligest-api","timestamp":"2026-04-27 12:18:44"}
