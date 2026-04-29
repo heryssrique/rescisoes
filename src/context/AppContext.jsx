@@ -326,6 +326,8 @@ export function AppProvider({ children }) {
       const isPaid = (d.checklist || []).some(c => c.id === 'p1' && (c.done || c.notApplicable));
       // Is signing done? (Checklist h3: TRCT assinado)
       const isSigned = (d.checklist || []).some(c => c.id === 'h3' && (c.done || c.notApplicable));
+      // Is calculated? (Checklist h2: Cálculo da rescisão conferido)
+      const isCalculated = (d.checklist || []).some(c => c.id === 'h2' && (c.done || c.notApplicable));
 
       if (['pago', 'cancelado', 'pendente_comprovante', 'concluido'].includes(d.status) || isPaid) return;
 
@@ -361,6 +363,23 @@ export function AppProvider({ children }) {
           if (diff7Dias < 0 && diff7Dias >= -5) { alertas.push({ type: 'prazo7_vencido', message: `${d.nome}: Prazo de 7 dias VENCIDO (Docs)!`, severity: 'error' }); }
           else if (diff7Dias === 0) { alertas.push({ type: 'prazo7_hoje', message: `${d.nome}: Prazo de 7 dias vence HOJE!`, severity: 'warning' }); }
           else if (diff7Dias === 1) { alertas.push({ type: 'prazo7_amanha', message: `${d.nome}: Prazo de 7 dias vence AMANHÃ!`, severity: 'info' }); }
+        }
+      }
+
+      // 3. Alertas de Cálculo no Mês do Desligamento
+      // Regra: Todos os desligamentos devem ser calculados no mês do desligamento
+      if (!isCalculated && d.dataDesligamento) {
+        const rawDesl = d.dataDesligamento.split('T')[0];
+        const partsDesl = rawDesl.split('-');
+        if (partsDesl.length === 3) {
+          const [dy, dm, dd] = partsDesl.map(Number);
+          const ultimoDiaMes = new Date(dy, dm, 0); // Dia 0 do mês seguinte = último dia do mês atual
+          
+          const diffDiasFimMes = Math.ceil((ultimoDiaMes - today) / (1000 * 60 * 60 * 24));
+          
+          if (diffDiasFimMes < 0 && diffDiasFimMes >= -10) { alertas.push({ type: 'calculo_vencido', message: `${d.nome}: Cálculo atrasado (virou o mês)!`, severity: 'error' }); }
+          else if (diffDiasFimMes === 0) { alertas.push({ type: 'calculo_hoje', message: `${d.nome}: Último dia do mês para o cálculo!`, severity: 'warning' }); }
+          else if (diffDiasFimMes <= 5 && diffDiasFimMes > 0) { alertas.push({ type: 'calculo_proximo', message: `${d.nome}: Fim do mês em ${diffDiasFimMes} dia(s). Calcule a rescisão!`, severity: 'info' }); }
         }
       }
 
