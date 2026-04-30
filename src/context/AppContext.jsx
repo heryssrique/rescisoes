@@ -422,7 +422,8 @@ export function AppProvider({ children }) {
       },
       updateDesligamento: async (data) => {
         const isCancelado = data.status === 'cancelado';
-        const willArchive = isCancelado && !data.arquivado;
+        const isConcluido = data.status === 'concluido';
+        const willArchive = (isCancelado || isConcluido) && !data.arquivado;
         
         let docData = { ...data };
         if (willArchive) {
@@ -430,7 +431,7 @@ export function AppProvider({ children }) {
           docData.historico = [...(docData.historico || []), {
             data: new Date().toISOString(),
             acao: 'Arquivado (Automático)',
-            nota: 'Processo cancelado foi arquivado automaticamente'
+            nota: `Processo ${data.status} foi arquivado automaticamente`
           }];
         }
 
@@ -492,14 +493,8 @@ export function AppProvider({ children }) {
       updateConfig: (name, key, payload) => dispatch({ type: 'UPDATE_CONFIG', configName: name, key, payload }),
       changeStatus: async (d, newStatus) => {
         const isCancelado = newStatus === 'cancelado';
-        let willArchive = isCancelado && !d.arquivado;
-
-        if (newStatus === 'concluido' && !d.arquivado) {
-          const checklist = d.checklist || [];
-          const p2 = checklist.find(c => c.id === 'p2');
-          const hasReceipt = p2 && (p2.done || p2.notApplicable);
-          if (hasReceipt) willArchive = true;
-        }
+        const isConcluido = newStatus === 'concluido';
+        const willArchive = (isCancelado || isConcluido) && !d.arquivado;
 
         const updated = {
           ...d,
@@ -516,7 +511,7 @@ export function AppProvider({ children }) {
           updated.historico.push({
             data: new Date().toISOString(),
             acao: 'Arquivado (Automático)',
-            nota: 'Processo cancelado foi arquivado automaticamente'
+            nota: `Processo ${newStatus} foi arquivado automaticamente`
           });
         }
 

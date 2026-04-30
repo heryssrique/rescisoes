@@ -315,11 +315,11 @@ export function ListView({ data: injectedData }) {
 
   async function handleBulkArchive() {
     const archivableIds = activeFiltered
-      .filter(d => selectedIds.includes(d.id) && (d.status === 'pago' || d.status === 'cancelado'))
+      .filter(d => selectedIds.includes(d.id) && (d.status === 'pago' || d.status === 'cancelado' || d.status === 'concluido'))
       .map(d => d.id);
     
     if (archivableIds.length === 0) {
-      toast('Nenhum dos itens selecionados pode ser arquivado. Apenas processos com Status "Pago" ou "Cancelado" são elegíveis.', 'warning');
+      toast('Nenhum dos itens selecionados pode ser arquivado. Apenas processos com Status "Pago", "Cancelado" ou "Concluído" são elegíveis.', 'warning');
       return;
     }
 
@@ -398,7 +398,7 @@ export function ListView({ data: injectedData }) {
         </select>
 
         <select id="filter-status" className="filter-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-          <option value="ativos">Processos Ativos ({currentList.filter(d => !['pago','cancelado'].includes(d.status)).length})</option>
+          <option value="ativos">Processos Ativos ({currentList.filter(d => !['pago','cancelado','concluido'].includes(d.status)).length})</option>
           <option value="comunicado">Comunicado ({currentList.filter(d => d.status === 'comunicado').length})</option>
           <option value="documentacao">Documentação ({currentList.filter(d => d.status === 'documentacao').length})</option>
           <option value="homologacao">Homologação ({currentList.filter(d => d.status === 'homologacao').length})</option>
