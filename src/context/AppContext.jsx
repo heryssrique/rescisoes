@@ -163,6 +163,10 @@ function reducer(state, action) {
       return { ...s, activeCelebration: action.payload };
     case 'SET_LINKS':
       return { ...s, linksUteis: action.payload };
+    case 'OPEN_NEW_MODAL':
+      return { ...s, isNewModalOpen: true, newModalData: action.payload };
+    case 'CLOSE_NEW_MODAL':
+      return { ...s, isNewModalOpen: false, newModalData: null };
     default:
       return s;
   }
@@ -211,6 +215,8 @@ function getInitialState() {
       linksUteis: getConfig('desligest_links', DEFAULT_LINKS_UTEIS),
       triggerConfetti: false,
       activeCelebration: null,
+      isNewModalOpen: false,
+      newModalData: null,
     };
   } catch (e) {
     return {
@@ -220,6 +226,8 @@ function getInitialState() {
       coligadas: {}, motivos: [], statusFlow: [], checklistTemplate: [], linksUteis: [],
       triggerConfetti: false,
       activeCelebration: null,
+      isNewModalOpen: false,
+      newModalData: null,
     };
   }
 }
@@ -573,6 +581,8 @@ export function AppProvider({ children }) {
         await fetchLinks();
         return res;
       },
+      openNewModal: (data) => dispatch({ type: 'OPEN_NEW_MODAL', payload: data }),
+      closeNewModal: () => dispatch({ type: 'CLOSE_NEW_MODAL' }),
     }
   }), [state, fetchAll, fetchArchived, fetchLinks]);
 

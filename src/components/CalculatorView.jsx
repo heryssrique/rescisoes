@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calculator, RotateCcw, Check, AlertTriangle, Users, ClipboardList, DollarSign, Calendar as CalendarIcon, Download, FileText, ArrowLeft } from 'lucide-react';
+import { Calculator, RotateCcw, Check, AlertTriangle, Users, ClipboardList, DollarSign, Calendar as CalendarIcon, Download, FileText, ArrowLeft, Send } from 'lucide-react';
+import { useApp } from '../context/AppContext';
 import { calcularRescisao } from '../utils/calculators/rescisaoEngine';
 import { exportarPDF } from '../utils/calculators/pdfExport';
 import { gerarLog } from '../utils/calculators/gerarLog';
@@ -23,6 +24,7 @@ const INITIAL_STATE = {
 };
 
 export function CalculatorView() {
+  const { actions } = useApp();
   const [form, setForm] = useState(INITIAL_STATE);
   const [result, setResult] = useState(null);
   const [errors, setErrors] = useState({});
@@ -98,6 +100,40 @@ export function CalculatorView() {
 
   const formatBRL = (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+  const handleCreateProcess = () => {
+    const mapMotivo = {
+      SEM_JUSTA_CAUSA: 'demissao',
+      COM_JUSTA_CAUSA: 'justa',
+      PEDIDO_DEMISSAO: 'pedido',
+      ACORDO_MUTUO: 'acordo',
+      DETERMINADO: 'termino_contrato'
+    };
+
+    const dataAdmissaoStr = result.metadados.dataAdmissao ? result.metadados.dataAdmissao.toISOString().split('T')[0] : '';
+    const dataDemissaoStr = result.metadados.dataDemissao ? result.metadados.dataDemissao.toISOString().split('T')[0] : '';
+
+    const initialData = {
+      nome: result.metadados.nomeEmpregado || '',
+      coligada: '',
+      cargo: result.metadados.cargo || '',
+      departamento: '',
+      matricula: result.metadados.matricula || '',
+      dataAdmissao: dataAdmissaoStr,
+      dataComunicado: dataDemissaoStr, 
+      dataDesligamento: dataDemissaoStr,
+      dataPagamento: '',
+      motivo: mapMotivo[result.metadados.tipoRescisao] || 'demissao',
+      avisoPrevio: result.metadados.avisoPrevioTrabalhado ? 'trabalhado' : (result.metadados.avisoDiasDesconto > 0 ? 'descontado' : 'indenizado'),
+      diasAvisoTrabalhado: result.metadados.avisoDiasDesconto ? String(result.metadados.avisoDiasDesconto) : '',
+      status: 'comunicado',
+      responsavel: '',
+      observacoes: `[Gerado via Calculadora de Rescisão]\nSalário Base Informado: ${formatBRL(result.metadados.salarioBruto)}\nLíquido Estimado: ${formatBRL(result.totais.liquido)}`,
+      prazoPagamento: '10',
+    };
+    
+    actions.openNewModal(initialData);
+  };
+
   if (result) {
     return (
       <div className="page-content">
@@ -115,6 +151,9 @@ export function CalculatorView() {
             </button>
             <button className="btn btn-primary" onClick={() => exportarPDF(result)}>
               <Download size={16} /> Exportar PDF
+            </button>
+            <button className="btn btn-primary" style={{ background: 'var(--accent-purple)', boxShadow: '0 4px 12px rgba(168, 85, 247, 0.3)' }} onClick={handleCreateProcess}>
+              <Send size={16} /> Salvar Processo
             </button>
           </div>
         </div>

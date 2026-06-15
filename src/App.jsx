@@ -91,7 +91,6 @@ function AppContent() {
   };
 
   const { user, view, selected, desligamentos, archivedDesligamentos, loading, error, globalColigadaFilter } = state;
-  const [showNew, setShowNew] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -185,7 +184,7 @@ function AppContent() {
                 fontWeight: 700,
                 cursor: 'pointer'
               }} 
-              onClick={() => setShowNew(true)}
+              onClick={() => actions.openNewModal(null)}
             >
               <Plus size={isSidebarCollapsed ? 20 : 18} />
               {!isSidebarCollapsed && <span>Novo Desligamento</span>}
@@ -273,7 +272,7 @@ function AppContent() {
           </AnimatePresence>
         </div>
       </div>
-      {showNew && <ModalNovoDesligamento onClose={() => setShowNew(false)} />}
+      {state.isNewModalOpen && <ModalNovoDesligamento onClose={actions.closeNewModal} initialData={state.newModalData} />}
       {showImport && <ModalImportarPlanilha onClose={() => setShowImport(false)} />}
       </div>
     </MotionConfig>

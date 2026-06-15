@@ -24,9 +24,9 @@ const INITIAL_FORM = {
   prazoPagamento: '10',
 };
 
-export function ModalNovoDesligamento({ onClose }) {
+export function ModalNovoDesligamento({ onClose, initialData }) {
   const { actions } = useApp();
-  const [form, setForm] = useState(INITIAL_FORM);
+  const [form, setForm] = useState(initialData || INITIAL_FORM);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
 

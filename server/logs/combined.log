@@ -622,3 +622,4 @@
 {"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-06-15 09:50:40"}
 {"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-06-15 09:53:21"}
 {"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-06-15 09:53:21"}
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-06-15 11:07:44"}
