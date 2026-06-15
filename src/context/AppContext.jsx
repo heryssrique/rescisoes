@@ -109,7 +109,7 @@ function reducer(state, action) {
       return { ...s, user: null, desligamentos: [], archivedDesligamentos: [], view: 'lista', selected: null };
     case 'SET_VIEW':
       localStorage.setItem('desligest_view', action.view);
-      return { ...s, view: action.view };
+      return { ...s, view: action.view, calculatorInitialData: action.calculatorData || null };
     case 'SET_SELECTED':
       if (action.id) { localStorage.setItem('desligest_selected', action.id); }
       else { localStorage.removeItem('desligest_selected'); }

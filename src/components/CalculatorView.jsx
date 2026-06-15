@@ -24,8 +24,8 @@ const INITIAL_STATE = {
 };
 
 export function CalculatorView() {
-  const { actions } = useApp();
-  const [form, setForm] = useState(INITIAL_STATE);
+  const { state, actions } = useApp();
+  const [form, setForm] = useState(() => state.calculatorInitialData || INITIAL_STATE);
   const [result, setResult] = useState(null);
   const [errors, setErrors] = useState({});
 

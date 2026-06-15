@@ -7,7 +7,7 @@ import { ModalEditarDesligamento } from './Modals';
 import {
   ArrowLeft, Edit2, Trash2, Calendar, User, Briefcase,
   CheckSquare, Clock, AlertTriangle, MessageSquare, Plus, Loader,
-  Archive, RotateCcw, CheckCircle2, Circle, MinusCircle, FileText, Paperclip, X
+  Archive, RotateCcw, CheckCircle2, Circle, MinusCircle, FileText, Paperclip, X, Calculator
 } from 'lucide-react';
 import { CHECKLIST_TEMPLATE } from '../data/initialData';
 import { format } from 'date-fns';
@@ -159,11 +159,39 @@ export function DetailView({ id }) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Relatorio_Checklist_${d.nome.replace(/\\s+/g, '_')}_${format(new Date(), 'yyyyMMdd')}.txt`;
+    link.download = `Relatorio_Checklist_${d.nome.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd')}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  }
+
+  function handleCalcularPrevia() {
+    const mapMotivoToCalc = {
+      demissao: 'SEM_JUSTA_CAUSA',
+      justa: 'COM_JUSTA_CAUSA',
+      pedido: 'PEDIDO_DEMISSAO',
+      acordo: 'ACORDO_MUTUO',
+      termino_contrato: 'DETERMINADO',
+      termino_empresa: 'DETERMINADO',
+      termino_empregado: 'PEDIDO_DEMISSAO',
+      aposentadoria: 'PEDIDO_DEMISSAO' // Aproximação
+    };
+
+    const calculatorData = {
+      nome: d.nome || '',
+      cargo: d.cargo || '',
+      matricula: d.matricula || '',
+      salarioBruto: '',
+      dataAdmissao: d.dataAdmissao || '',
+      dataDemissao: d.dataDesligamento || '',
+      motivo: mapMotivoToCalc[d.motivo] || 'SEM_JUSTA_CAUSA',
+      avisoPrevio: d.avisoPrevio === 'trabalhado' ? 'TRABALHADO' : 'INDENIZADO',
+      feriasVencidas: 0,
+      dependentes: 0,
+    };
+    
+    dispatch({ type: 'SET_VIEW', view: 'calculadora', calculatorData });
   }
 
   const handleFileUpload = (e) => {
@@ -243,6 +271,9 @@ export function DetailView({ id }) {
               )}
               <button className="btn btn-secondary btn-sm" onClick={() => setShowEdit(true)} id="btn-editar">
                 <Edit2 size={13} /> Editar
+              </button>
+              <button className="btn btn-primary btn-sm" style={{ background: 'var(--accent-purple)' }} onClick={handleCalcularPrevia} id="btn-previa">
+                <Calculator size={13} /> Prévia
               </button>
               <button className="btn btn-primary btn-sm" onClick={handleGenerateReport} id="btn-relatorio">
                 <FileText size={13} /> Relatório
