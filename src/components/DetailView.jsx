@@ -179,16 +179,20 @@ export function DetailView({ id }) {
     };
 
     const calculatorData = {
-      nome: d.nome || '',
+      nomeEmpregado: d.nome || '',
       cargo: d.cargo || '',
       matricula: d.matricula || '',
       salarioBruto: '',
       dataAdmissao: d.dataAdmissao || '',
       dataDemissao: d.dataDesligamento || '',
-      motivo: mapMotivoToCalc[d.motivo] || 'SEM_JUSTA_CAUSA',
-      avisoPrevio: d.avisoPrevio === 'trabalhado' ? 'TRABALHADO' : 'INDENIZADO',
-      feriasVencidas: 0,
-      dependentes: 0,
+      tipoRescisao: mapMotivoToCalc[d.motivo] || 'SEM_JUSTA_CAUSA',
+      avisoPrevioTrabalhado: d.avisoPrevio === 'trabalhado',
+      avisoDiasDesconto: d.avisoPrevio === 'trabalhado' && d.diasAvisoTrabalhado ? parseInt(d.diasAvisoTrabalhado, 10) : 0,
+      mediasVariaveis: '',
+      periodosVencidos: 0,
+      diasFeriasGozados: 0,
+      saldoFGTS: '',
+      numeroDependentes: 0,
     };
     
     dispatch({ type: 'SET_VIEW', view: 'calculadora', calculatorData });
