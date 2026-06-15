@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calculator, RotateCcw, Check, AlertTriangle, Users, ClipboardList, DollarSign, Calendar as CalendarIcon, Download, FileText } from 'lucide-react';
+import { Calculator, RotateCcw, Check, AlertTriangle, Users, ClipboardList, DollarSign, Calendar as CalendarIcon, Download, FileText, ArrowLeft } from 'lucide-react';
 import { calcularRescisao } from '../utils/calculators/rescisaoEngine';
 import { exportarPDF } from '../utils/calculators/pdfExport';
 import { gerarLog } from '../utils/calculators/gerarLog';
@@ -107,11 +107,14 @@ export function CalculatorView() {
             <p style={{ color: 'var(--text-muted)' }}>Prévia estimada para {result.metadados.nomeEmpregado}</p>
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
+            <button className="btn btn-ghost" onClick={() => setResult(null)}>
+              <ArrowLeft size={16} /> Voltar
+            </button>
+            <button className="btn btn-ghost" onClick={handleClear}>
+              <RotateCcw size={16} /> Novo Cálculo
+            </button>
             <button className="btn btn-primary" onClick={() => exportarPDF(result)}>
               <Download size={16} /> Exportar PDF
-            </button>
-            <button className="btn btn-ghost" onClick={() => setResult(null)}>
-              <RotateCcw size={16} /> Novo Cálculo
             </button>
           </div>
         </div>
