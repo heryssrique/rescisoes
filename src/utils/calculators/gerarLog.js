@@ -332,6 +332,16 @@ export function gerarLog(resultado) {
       const baseIRRFBruta = verbas.filter(v => v.tributavelIRRF).reduce((a, v) => a + v.valor, 0);
       const baseLiquida   = Math.max(0, baseIRRFBruta - inssDesconto);
       const deducDep      = numeroDependentes * 189.59;
+      const baseAposDeducoes = Math.max(0, baseLiquida - deducDep);
+
+      let statusIRRF = '';
+      if (baseAposDeducoes <= 5000) {
+        statusIRRF = `► ISENTO: A base de cálculo (${formatBRL(baseAposDeducoes)}) é menor ou igual ao limite de isenção (R$ 5.000,00). Nenhum imposto será descontado.`;
+      } else if (baseAposDeducoes <= 7350) {
+        statusIRRF = `► TRIBUTADO COM REDUÇÃO: Base (${formatBRL(baseAposDeducoes)}) se enquadra na regra de transição. Aplica-se a fórmula de redução simplificada.`;
+      } else {
+        statusIRRF = `► TRIBUTADO: Base (${formatBRL(baseAposDeducoes)}) acima de R$ 7.350,00. Aplica-se a tabela progressiva integral.`;
+      }
 
       const verbasIRRFStr = verbas
         .filter(v => v.tributavelIRRF)
@@ -342,9 +352,6 @@ export function gerarLog(resultado) {
         icon: '📋',
         tipo: 'desconto',
         formula: '(Base tributável − INSS − Dependentes) × Alíquota − Parcela a deduzir',
-        baseLabel: 'Base Legal',
-        baseText: 'Lei 7.713/88 + Lei 14.663/2023',
-        baseText: 'Lei 7.713/88',
         baseLegal: 'Lei 7.713/88 + Lei 14.663/2023',
         passos: [
           'Verbas sujeitas a IRRF:',
@@ -352,7 +359,8 @@ export function gerarLog(resultado) {
           `Base bruta IRRF: ${formatBRL(baseIRRFBruta)}`,
           `(−) Desconto INSS: − ${formatBRL(inssDesconto)}`,
           numeroDependentes > 0 ? `(−) Dedução dependentes (${numeroDependentes} × R$ 189,59): − ${formatBRL(deducDep)}` : null,
-          `Base líquida: ${formatBRL(baseLiquida - (numeroDependentes > 0 ? deducDep : 0))}`,
+          `Base líquida (após deduções): ${formatBRL(baseAposDeducoes)}`,
+          statusIRRF,
           '─── Tabela IRRF Mensal 2026 (Com Redução) ───',
           '  Tabela progressiva base (alíquotas de 7,5% a 27,5%)',
           '  Renda até R$ 5.000,00 → Imposto zerado (Redução total)',
@@ -368,22 +376,32 @@ export function gerarLog(resultado) {
 
     // IRRF 13º
     if (desc.descricao.includes('13°') || desc.descricao.includes('13º')) {
-      const base13 = verbas.filter(v => v.tributavelIRRF13).reduce((a, v) => a + v.valor, 0);
+      const base13Bruta = verbas.filter(v => v.tributavelIRRF13).reduce((a, v) => a + v.valor, 0);
+      const inss13Desc = descontos.find(d => d.descricao.includes('INSS sobre 13º'))?.valor || 0;
+      const base13 = Math.max(0, base13Bruta - inss13Desc);
+
+      let statusIRRF13 = '';
+      if (base13 <= 5000) {
+        statusIRRF13 = `► ISENTO: A base do 13º (${formatBRL(base13)}) é menor ou igual ao limite de isenção (R$ 5.000,00).`;
+      } else if (base13 <= 7350) {
+        statusIRRF13 = `► TRIBUTADO COM REDUÇÃO: Base (${formatBRL(base13)}) na regra de transição.`;
+      } else {
+        statusIRRF13 = `► TRIBUTADO: Base (${formatBRL(base13)}) acima de R$ 7.350,00.`;
+      }
 
       etapas.push({
         titulo: 'IRRF sobre 13º Salário',
         icon: '📋',
         tipo: 'desconto',
         formula: '13º líquido de INSS × Alíquota − Parcela a deduzir',
-        baseLabel: 'Base Legal',
-        baseText: 'Decreto 9.580/2018 (RIR)',
-        baseText: 'Decreto 9.580/2018',
         baseLegal: 'Decreto 9.580/2018 (RIR)',
         passos: [
-          '13º salário é tributado SEPARADAMENTE do salário mensal',
-          'Não é somado às demais verbas para cálculo do IR',
-          `Base: 13º proporcional (${formatBRL(base13)}) − INSS incidente sobre o 13°`,
-          'Usa a mesma tabela de alíquotas do IRRF mensal (sem dedução de dependentes)',
+          'O 13º salário é tributado SEPARADAMENTE do salário mensal',
+          'Não é somado às demais verbas nem tem dedução de dependentes',
+          `Base bruta do 13º: ${formatBRL(base13Bruta)}`,
+          `(−) Desconto INSS s/ 13º: − ${formatBRL(inss13Desc)}`,
+          `Base líquida do 13º: ${formatBRL(base13)}`,
+          statusIRRF13,
           `Resultado: ${formatBRL(desc.valor)}`,
         ],
         resultado: desc.valor,
