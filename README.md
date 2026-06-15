@@ -48,6 +48,7 @@ O sistema opera como um aplicativo híbrido moderno:
 
 ### 📦 Funcionalidades Core
 *   **Checklist Dinâmico**: 15+ etapas automáticas organizadas por fluxo de trabalho (Comunicado, Documentação, Homologação, Pagamento).
+*   **Calculadora de Rescisão Integrada**: Motor inteligente para simulação de rescisões, exibição de memória de cálculo detalhada com embasamento jurídico e exportação em PDF.
 *   **Dashboard Executivo**: Estatísticas gráficas por motivo de desligamento e por empresa (Coligada).
 *   **Quadro Kanban**: Visualize o gargalo operacional por etapas do processo.
 *   **Importação Inteligente**: Suporte para importação em lote via planilha CSV.

@@ -4,7 +4,7 @@ import {
   BookOpen, Plus, FileSpreadsheet, ListTodo, Columns, Archive, 
   PieChart, Bell, Settings, HelpCircle, ShieldCheck, Search, ChevronRight,
   LifeBuoy, MessageSquare, ExternalLink, Sparkles, GraduationCap, Zap,
-  AlertCircle
+  AlertCircle, Calculator, FileText
 } from 'lucide-react';
 
 const HELP_DATA = [
@@ -101,6 +101,27 @@ const HELP_DATA = [
         name: 'Configurações de Tenant', 
         text: 'Administradores podem configurar nomes de coligadas, motivos customizados e regras de permissão na aba de Configurações.', 
         icon: <Settings size={18} /> 
+      },
+    ]
+  },
+  {
+    id: 'calculos',
+    title: 'Cálculos Trabalhistas',
+    description: 'Faça simulações precisas e gere relatórios de rescisão.',
+    icon: <Calculator size={24} color="var(--accent-purple)" />,
+    color: 'var(--accent-purple)',
+    items: [
+      { 
+        id: 'calc-rescisao',
+        name: 'Calculadora de Rescisão', 
+        text: 'Acesse a Calculadora de Rescisão no menu lateral para simular todos os direitos do colaborador. A ferramenta suporta vários tipos de rescisão (Com/Sem Justa Causa, Pedido de Demissão, Acordo Mútuo e Fim de Contrato) e calcula automaticamente férias, 13º, aviso prévio, multas do FGTS e os descontos de INSS e IRRF.', 
+        icon: <Calculator size={18} /> 
+      },
+      { 
+        id: 'calc-export',
+        name: 'Memória de Cálculo e Exportação PDF', 
+        text: 'Após calcular a rescisão, o sistema gera uma memória detalhada explicando a base legal e a fórmula de cada provento e desconto. Você pode exportar todo o detalhamento para PDF, incluindo a demonstração de isenções ou deduções aplicáveis, para fins de comprovação e arquivo.', 
+        icon: <FileText size={18} /> 
       },
     ]
   }
