@@ -291,12 +291,11 @@ export function gerarLog(resultado) {
   // ─── ETAPA N+1–M: Descontos ───────────────────────────────────────────────
 
   const baseINSS = verbas.filter(v => v.tributavelINSS).reduce((a, v) => a + v.valor, 0);
-  const inssDesconto = descontos.find(d => d.descricao.includes('INSS'))?.valor || 0;
+  const inssDesconto = descontos.find(d => d.descricao.includes('INSS') && !d.descricao.includes('13'))?.valor || 0;
 
-  for (const desc of descontos) {
-    // INSS
-    if (desc.descricao.includes('INSS')) {
-      const verbasINSSStr = verbas
+  // INSS
+  if (baseINSS > 0) {
+    const verbasINSSStr = verbas
         .filter(v => v.tributavelINSS)
         .map(v => `  • ${v.descricao.split('(')[0].trim()}: ${formatBRL(v.valor)}`);
 
@@ -319,17 +318,17 @@ export function gerarLog(resultado) {
           '  Faixa 3: R$ 2.793,89 a R$ 4.190,83 → 12,0%',
           '  Faixa 4: R$ 4.190,84 a R$ 8.157,41 → 14,0%',
           'Desconto calculado faixa a faixa (não alíquota única)',
-          `Resultado: ${formatBRL(desc.valor)}`,
+          `Resultado: ${formatBRL(inssDesconto)}`,
           'Verbas ISENTAS de INSS: férias indenizadas, aviso prévio indenizado, multa FGTS',
         ],
-        resultado: desc.valor,
+        resultado: inssDesconto,
       });
-      continue;
-    }
+  }
 
-    // IRRF mensal
-    if (desc.descricao.includes('IRRF') && !desc.descricao.includes('13°')) {
-      const baseIRRFBruta = verbas.filter(v => v.tributavelIRRF).reduce((a, v) => a + v.valor, 0);
+  // IRRF mensal
+  const baseIRRFBruta = verbas.filter(v => v.tributavelIRRF).reduce((a, v) => a + v.valor, 0);
+  if (baseIRRFBruta > 0) {
+      const descValor = descontos.find(d => d.descricao.includes('IRRF') && !d.descricao.includes('13°') && !d.descricao.includes('13º'))?.valor || 0;
       const baseLiquida   = Math.max(0, baseIRRFBruta - inssDesconto);
       const deducDep      = numeroDependentes * 189.59;
       const baseAposDeducoes = Math.max(0, baseLiquida - deducDep);
@@ -366,18 +365,18 @@ export function gerarLog(resultado) {
           '  Renda até R$ 5.000,00 → Imposto zerado (Redução total)',
           '  Renda R$ 5.000,01 a R$ 7.350,00 → Redução: R$ 978,62 - (0,133145 × renda)',
           '  Renda acima de R$ 7.350,01 → Sem redução adicional',
-          `Resultado Final após reduções: ${formatBRL(desc.valor)}`,
+          `Resultado Final após reduções: ${formatBRL(descValor)}`,
           'Verbas ISENTAS de IRRF: férias indenizadas, aviso prévio indenizado, multa FGTS',
         ].filter(Boolean),
-        resultado: desc.valor,
+        resultado: descValor,
       });
-      continue;
-    }
+  }
 
-    // IRRF 13º
-    if (desc.descricao.includes('13°') || desc.descricao.includes('13º')) {
-      const base13Bruta = verbas.filter(v => v.tributavelIRRF13).reduce((a, v) => a + v.valor, 0);
+  // IRRF 13º
+  const base13Bruta = verbas.filter(v => v.tributavelIRRF13).reduce((a, v) => a + v.valor, 0);
+  if (base13Bruta > 0) {
       const inss13Desc = descontos.find(d => d.descricao.includes('INSS sobre 13º'))?.valor || 0;
+      const descValor13 = descontos.find(d => d.descricao.includes('IRRF') && (d.descricao.includes('13°') || d.descricao.includes('13º')))?.valor || 0;
       const base13 = Math.max(0, base13Bruta - inss13Desc);
 
       let statusIRRF13 = '';
@@ -402,12 +401,10 @@ export function gerarLog(resultado) {
           `(−) Desconto INSS s/ 13º: − ${formatBRL(inss13Desc)}`,
           `Base líquida do 13º: ${formatBRL(base13)}`,
           statusIRRF13,
-          `Resultado: ${formatBRL(desc.valor)}`,
+          `Resultado: ${formatBRL(descValor13)}`,
         ],
-        resultado: desc.valor,
+        resultado: descValor13,
       });
-      continue;
-    }
   }
 
   // ─── ETAPA FINAL: Resumo ──────────────────────────────────────────────────
