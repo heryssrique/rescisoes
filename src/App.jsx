@@ -9,7 +9,7 @@ import { differenceInDays, parseISO, startOfDay } from 'date-fns';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { CelebrationCanvas3D } from './components/CelebrationCanvas3D';
 import {
-  LayoutList, Columns, Plus, Users, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut, HelpCircle, FileText, Sun, Moon, Calendar, History, Link, Monitor, Zap, ZapOff
+  LayoutList, Columns, Plus, Users, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut, HelpCircle, FileText, Sun, Moon, Calendar, History, Link, Monitor, Zap, ZapOff, Calculator
 } from 'lucide-react';
 
 const Dashboard = lazy(() => import('./components/Dashboard').then(m => ({ default: m.Dashboard })));
@@ -23,6 +23,7 @@ const SettingsView = lazy(() => import('./components/SettingsView').then(m => ({
 const HelpView = lazy(() => import('./components/HelpView').then(m => ({ default: m.HelpView })));
 const ReportsView = lazy(() => import('./components/ReportsView').then(m => ({ default: m.ReportsView })));
 const LinksView = lazy(() => import('./components/LinksView').then(m => ({ default: m.LinksView })));
+const CalculatorView = lazy(() => import('./components/CalculatorView').then(m => ({ default: m.CalculatorView })));
 
 const LoadingScreen = ({ message }) => (
   <div className="loading-screen">
@@ -132,6 +133,7 @@ function AppContent() {
     { id: 'relatorios', label: 'Relatórios', icon: <FileText size={15} /> },
     { id: 'audit', label: 'Histórico Global', icon: <History size={15} /> },
     { id: 'dashboard', label: 'Estatísticas', icon: <PieChartIcon size={15} /> },
+    { id: 'calculadora', label: 'Calculadora', icon: <Calculator size={15} /> },
     { id: 'links', label: 'Links Úteis', icon: <Link size={15} /> },
     { id: 'configuracoes', label: 'Configurações', icon: <Settings size={15} /> },
     { id: 'ajuda', label: 'Central de Ajuda', icon: <HelpCircle size={15} /> },
@@ -140,7 +142,7 @@ function AppContent() {
   const viewTitles = {
     dashboard: 'Estatísticas do RH', lista: 'Processos de Desligamento', kanban: 'Quadro Kanban', calendar: 'Calendário de Prazos',
     pendentes: 'Aguardando Comprovante', arquivados: 'Processos Arquivados', relatorios: 'Central de Relatórios',
-    audit: 'Log de Auditoria Global', links: 'Links e Ferramentas', configuracoes: 'Configurações do Sistema', ajuda: 'Central de Ajuda', detalhe: 'Detalhe do Processo',
+    audit: 'Log de Auditoria Global', links: 'Links e Ferramentas', configuracoes: 'Configurações do Sistema', ajuda: 'Central de Ajuda', detalhe: 'Detalhe do Processo', calculadora: 'Calculadora de Rescisão',
   };
 
   const selectedName = selected ? (processedData.all.find(d => d.id === selected)?.nome) : '';
@@ -148,7 +150,7 @@ function AppContent() {
     dashboard: 'Visão geral por motivos e empresas', lista: 'Organizados por data de pagamento', kanban: 'Visão por etapa do processo',
     calendar: 'Visualização mensal de vencimentos', pendentes: 'Processos com pagamento pendente de arquivo', arquivados: 'Histórico de processos finalizados',
     relatorios: 'Exportar dados para auditoria e gerência', audit: 'Monitoramento de alterações em tempo real', links: 'Atalhos para ferramentas de cálculo e portais', configuracoes: 'Administração de dados e preferências',
-    ajuda: 'Guia de uso e funcionalidades', detalhe: selectedName,
+    ajuda: 'Guia de uso e funcionalidades', detalhe: selectedName, calculadora: 'Simulação de cálculos rescisórios',
   };
 
   return (
@@ -262,6 +264,7 @@ function AppContent() {
                 {view === 'relatorios' && <ReportsView ativos={processedData.mainDesligamentos} arquivados={processedData.mainArquivados} />}
                 {view === 'audit' && <AuditLogView data={processedData.all} />}
                 {view === 'links' && <LinksView />}
+                {view === 'calculadora' && <CalculatorView />}
                 {view === 'configuracoes' && <SettingsView />}
                 {view === 'ajuda' && <HelpView />}
                 {view === 'detalhe' && selected && <DetailView id={selected} />}

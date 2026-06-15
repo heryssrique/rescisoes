@@ -183,14 +183,15 @@ function getInitialState() {
     };
 
     const rawFlow = getConfig('desligest_status_flow', DEFAULT_STATUS_FLOW);
-    // Migração: garante que 'concluido' exista mesmo em fluxos salvos antigos
     const statusFlow = rawFlow.find(s => s.key === 'concluido')
       ? rawFlow
       : [...rawFlow, { key: 'concluido', label: 'Concluído', short: 'Concluído', color: '#34d399' }];
 
+    const savedUser = getConfig('desligest_auth_user', null);
+
     return {
-      user: null,
-      isAuthChecked: false,
+      user: savedUser,
+      isAuthChecked: true,
       desligamentos: [],
       archivedDesligamentos: [],
       view,
@@ -213,7 +214,7 @@ function getInitialState() {
     };
   } catch (e) {
     return {
-      user: null, isAuthChecked: false, desligamentos: [], archivedDesligamentos: [],
+      user: null, isAuthChecked: true, desligamentos: [], archivedDesligamentos: [],
       view: 'lista', selected: null, theme: 'dark', performanceMode: false, globalColigadaFilter: 'todas',
       loading: true, error: null, offline: false, notifications: [], readNotificationIds: [],
       coligadas: {}, motivos: [], statusFlow: [], checklistTemplate: [], linksUteis: [],
@@ -274,16 +275,6 @@ export function AppProvider({ children }) {
   }, []);
 
   const checkAuthStatus = useCallback(async () => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const user = await api.checkAuth();
-        dispatch({ type: 'SET_USER', payload: user });
-      } catch (err) {
-        localStorage.removeItem('token');
-        dispatch({ type: 'SET_USER', payload: null });
-      }
-    }
     dispatch({ type: 'SET_AUTH_CHECKED' });
   }, []);
 
@@ -477,11 +468,13 @@ export function AppProvider({ children }) {
       login: async (e, p) => {
         const res = await api.login(e, p);
         localStorage.setItem('token', res.token);
+        localStorage.setItem('desligest_auth_user', JSON.stringify(res.user));
         dispatch({ type: 'SET_USER', payload: res.user });
       },
       register: async (name, email, password) => {
         const res = await api.register(name, email, password);
         localStorage.setItem('token', res.token);
+        localStorage.setItem('desligest_auth_user', JSON.stringify(res.user));
         dispatch({ type: 'SET_USER', payload: res.user });
       },
       logout: () => {

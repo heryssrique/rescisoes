@@ -618,3 +618,7 @@
 {"level":"info","message":"Incoming Request: POST /api/auth/register","service":"desligest-api","timestamp":"2026-04-27 14:41:10"}
 {"level":"info","message":"Incoming Request: POST /api/desligamentos","service":"desligest-api","timestamp":"2026-04-27 14:41:10"}
 {"level":"info","message":"Incoming Request: PUT /api/desligamentos/69ef9fb7f5f8003ae948efed","service":"desligest-api","timestamp":"2026-04-27 14:41:11"}
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-06-15 09:50:30"}
+{"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-06-15 09:50:40"}
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-06-15 09:53:21"}
+{"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-06-15 09:53:21"}
