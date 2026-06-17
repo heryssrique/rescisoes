@@ -33,6 +33,8 @@ export function CalculatorView() {
   const [editingItem, setEditingItem] = useState(null);
   const [editDesc, setEditDesc] = useState('');
   const [editValue, setEditValue] = useState('');
+  const [editIncideINSS, setEditIncideINSS] = useState(false);
+  const [editIncideIRRF, setEditIncideIRRF] = useState(false);
 
   const showAviso = ['SEM_JUSTA_CAUSA', 'ACORDO_MUTUO'].includes(form.tipoRescisao);
 
@@ -180,13 +182,21 @@ export function CalculatorView() {
     setEditingItem({ type, index });
     setEditDesc(item.descricao);
     setEditValue(item.valor);
+    if (type === 'verbas') {
+      setEditIncideINSS(!!item.tributavelINSS);
+      setEditIncideIRRF(!!item.tributavelIRRF);
+    }
   };
 
   const handleSaveEdit = () => {
     if (!editingItem) return;
     const { type, index } = editingItem;
     const list = type === 'verbas' ? [...result.verbas] : [...result.descontos];
-    list[index] = { ...list[index], descricao: editDesc, valor: Number(editValue) || 0 };
+    if (type === 'verbas') {
+      list[index] = { ...list[index], descricao: editDesc, valor: Number(editValue) || 0, tributavelINSS: editIncideINSS, tributavelIRRF: editIncideIRRF };
+    } else {
+      list[index] = { ...list[index], descricao: editDesc, valor: Number(editValue) || 0 };
+    }
     updateResultList(type, list);
     setEditingItem(null);
   };
@@ -292,11 +302,23 @@ export function CalculatorView() {
                 return (
                   <li key={i} style={{ display: 'flex', flexDirection: 'column', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
                     {isEditing ? (
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%' }}>
-                        <input className="form-input" style={{ flex: 1, padding: '4px 8px', fontSize: 14 }} value={editDesc} onChange={e => setEditDesc(e.target.value)} />
-                        <input className="form-input" type="number" step="0.01" style={{ width: 100, padding: '4px 8px', fontSize: 14 }} value={editValue} onChange={e => setEditValue(e.target.value)} />
-                        <button className="btn btn-ghost" style={{ padding: 4 }} onClick={handleSaveEdit} title="Salvar"><Save size={16} color="var(--accent-teal)" /></button>
-                        <button className="btn btn-ghost" style={{ padding: 4 }} onClick={handleCancelEdit} title="Cancelar"><X size={16} color="var(--accent-red)" /></button>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%' }}>
+                          <input className="form-input" style={{ flex: 1, padding: '4px 8px', fontSize: 14 }} value={editDesc} onChange={e => setEditDesc(e.target.value)} />
+                          <input className="form-input" type="number" step="0.01" style={{ width: 100, padding: '4px 8px', fontSize: 14 }} value={editValue} onChange={e => setEditValue(e.target.value)} />
+                          <button className="btn btn-ghost" style={{ padding: 4 }} onClick={handleSaveEdit} title="Salvar"><Save size={16} color="var(--accent-teal)" /></button>
+                          <button className="btn btn-ghost" style={{ padding: 4 }} onClick={handleCancelEdit} title="Cancelar"><X size={16} color="var(--accent-red)" /></button>
+                        </div>
+                        <div style={{ display: 'flex', gap: 16, paddingLeft: 4 }}>
+                          <label style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                            <input type="checkbox" checked={editIncideINSS} onChange={e => setEditIncideINSS(e.target.checked)} />
+                            Incide INSS/FGTS
+                          </label>
+                          <label style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                            <input type="checkbox" checked={editIncideIRRF} onChange={e => setEditIncideIRRF(e.target.checked)} />
+                            Incide IRRF
+                          </label>
+                        </div>
                       </div>
                     ) : (
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
