@@ -138,6 +138,22 @@ export function CalculatorView() {
           }
         }
         
+        // Recalcular Multa FGTS, se existir
+        const fgtsRescisao = (baseINSS + base13Bruto) * 0.08;
+        const multaFGTSIndex = updated.verbas.findIndex(v => v.descricao.includes('Multa FGTS'));
+        if (multaFGTSIndex !== -1) {
+          const pct = prev.metadados.tipoRescisao === 'SEM_JUSTA_CAUSA' ? 0.40 : (prev.metadados.tipoRescisao === 'ACORDO_MUTUO' ? 0.20 : 0);
+          if (pct > 0) {
+            const novoSaldoParaMulta = (prev.metadados.saldoFGTS || 0) + fgtsRescisao;
+            const novaMulta = novoSaldoParaMulta * pct;
+            updated.verbas[multaFGTSIndex] = {
+              ...updated.verbas[multaFGTSIndex],
+              valor: Math.round(novaMulta * 100) / 100,
+              descricao: `Multa FGTS ${pct * 100}% (saldo de R$ ${novoSaldoParaMulta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`
+            };
+          }
+        }
+
         updated.descontos = updatedDescontos;
       } else {
         updated.descontos = newList;

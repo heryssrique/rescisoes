@@ -215,11 +215,18 @@ export function calcularRescisao(dados) {
     ? saldoFGTSInformado
     : estimarSaldoFGTS(remuneracaoTotal, dataAdmissao, dataDemissao);
 
-  const fgtsInfo = calcularMultaFGTS(saldoFGTSFinal, tipoRescisao);
+  const baseFGTSRescisao = verbas
+    .filter((v) => v.tributavelINSS || v.tributavelIRRF13)
+    .reduce((acc, v) => acc + v.valor, 0);
+  const fgtsRescisao = baseFGTSRescisao * 0.08;
+
+  const saldoParaMulta = saldoFGTSFinal + fgtsRescisao;
+
+  const fgtsInfo = calcularMultaFGTS(saldoParaMulta, tipoRescisao);
 
   if (verbaDevida('multaFGTS', tipoRescisao) && fgtsInfo.multa > 0) {
     verbas.push({
-      descricao: `Multa FGTS ${fgtsInfo.percentual}% (saldo de R$ ${saldoFGTSFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`,
+      descricao: `Multa FGTS ${fgtsInfo.percentual}% (saldo de R$ ${saldoParaMulta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`,
       valor: fgtsInfo.multa,
       tributavelINSS: false,
       tributavelIRRF: false,
