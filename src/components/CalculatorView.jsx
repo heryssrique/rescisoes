@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calculator, RotateCcw, Check, AlertTriangle, Users, ClipboardList, DollarSign, Calendar as CalendarIcon, Download, FileText, ArrowLeft, Send } from 'lucide-react';
+import { Calculator, RotateCcw, Check, AlertTriangle, Users, ClipboardList, DollarSign, Calendar as CalendarIcon, Download, FileText, ArrowLeft, Send, Edit2, Trash2, Plus, Save, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { calcularRescisao } from '../utils/calculators/rescisaoEngine';
 import { exportarPDF } from '../utils/calculators/pdfExport';
@@ -28,6 +28,9 @@ export function CalculatorView() {
   const [form, setForm] = useState(() => state.calculatorInitialData || INITIAL_STATE);
   const [result, setResult] = useState(null);
   const [errors, setErrors] = useState({});
+  const [editingItem, setEditingItem] = useState(null);
+  const [editDesc, setEditDesc] = useState('');
+  const [editValue, setEditValue] = useState('');
 
   const showAviso = ['SEM_JUSTA_CAUSA', 'ACORDO_MUTUO'].includes(form.tipoRescisao);
 
@@ -99,6 +102,55 @@ export function CalculatorView() {
   };
 
   const formatBRL = (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  const updateResultList = (type, newList) => {
+    setResult(prev => {
+      const updated = { ...prev };
+      if (type === 'verbas') updated.verbas = newList;
+      else updated.descontos = newList;
+
+      const totalProventos = updated.verbas.reduce((acc, v) => acc + (Number(v.valor) || 0), 0);
+      const totalDescontos = updated.descontos.reduce((acc, d) => acc + (Number(d.valor) || 0), 0);
+      updated.totais = {
+        totalProventos,
+        totalDescontos,
+        liquido: totalProventos - totalDescontos
+      };
+      return updated;
+    });
+  };
+
+  const handleRemoveItem = (type, index) => {
+    const list = type === 'verbas' ? [...result.verbas] : [...result.descontos];
+    list.splice(index, 1);
+    updateResultList(type, list);
+  };
+
+  const handleEditItem = (type, index, item) => {
+    setEditingItem({ type, index });
+    setEditDesc(item.descricao);
+    setEditValue(item.valor);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingItem) return;
+    const { type, index } = editingItem;
+    const list = type === 'verbas' ? [...result.verbas] : [...result.descontos];
+    list[index] = { ...list[index], descricao: editDesc, valor: Number(editValue) || 0 };
+    updateResultList(type, list);
+    setEditingItem(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingItem(null);
+  };
+
+  const handleAddItem = (type) => {
+    const list = type === 'verbas' ? [...result.verbas] : [...result.descontos];
+    list.push({ descricao: 'Novo Item', valor: 0 });
+    updateResultList(type, list);
+    handleEditItem(type, list.length - 1, list[list.length - 1]);
+  };
 
   const handleCreateProcess = () => {
     const mapMotivo = {
@@ -185,13 +237,36 @@ export function CalculatorView() {
               <Check size={18} color="var(--accent-teal)" /> Verbas Rescisórias (Proventos)
             </h3>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              {result.verbas.map((v, i) => (
-                <li key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
-                  <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{v.descricao}</span>
-                  <span style={{ fontWeight: 600, color: 'var(--accent-teal)' }}>{formatBRL(v.valor)}</span>
-                </li>
-              ))}
+              {result.verbas.map((v, i) => {
+                const isEditing = editingItem?.type === 'verbas' && editingItem?.index === i;
+                return (
+                  <li key={i} style={{ display: 'flex', flexDirection: 'column', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+                    {isEditing ? (
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%' }}>
+                        <input className="form-input" style={{ flex: 1, padding: '4px 8px', fontSize: 14 }} value={editDesc} onChange={e => setEditDesc(e.target.value)} />
+                        <input className="form-input" type="number" step="0.01" style={{ width: 100, padding: '4px 8px', fontSize: 14 }} value={editValue} onChange={e => setEditValue(e.target.value)} />
+                        <button className="btn btn-ghost" style={{ padding: 4 }} onClick={handleSaveEdit} title="Salvar"><Save size={16} color="var(--accent-teal)" /></button>
+                        <button className="btn btn-ghost" style={{ padding: 4 }} onClick={handleCancelEdit} title="Cancelar"><X size={16} color="var(--accent-red)" /></button>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                        <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{v.descricao}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <span style={{ fontWeight: 600, color: 'var(--accent-teal)' }}>{formatBRL(v.valor)}</span>
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <button className="btn btn-ghost" style={{ padding: 4 }} onClick={() => handleEditItem('verbas', i, v)} title="Editar"><Edit2 size={14} color="var(--text-muted)" /></button>
+                            <button className="btn btn-ghost" style={{ padding: 4 }} onClick={() => handleRemoveItem('verbas', i)} title="Excluir"><Trash2 size={14} color="var(--accent-red)" /></button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
+            <button className="btn btn-ghost" style={{ marginTop: 12, padding: '6px 12px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => handleAddItem('verbas')}>
+              <Plus size={14} /> Adicionar Verba
+            </button>
           </div>
 
           <div className="card" style={{ padding: 20, border: '1px solid var(--border)' }}>
@@ -202,14 +277,37 @@ export function CalculatorView() {
               <p style={{ color: 'var(--text-muted)' }}>Nenhum desconto aplicado.</p>
             ) : (
               <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                {result.descontos.map((d, i) => (
-                  <li key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
-                    <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{d.descricao}</span>
-                    <span style={{ fontWeight: 600, color: 'var(--accent-red)' }}>{formatBRL(d.valor)}</span>
-                  </li>
-                ))}
+                {result.descontos.map((d, i) => {
+                  const isEditing = editingItem?.type === 'descontos' && editingItem?.index === i;
+                  return (
+                    <li key={i} style={{ display: 'flex', flexDirection: 'column', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+                      {isEditing ? (
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%' }}>
+                          <input className="form-input" style={{ flex: 1, padding: '4px 8px', fontSize: 14 }} value={editDesc} onChange={e => setEditDesc(e.target.value)} />
+                          <input className="form-input" type="number" step="0.01" style={{ width: 100, padding: '4px 8px', fontSize: 14 }} value={editValue} onChange={e => setEditValue(e.target.value)} />
+                          <button className="btn btn-ghost" style={{ padding: 4 }} onClick={handleSaveEdit} title="Salvar"><Save size={16} color="var(--accent-teal)" /></button>
+                          <button className="btn btn-ghost" style={{ padding: 4 }} onClick={handleCancelEdit} title="Cancelar"><X size={16} color="var(--accent-red)" /></button>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                          <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{d.descricao}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <span style={{ fontWeight: 600, color: 'var(--accent-red)' }}>{formatBRL(d.valor)}</span>
+                            <div style={{ display: 'flex', gap: 4 }}>
+                              <button className="btn btn-ghost" style={{ padding: 4 }} onClick={() => handleEditItem('descontos', i, d)} title="Editar"><Edit2 size={14} color="var(--text-muted)" /></button>
+                              <button className="btn btn-ghost" style={{ padding: 4 }} onClick={() => handleRemoveItem('descontos', i)} title="Excluir"><Trash2 size={14} color="var(--accent-red)" /></button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
+            <button className="btn btn-ghost" style={{ marginTop: 12, padding: '6px 12px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => handleAddItem('descontos')}>
+              <Plus size={14} /> Adicionar Desconto
+            </button>
           </div>
         </div>
 
