@@ -5,6 +5,8 @@ import { useApp } from '../context/AppContext';
 import { calcularRescisao } from '../utils/calculators/rescisaoEngine';
 import { exportarPDF } from '../utils/calculators/pdfExport';
 import { gerarLog } from '../utils/calculators/gerarLog';
+import { calcularINSS } from '../utils/calculators/inss';
+import { calcularIRRF, calcularIRRF13 } from '../utils/calculators/irrf';
 
 const INITIAL_STATE = {
   nomeEmpregado: '',
@@ -106,8 +108,40 @@ export function CalculatorView() {
   const updateResultList = (type, newList) => {
     setResult(prev => {
       const updated = { ...prev };
-      if (type === 'verbas') updated.verbas = newList;
-      else updated.descontos = newList;
+      
+      if (type === 'verbas') {
+        updated.verbas = newList;
+        
+        // Recalcular impostos automaticamente ao mexer nas verbas
+        let updatedDescontos = updated.descontos.filter(d => !d.descricao.startsWith('INSS') && !d.descricao.startsWith('IRRF'));
+
+        const baseINSS = updated.verbas.filter(v => v.tributavelINSS).reduce((acc, v) => acc + (Number(v.valor) || 0), 0);
+        const inss = calcularINSS(baseINSS);
+        if (inss.desconto > 0) {
+          updatedDescontos.unshift({ descricao: `INSS (alíq. efetiva ${(inss.aliquotaEfetiva * 100).toFixed(2)}% sobre R$ ${baseINSS.toFixed(2)})`, valor: inss.desconto });
+        }
+
+        const baseIRRFBruta = updated.verbas.filter(v => v.tributavelIRRF).reduce((acc, v) => acc + (Number(v.valor) || 0), 0);
+        const baseIRRFLiquida = Math.max(0, baseIRRFBruta - inss.desconto);
+        const irrf = calcularIRRF(baseIRRFLiquida, prev.metadados.numeroDependentes || 0);
+        if (irrf.desconto > 0) {
+          updatedDescontos.unshift({ descricao: `IRRF (${(irrf.aliquota * 100).toFixed(1)}% sobre base líquida de R$ ${baseIRRFLiquida.toFixed(2)})`, valor: irrf.desconto });
+        }
+
+        const base13Bruto = updated.verbas.filter(v => v.tributavelIRRF13).reduce((acc, v) => acc + (Number(v.valor) || 0), 0);
+        if (base13Bruto > 0) {
+          const inss13 = calcularINSS(base13Bruto);
+          const base13Liquida = Math.max(0, base13Bruto - inss13.desconto);
+          const irrf13 = calcularIRRF13(base13Liquida);
+          if (irrf13.desconto > 0) {
+            updatedDescontos.unshift({ descricao: `IRRF sobre 13° Proporcional (${(irrf13.aliquota * 100).toFixed(1)}%)`, valor: irrf13.desconto });
+          }
+        }
+        
+        updated.descontos = updatedDescontos;
+      } else {
+        updated.descontos = newList;
+      }
 
       const totalProventos = updated.verbas.reduce((acc, v) => acc + (Number(v.valor) || 0), 0);
       const totalDescontos = updated.descontos.reduce((acc, d) => acc + (Number(d.valor) || 0), 0);
