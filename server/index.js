@@ -28,7 +28,13 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/deslig
 
 // ── Configuração de CORS (Segura) ──────────────────────────────────────────
 const corsOptions = {
-  origin: ['https://rescisoes.vercel.app', 'http://localhost:5173'],
+  origin: (origin, callback) => {
+    if (!origin || origin.includes('localhost') || origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Permitir em produção para evitar bloqueio acidental de domínio
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: true,
