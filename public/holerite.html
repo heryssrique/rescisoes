@@ -547,8 +547,9 @@
         </div>
 
         <div class="actions-bar">
-            <div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <button class="btn btn-warning" onclick="loadExampleData()">🔄 Recarregar Modelo Original</button>
+                <button class="btn btn-danger" style="padding: 9px 16px;" onclick="clearAllData()">🧹 Limpar Dados</button>
             </div>
             <div>
                 <button class="btn btn-primary" style="font-size: 15px; padding: 12px 24px;" onclick="window.print()">🖨️ Imprimir / Gerar PDF (2 Vias A4)</button>
@@ -595,6 +596,38 @@
             sampleEvents.forEach(ev => {
                 addEventRow(ev.cod, ev.desc, ev.ref, ev.tipo, ev.val);
             });
+            updateHolerite();
+        }
+
+        function clearAllData() {
+            if (!confirm('Deseja realmente limpar todos os dados do holerite?')) return;
+            
+            // Limpar dados do funcionário
+            document.getElementById('inp-mat').value = '';
+            document.getElementById('inp-nome').value = '';
+            document.getElementById('inp-cpf').value = '';
+            document.getElementById('inp-adm').value = '';
+            document.getElementById('inp-cargo').value = '';
+            document.getElementById('inp-cbo').value = '';
+            document.getElementById('inp-comp').value = '';
+            document.getElementById('inp-secao').value = '';
+            document.getElementById('inp-bco').value = '';
+            document.getElementById('inp-ag').value = '';
+            document.getElementById('inp-cs').value = '';
+
+            // Limpar linhas da tabela de eventos
+            const tbody = document.getElementById('editor-rows');
+            tbody.innerHTML = '';
+            addEventRow('', '', '', 'Vencimento', '');
+
+            // Limpar bases de cálculo
+            document.getElementById('inp-salbase').value = '0,00';
+            document.getElementById('inp-baseinss').value = '0,00';
+            document.getElementById('inp-basefgts').value = '0,00';
+            document.getElementById('inp-fgtsmes').value = '0,00';
+            document.getElementById('inp-baseirrf').value = '0,00';
+            document.getElementById('inp-faixairrf').value = '0,0%';
+
             updateHolerite();
         }
 
