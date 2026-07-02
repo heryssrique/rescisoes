@@ -332,7 +332,7 @@ export function Dashboard({ data: injectedData }) {
         setExportingImg(false);
         if (!wasShowing) setShowValues(false);
       }
-    }, 450);
+    }, 800);
   };
 
   return (
@@ -654,8 +654,8 @@ export function Dashboard({ data: injectedData }) {
                   contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 12 }}
                   cursor={{ fill: 'rgba(255,255,255,0.03)' }}
                 />
-                <Bar dataKey="value" fill="var(--accent-blue)" radius={[4, 4, 0, 0]} barSize={40}>
-                  {(showValues || exportingImg) && <LabelList dataKey="value" position="top" fill="var(--text-primary)" fontSize={11} fontWeight={700} />}
+                <Bar dataKey="value" fill="var(--accent-blue)" radius={[4, 4, 0, 0]} barSize={40} isAnimationActive={!exportingImg && !showValues}>
+                  {(showValues || exportingImg) && <LabelList dataKey="value" position="top" fill="#ffffff" fontSize={11} fontWeight={700} />}
                   {mesChartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={index === mesChartData.length - 1 ? 'var(--accent-blue)' : 'rgba(59, 130, 246, 0.4)'} />
                   ))}
@@ -686,11 +686,11 @@ export function Dashboard({ data: injectedData }) {
                 <Tooltip 
                   contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 12 }}
                 />
-                <Line type="monotone" dataKey="currentYear" name={`Ano ${primaryYear}`} stroke="var(--accent-blue)" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }}>
-                  {(showValues || exportingImg) && <LabelList dataKey="currentYear" position="top" fill="var(--accent-blue)" fontSize={11} fontWeight={700} />}
+                <Line type="monotone" dataKey="currentYear" name={`Ano ${primaryYear}`} stroke="var(--accent-blue)" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} isAnimationActive={!exportingImg && !showValues}>
+                  {(showValues || exportingImg) && <LabelList dataKey="currentYear" position="top" fill="#60a5fa" fontSize={11} fontWeight={700} />}
                 </Line>
-                <Line type="monotone" dataKey="lastYear" name={`Ano ${compYear}`} stroke="var(--accent-purple)" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3 }} opacity={0.6}>
-                  {(showValues || exportingImg) && <LabelList dataKey="lastYear" position="bottom" fill="var(--accent-purple)" fontSize={10} fontWeight={600} />}
+                <Line type="monotone" dataKey="lastYear" name={`Ano ${compYear}`} stroke="var(--accent-purple)" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3 }} opacity={0.6} isAnimationActive={!exportingImg && !showValues}>
+                  {(showValues || exportingImg) && <LabelList dataKey="lastYear" position="bottom" fill="#c084fc" fontSize={10} fontWeight={600} />}
                 </Line>
               </LineChart>
               </ResponsiveContainer>
@@ -730,11 +730,11 @@ export function Dashboard({ data: injectedData }) {
                   contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 12 }}
                   cursor={{ fill: 'rgba(255,255,255,0.02)' }}
                 />
-                <Bar dataKey="current" name="Ano Atual" fill="var(--accent-blue)" radius={[0, 4, 4, 0]} barSize={12}>
-                  {(showValues || exportingImg) && <LabelList dataKey="current" position="right" fill="var(--accent-blue)" fontSize={10} fontWeight={700} />}
+                <Bar dataKey="current" name="Ano Atual" fill="var(--accent-blue)" radius={[0, 4, 4, 0]} barSize={12} isAnimationActive={!exportingImg && !showValues}>
+                  {(showValues || exportingImg) && <LabelList dataKey="current" position="right" fill="#60a5fa" fontSize={10} fontWeight={700} />}
                 </Bar>
-                <Bar dataKey="previous" name="Ano Anterior" fill="var(--accent-purple)" opacity={0.5} radius={[0, 4, 4, 0]} barSize={12}>
-                  {(showValues || exportingImg) && <LabelList dataKey="previous" position="right" fill="var(--accent-purple)" fontSize={10} fontWeight={700} />}
+                <Bar dataKey="previous" name="Ano Anterior" fill="var(--accent-purple)" opacity={0.5} radius={[0, 4, 4, 0]} barSize={12} isAnimationActive={!exportingImg && !showValues}>
+                  {(showValues || exportingImg) && <LabelList dataKey="previous" position="right" fill="#c084fc" fontSize={10} fontWeight={700} />}
                 </Bar>
               </BarChart>
               </ResponsiveContainer>
@@ -780,8 +780,8 @@ export function Dashboard({ data: injectedData }) {
                   contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 12 }}
                   cursor={{ fill: 'rgba(255,255,255,0.02)' }}
                 />
-                <Bar dataKey="value" fill="var(--accent-indigo)" radius={[4, 4, 0, 0]} barSize={60}>
-                  {(showValues || exportingImg) && <LabelList dataKey="value" position="top" fill="var(--text-primary)" fontSize={11} fontWeight={700} />}
+                <Bar dataKey="value" fill="var(--accent-indigo)" radius={[4, 4, 0, 0]} barSize={60} isAnimationActive={!exportingImg && !showValues}>
+                  {(showValues || exportingImg) && <LabelList dataKey="value" position="top" fill="#ffffff" fontSize={11} fontWeight={700} />}
                 </Bar>
               </BarChart>
               </ResponsiveContainer>
