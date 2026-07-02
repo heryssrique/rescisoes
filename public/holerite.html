@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Holerite - Concreta Construções</title>
+    <style>
+        :root {
+            --primary: #003366;
+            --secondary: #e65c00;
+            --bg: #f4f6f9;
+            --border: #000000;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+            background-color: var(--bg);
+            color: #333;
+            padding-bottom: 50px;
+        }
+
+        /* --- PAINEL DE CONTROLE (OCULTO NA IMPRESSÃO) --- */
+        .no-print {
+            max-width: 1100px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .no-print h1 {
+            color: var(--primary);
+            font-size: 24px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .no-print p.subtitle {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+
+        .form-section h3 {
+            font-size: 16px;
+            color: var(--primary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .grid-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 4px;
+        }
+
+        .input-group input, .input-group select {
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        /* Tabela de edição de eventos */
+        .events-editor-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .events-editor-table th, .events-editor-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        .events-editor-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .events-editor-table input, .events-editor-table select {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .btn {
+            padding: 9px 16px;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover { background-color: #002244; }
+
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-success:hover { background-color: #218838; }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+            padding: 6px 10px;
+        }
+
+        .btn-warning {
+            background-color: var(--secondary);
+            color: white;
+        }
+
+        .actions-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+
+        /* --- FOLHA A4 PARA IMPRESSÃO --- */
+        .page-container {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            background: #fff;
+            padding: 8mm 10mm;
+            box-shadow: 0 0 10px rgba(0,0,0,0.15);
+        }
+
+        .holerite-copy {
+            width: 100%;
+            border: 1.5px solid var(--border);
+            font-family: Arial, Helvetica, sans-serif;
+            color: #000;
+            font-size: 10px;
+            background: #fff;
+            margin-bottom: 4mm;
+        }
+
+        /* Top Header */
+        .holerite-header {
+            display: flex;
+            align-items: center;
+            padding: 6px 10px;
+            border-bottom: 1.5px solid var(--border);
+        }
+
+        .logo-area {
+            width: 23%;
+            display: flex;
+            align-items: center;
+        }
+
+        .company-info {
+            width: 77%;
+            text-align: left;
+            padding-left: 10px;
+        }
+
+        .company-info h2 {
+            font-size: 15px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .company-info p {
+            font-size: 10px;
+            line-height: 1.3;
+        }
+
+        /* Colaborador Header Grid */
+        .employee-info {
+            border-bottom: 1.5px solid var(--border);
+        }
+
+        .info-row {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-cell {
+            padding: 3px 6px;
+            border-right: 1px solid var(--border);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .info-cell:last-child {
+            border-right: none;
+        }
+
+        /* Tabela Principal de Eventos */
+        .events-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .events-table th {
+            border-bottom: 1.5px solid var(--border);
+            border-right: 1px solid var(--border);
+            padding: 4px;
+            font-weight: bold;
+            text-align: center;
+            background-color: #fff;
+        }
+        .events-table th:last-child { border-right: none; }
+
+        .events-table td {
+            padding: 2px 5px;
+            border-right: 1px solid var(--border);
+            vertical-align: top;
+        }
+        .events-table td:last-child { border-right: none; }
+
+        .events-body {
+            height: 75mm; /* Altura fixa para manter o padrão A4 */
+        }
+
+        /* Colunas larguras exatas */
+        .col-cod { width: 8%; text-align: center; }
+        .col-desc { width: 44%; text-align: left; }
+        .col-ref { width: 14%; text-align: right; }
+        .col-venc { width: 17%; text-align: right; }
+        .col-desc-val { width: 17%; text-align: right; }
+
+        /* Rodapé da tabela de eventos (Totais) */
+        .totals-section {
+            border-top: 1.5px solid var(--border);
+            display: flex;
+            width: 100%;
+        }
+
+        .totals-left {
+            width: 66%;
+            border-right: 1.5px solid var(--border);
+        }
+
+        .totals-right {
+            width: 34%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .totals-subrow {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+        }
+        .totals-subrow:last-child { border-bottom: none; }
+
+        .total-box {
+            flex: 1;
+            padding: 3px 6px;
+            border-right: 1px solid var(--border);
+            text-align: right;
+        }
+        .total-box:last-child { border-right: none; }
+
+        .total-label {
+            font-size: 9px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            padding: 2px;
+            background: #fff;
+        }
+        .total-value {
+            font-size: 11px;
+            font-weight: bold;
+            padding: 4px;
+            text-align: right;
+        }
+
+        .liquido-box {
+            display: flex;
+            width: 100%;
+        }
+        .liquido-label {
+            width: 50%;
+            padding: 4px 6px;
+            font-weight: bold;
+            font-size: 11px;
+            border-right: 1px solid var(--border);
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .liquido-value {
+            width: 50%;
+            padding: 4px 6px;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: right;
+        }
+
+        /* Footer Bases de Cálculo */
+        .bases-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-top: 1.5px solid var(--border);
+            border-bottom: 1.5px solid var(--border);
+        }
+
+        .bases-table th {
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 3px;
+            font-size: 8.5px;
+            font-weight: normal;
+            text-align: center;
+        }
+        .bases-table th:last-child { border-right: none; }
+
+        .bases-table td {
+            border-right: 1px solid var(--border);
+            padding: 4px;
+            font-size: 10px;
+            text-align: center;
+        }
+        .bases-table td:last-child { border-right: none; }
+
+        /* Assinaturas / Recebimento */
+        .receipt-footer {
+            padding: 6px 15px;
+        }
+
+        .receipt-text {
+            text-align: center;
+            font-size: 9px;
+            margin-bottom: 18px;
+        }
+
+        .signatures {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            margin-bottom: 4px;
+        }
+
+        .sig-line {
+            text-align: center;
+        }
+        .sig-line .line {
+            border-bottom: 1px solid #000;
+            margin-bottom: 2px;
+        }
+
+        /* Linha de corte entre as vias */
+        .cut-line {
+            display: flex;
+            align-items: center;
+            margin: 5mm 0;
+            color: #555;
+            font-size: 11px;
+        }
+        .cut-line::before, .cut-line::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1.5px dashed #555;
+        }
+        .cut-line span {
+            padding: 0 10px;
+        }
+
+        /* Estilos de Impressão */
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .page-container {
+                width: 100%;
+                min-height: auto;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+            }
+            @page {
+                size: A4 portrait;
+                margin: 7mm 8mm;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PAINEL DE CONTROLE / PREENCHIMENTO -->
+    <div class="no-print">
+        <h1>📊 Gerador de Holerite / Demonstrativo de Pagamento</h1>
+        <p class="subtitle">Preencha os dados abaixo ou adicione proventos e descontos. O holerite será atualizado instantaneamente nas 2 vias prontas para impressão.</p>
+
+        <div class="form-section">
+            <h3>1. Dados do Colaborador & Competência</h3>
+            <div class="grid-inputs">
+                <div class="input-group">
+                    <label>Matrícula / Código</label>
+                    <input type="text" id="inp-mat" value="00001747" oninput="updateHolerite()">
+                </div>
+                <div class="input-group">
+                    <label>Nome do Funcionário</label>
+                    <input type="text" id="inp-nome" value="AGNALDO GUIMARAES" oninput="updateHolerite()">
+                </div>
+                <div class="input-group">
+                    <label>CPF</label>
+                    <input type="text" id="inp-cpf" value="1.907.961-38" oninput="updateHolerite()">
+                </div>
+                <div class="input-group">
+                    <label>Data de Admissão</label>
+                    <input type="text" id="inp-adm" value="17/01/2026" oninput="updateHolerite()">
+                </div>
+                <div class="input-group">
+                    <label>Cargo</label>
+                    <input type="text" id="inp-cargo" value="COLETOR DE LIXO DOMICILIAR" oninput="updateHolerite()">
+                </div>
+                <div class="input-group">
+                    <label>CBO</label>
+                    <input type="text" id="inp-cbo" value="" oninput="updateHolerite()">
+                </div>
+                <div class="input-group">
+                    <label>Competência (Mês/Ano)</label>
+                    <input type="text" id="inp-comp" value="Junho / 2026" oninput="updateHolerite()">
+                </div>
+                <div class="input-group">
+                    <label>Seção / Departamento</label>
+                    <input type="text" id="inp-secao" value="Coleta de Lixo Varzea Grande MT" oninput="updateHolerite()">
+                </div>
+                <div class="input-group">
+                    <label>Banco (BCO)</label>
+                    <input type="text" id="inp-bco" value="CEF" oninput="updateHolerite()">
+                </div>
+                <div class="input-group">
+                    <label>Agência (AG)</label>
+                    <input type="text" id="inp-ag" value="" oninput="updateHolerite()">
+                </div>
+                <div class="input-group">
+                    <label>Conta/Salário (C/S)</label>
+                    <input type="text" id="inp-cs" value="159035810" oninput="updateHolerite()">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>2. Eventos (Proventos e Descontos)</h3>
+            <table class="events-editor-table">
+                <thead>
+                    <tr>
+                        <th style="width: 10%">Código</th>
+                        <th style="width: 38%">Descrição do Evento</th>
+                        <th style="width: 12%">Referência</th>
+                        <th style="width: 15%">Tipo</th>
+                        <th style="width: 18%">Valor (R$)</th>
+                        <th style="width: 7%">Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="editor-rows">
+                    <!-- Linhas injetadas via JS -->
+                </tbody>
+            </table>
+            <div style="margin-top: 10px;">
+                <button class="btn btn-success" onclick="addEventRow('', '', '', 'Vencimento', '')">➕ Adicionar Evento</button>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>3. Bases de Cálculo e Rodapé</h3>
+            <div class="grid-inputs">
+                <div class="input-group">
+                    <label>Salário Base (R$)</label>
+                    <input type="text" id="inp-salbase" value="1.903,13" oninput="updateHolerite()">
+                </div>
+                <div class="input-group">
+                    <label>Sal. Contr. INSS (R$)</label>
+                    <input type="text" id="inp-baseinss" value="4.208,48" oninput="updateHolerite()">
+                </div>
+                <div class="input-group">
+                    <label>Base Cálculo FGTS (R$)</label>
+                    <input type="text" id="inp-basefgts" value="4.208,48" oninput="updateHolerite()">
+                </div>
+                <div class="input-group">
+                    <label>FGTS do Mês (R$)</label>
+                    <input type="text" id="inp-fgtsmes" value="336,68" oninput="updateHolerite()">
+                </div>
+                <div class="input-group">
+                    <label>Base Cálculo IRRF (R$)</label>
+                    <input type="text" id="inp-baseirrf" value="4.208,48" oninput="updateHolerite()">
+                </div>
+                <div class="input-group">
+                    <label>Faixa IRRF</label>
+                    <input type="text" id="inp-faixairrf" value="22,5%" oninput="updateHolerite()">
+                </div>
+            </div>
+        </div>
+
+        <div class="actions-bar">
+            <div>
+                <button class="btn btn-warning" onclick="loadExampleData()">🔄 Recarregar Modelo Original</button>
+            </div>
+            <div>
+                <button class="btn btn-primary" style="font-size: 15px; padding: 12px 24px;" onclick="window.print()">🖨️ Imprimir / Gerar PDF (2 Vias A4)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOLHA A4 - VISUALIZAÇÃO E IMPRESSÃO -->
+    <div class="page-container">
+        
+        <!-- VIA 1: COLABORADOR -->
+        <div id="copy-1" class="holerite-copy"></div>
+
+        <!-- LINHA DE CORTE -->
+        <div class="cut-line">
+            <span>✂️ Corte aqui (Via Colaborador / Via Empresa)</span>
+        </div>
+
+        <!-- VIA 2: EMPRESA -->
+        <div id="copy-2" class="holerite-copy"></div>
+
+    </div>
+
+    <script>
+        // Dados de exemplo originais (modelo Concreta Construções)
+        const sampleEvents = [
+            { cod: '1001', desc: 'DIAS TRABALHADOS', ref: '30,00', tipo: 'Vencimento', val: '1.903,13' },
+            { cod: '1045', desc: 'ADICIONAL INSALUBRIDADE 40%', ref: '0,00', tipo: 'Vencimento', val: '761,26' },
+            { cod: '1051', desc: 'DSR - HORA EXTRA', ref: '0,00', tipo: 'Vencimento', val: '257,35' },
+            { cod: '1061', desc: 'HORA EXTRA 110%', ref: '10,80', tipo: 'Vencimento', val: '302,14' },
+            { cod: '1064', desc: 'HORA EXTRA 75%', ref: '42,23', tipo: 'Vencimento', val: '984,60' },
+            { cod: '1110', desc: 'VALE GAS', ref: '0,00', tipo: 'Vencimento', val: '100,00' },
+            { cod: '1472', desc: 'BONIFICACAO DE NAO AUSENCIA', ref: '0,00', tipo: 'Vencimento', val: '240,00' },
+            { cod: '2012', desc: 'CONTRIBUICAO ASSOCIATIVA MT', ref: '0,00', tipo: 'Desconto', val: '38,06' },
+            { cod: '2022', desc: 'DESCONTO PART. VALE ALIMENTACAO', ref: '0,00', tipo: 'Desconto', val: '55,00' },
+            { cod: '2042', desc: 'CONTRIBUICAO ASSISTENCIAL MT', ref: '0,00', tipo: 'Desconto', val: '45,00' },
+            { cod: '2055', desc: 'VALE TRANSP/AUXILIO TRANSP', ref: '6,00', tipo: 'Desconto', val: '98,96' },
+            { cod: '2075', desc: 'INSS', ref: '12,00', tipo: 'Desconto', val: '393,60' }
+        ];
+
+        function loadExampleData() {
+            const tbody = document.getElementById('editor-rows');
+            tbody.innerHTML = '';
+            sampleEvents.forEach(ev => {
+                addEventRow(ev.cod, ev.desc, ev.ref, ev.tipo, ev.val);
+            });
+            updateHolerite();
+        }
+
+        function addEventRow(cod = '', desc = '', ref = '', tipo = 'Vencimento', val = '') {
+            const tbody = document.getElementById('editor-rows');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="text" class="ev-cod" value="${cod}" oninput="updateHolerite()"></td>
+                <td><input type="text" class="ev-desc" value="${desc}" oninput="updateHolerite()"></td>
+                <td><input type="text" class="ev-ref" value="${ref}" oninput="updateHolerite()"></td>
+                <td>
+                    <select class="ev-tipo" onchange="updateHolerite()">
+                        <option value="Vencimento" ${tipo === 'Vencimento' ? 'selected' : ''}>Vencimento</option>
+                        <option value="Desconto" ${tipo === 'Desconto' ? 'selected' : ''}>Desconto</option>
+                    </select>
+                </td>
+                <td><input type="text" class="ev-val" value="${val}" oninput="updateHolerite()" placeholder="0,00"></td>
+                <td><button class="btn btn-danger" onclick="this.closest('tr').remove(); updateHolerite();">🗑️</button></td>
+            `;
+            tbody.appendChild(tr);
+            updateHolerite();
+        }
+
+        function parseCurrency(str) {
+            if (!str) return 0;
+            return parseFloat(str.toString().replace(/\./g, '').replace(',', '.')) || 0;
+        }
+
+        function formatCurrency(num) {
+            return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function generateHoleriteHTML() {
+            // Coletar cabeçalho
+            const mat = document.getElementById('inp-mat').value || '';
+            const nome = document.getElementById('inp-nome').value || '';
+            const cpf = document.getElementById('inp-cpf').value || '';
+            const adm = document.getElementById('inp-adm').value || '';
+            const cargo = document.getElementById('inp-cargo').value || '';
+            const cbo = document.getElementById('inp-cbo').value || '';
+            const comp = document.getElementById('inp-comp').value || '';
+            const secao = document.getElementById('inp-secao').value || '';
+            const bco = document.getElementById('inp-bco').value || '';
+            const ag = document.getElementById('inp-ag').value || '';
+            const cs = document.getElementById('inp-cs').value || '';
+
+            // Coletar eventos e calcular totais
+            const rows = document.querySelectorAll('#editor-rows tr');
+            let eventsHTML = '';
+            let totalVenc = 0;
+            let totalDesc = 0;
+
+            rows.forEach(r => {
+                const cod = r.querySelector('.ev-cod').value;
+                const desc = r.querySelector('.ev-desc').value;
+                const ref = r.querySelector('.ev-ref').value;
+                const tipo = r.querySelector('.ev-tipo').value;
+                const valStr = r.querySelector('.ev-val').value;
+                const valNum = parseCurrency(valStr);
+
+                let vencCell = '';
+                let descCell = '';
+
+                if (desc || cod || valStr) {
+                    if (tipo === 'Vencimento') {
+                        totalVenc += valNum;
+                        vencCell = valStr || formatCurrency(valNum);
+                    } else {
+                        totalDesc += valNum;
+                        descCell = valStr || formatCurrency(valNum);
+                    }
+
+                    eventsHTML += `
+                        <tr>
+                            <td class="col-cod">${cod}</td>
+                            <td class="col-desc">${desc}</td>
+                            <td class="col-ref">${ref}</td>
+                            <td class="col-venc">${vencCell}</td>
+                            <td class="col-desc-val">${descCell}</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            const totalLiq = totalVenc - totalDesc;
+
+            // Coletar bases
+            const salbase = document.getElementById('inp-salbase').value || '';
+            const baseinss = document.getElementById('inp-baseinss').value || '';
+            const basefgts = document.getElementById('inp-basefgts').value || '';
+            const fgtsmes = document.getElementById('inp-fgtsmes').value || '';
+            const baseirrf = document.getElementById('inp-baseirrf').value || '';
+            const faixairrf = document.getElementById('inp-faixairrf').value || '';
+
+            return `
+                <!-- TOPO LOGO E EMPRESA -->
+                <div class="holerite-header">
+                    <div class="logo-area">
+                        <svg width="150" height="42" viewBox="0 0 200 55">
+                            <!-- Logo Estilizado Concreta -->
+                            <path d="M 35 10 A 20 20 0 1 0 35 45" fill="none" stroke="#003366" stroke-width="8" stroke-linecap="round"/>
+                            <path d="M 30 18 A 12 12 0 0 1 42 28" fill="none" stroke="#e65c00" stroke-width="5" stroke-linecap="round"/>
+                            <text x="52" y="28" font-family="Arial, sans-serif" font-weight="900" font-size="20" fill="#003366">CONCRETA</text>
+                            <text x="52" y="44" font-family="Arial, sans-serif" font-weight="700" font-size="12" fill="#e65c00" letter-spacing="1.5">CONSTRUÇÕES</text>
+                        </svg>
+                    </div>
+                    <div class="company-info">
+                        <h2>DEMONSTRATIVO DE PAGAMENTO</h2>
+                        <p><strong>Concreta Construção e Incorporação Ltda</strong></p>
+                        <p>R. Santo André,495 | São José do Rio Preto - SP</p>
+                        <p>04.327.690/0001-49</p>
+                    </div>
+                </div>
+
+                <!-- DADOS DO COLABORADOR -->
+                <div class="employee-info">
+                    <div class="info-row">
+                        <div class="info-cell" style="width: 12%;"><strong>${mat}</strong></div>
+                        <div class="info-cell" style="width: 44%;"><strong>${nome}</strong></div>
+                        <div class="info-cell" style="width: 24%;">CPF : ${cpf}</div>
+                        <div class="info-cell" style="width: 20%;">ADMISSÃO : ${adm}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-cell" style="width: 56%;">CARGO: ${cargo}</div>
+                        <div class="info-cell" style="width: 15%;">CBO : ${cbo}</div>
+                        <div class="info-cell" style="width: 17%;">Competência:</div>
+                        <div class="info-cell" style="width: 12%; text-align: center;"><strong>${comp}</strong></div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-cell" style="width: 56%;">SEÇÃO: ${secao}</div>
+                        <div class="info-cell" style="width: 15%;">BCO : ${bco}</div>
+                        <div class="info-cell" style="width: 10%;">AG : ${ag}</div>
+                        <div class="info-cell" style="width: 19%;">C/S : ${cs}</div>
+                    </div>
+                </div>
+
+                <!-- TABELA DE EVENTOS -->
+                <div class="events-body">
+                    <table class="events-table">
+                        <thead>
+                            <tr>
+                                <th class="col-cod">Código</th>
+                                <th class="col-desc">Descrição</th>
+                                <th class="col-ref">Referência</th>
+                                <th class="col-venc">Vencimentos</th>
+                                <th class="col-desc-val">Descontos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${eventsHTML}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- TOTAIS -->
+                <div class="totals-section">
+                    <div class="totals-left"></div>
+                    <div class="totals-right">
+                        <div class="totals-subrow">
+                            <div class="total-box">
+                                <div class="total-label">Total Vencimentos</div>
+                                <div class="total-value">${formatCurrency(totalVenc)}</div>
+                            </div>
+                            <div class="total-box">
+                                <div class="total-label">Total Descontos</div>
+                                <div class="total-value">${formatCurrency(totalDesc)}</div>
+                            </div>
+                        </div>
+                        <div class="totals-subrow">
+                            <div class="liquido-box">
+                                <div class="liquido-label">Total Líquido</div>
+                                <div class="liquido-value">${formatCurrency(totalLiq)}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BASES DE CÁLCULO -->
+                <table class="bases-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 16.6%">Salario Base</th>
+                            <th style="width: 16.6%">Sal.Contr.INSS</th>
+                            <th style="width: 16.6%">Base Calculo FGTS</th>
+                            <th style="width: 16.6%">FGTS do MES</th>
+                            <th style="width: 16.6%">Base Calculo IRRF</th>
+                            <th style="width: 17%">Faixa IRRF</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>${salbase}</td>
+                            <td>${baseinss}</td>
+                            <td>${basefgts}</td>
+                            <td>${fgtsmes}</td>
+                            <td>${baseirrf}</td>
+                            <td>${faixairrf}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- ASSINATURA -->
+                <div class="receipt-footer">
+                    <div class="receipt-text">Recebi a importância líquida acima discriminada.</div>
+                    <div class="signatures">
+                        <div class="sig-line" style="width: 55%;">
+                            <div class="line"></div>
+                            <div>Assinatura</div>
+                        </div>
+                        <div class="sig-line" style="width: 30%;">
+                            <div class="line"></div>
+                            <div>Data</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateHolerite() {
+            const html = generateHoleriteHTML();
+            document.getElementById('copy-1').innerHTML = html;
+            document.getElementById('copy-2').innerHTML = html;
+        }
+
+        // Inicializar com o modelo enviado
+        window.onload = () => {
+            loadExampleData();
+        };
+    </script>
+</body>
+</html>
