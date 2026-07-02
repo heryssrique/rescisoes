@@ -489,6 +489,17 @@
                     <label>Título do Cabeçalho</label>
                     <input type="text" id="inp-emp-titulo" value="DEMONSTRATIVO DE PAGAMENTO" oninput="updateHolerite()">
                 </div>
+                <div class="input-group" style="grid-column: span 2;">
+                    <label>Logotipo no Cabeçalho</label>
+                    <div style="display: flex; gap: 8px;">
+                        <select id="inp-emp-logo-option" onchange="handleLogoChange()" style="flex: 1;">
+                            <option value="none" selected>🚫 Sem Logotipo (Ocultar Logo da Empresa)</option>
+                            <option value="concreta">🏢 Exibir Logo Concreta Construções</option>
+                            <option value="custom">🖼️ Enviar Imagem / Logo Personalizado</option>
+                        </select>
+                        <input type="file" id="inp-custom-logo-file" accept="image/*" style="display: none; padding: 4px;" onchange="uploadCustomLogo(event)">
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -679,6 +690,30 @@
             updateHolerite();
         }
 
+        let customLogoDataURL = '';
+
+        function handleLogoChange() {
+            const opt = document.getElementById('inp-emp-logo-option').value;
+            const fileInput = document.getElementById('inp-custom-logo-file');
+            if (opt === 'custom') {
+                fileInput.style.display = 'inline-block';
+            } else {
+                fileInput.style.display = 'none';
+            }
+            updateHolerite();
+        }
+
+        function uploadCustomLogo(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                customLogoDataURL = e.target.result;
+                updateHolerite();
+            };
+            reader.readAsDataURL(file);
+        }
+
         function addEventRow(cod = '', desc = '', ref = '', tipo = 'Vencimento', val = '') {
             const tbody = document.getElementById('editor-rows');
             const tr = document.createElement('tr');
@@ -776,19 +811,36 @@
             const baseirrf = document.getElementById('inp-baseirrf').value || '';
             const faixairrf = document.getElementById('inp-faixairrf').value || '';
 
-            return `
-                <!-- TOPO LOGO E EMPRESA -->
-                <div class="holerite-header">
-                    <div class="logo-area">
+            const logoOpt = document.getElementById('inp-emp-logo-option') ? document.getElementById('inp-emp-logo-option').value : 'none';
+            let logoHTML = '';
+            let companyInfoStyle = 'width: 100%; text-align: left; padding-left: 0;';
+
+            if (logoOpt === 'concreta') {
+                logoHTML = `
+                    <div class="logo-area" style="width: 23%; display: flex; align-items: center;">
                         <svg width="150" height="42" viewBox="0 0 200 55">
-                            <!-- Logo Estilizado Concreta -->
                             <path d="M 35 10 A 20 20 0 1 0 35 45" fill="none" stroke="#003366" stroke-width="8" stroke-linecap="round"/>
                             <path d="M 30 18 A 12 12 0 0 1 42 28" fill="none" stroke="#e65c00" stroke-width="5" stroke-linecap="round"/>
                             <text x="52" y="28" font-family="Arial, sans-serif" font-weight="900" font-size="20" fill="#003366">CONCRETA</text>
                             <text x="52" y="44" font-family="Arial, sans-serif" font-weight="700" font-size="12" fill="#e65c00" letter-spacing="1.5">CONSTRUÇÕES</text>
                         </svg>
                     </div>
-                    <div class="company-info">
+                `;
+                companyInfoStyle = 'width: 77%; text-align: left; padding-left: 10px;';
+            } else if (logoOpt === 'custom' && customLogoDataURL) {
+                logoHTML = `
+                    <div class="logo-area" style="width: 23%; display: flex; align-items: center;">
+                        <img src="${customLogoDataURL}" style="max-height: 42px; max-width: 140px; object-fit: contain;">
+                    </div>
+                `;
+                companyInfoStyle = 'width: 77%; text-align: left; padding-left: 10px;';
+            }
+
+            return `
+                <!-- TOPO LOGO E EMPRESA -->
+                <div class="holerite-header">
+                    ${logoHTML}
+                    <div class="company-info" style="${companyInfoStyle}">
                         <h2>${empTitulo}</h2>
                         <p><strong>${empRazao}</strong></p>
                         <p>${empEnd}</p>
@@ -923,7 +975,9 @@
                     razao: document.getElementById('inp-emp-razao').value,
                     cnpj: document.getElementById('inp-emp-cnpj').value,
                     end: document.getElementById('inp-emp-end').value,
-                    titulo: document.getElementById('inp-emp-titulo').value
+                    titulo: document.getElementById('inp-emp-titulo').value,
+                    logoOption: document.getElementById('inp-emp-logo-option') ? document.getElementById('inp-emp-logo-option').value : 'none',
+                    customLogo: customLogoDataURL
                 },
                 employee: {
                     mat: document.getElementById('inp-mat').value,
@@ -957,6 +1011,13 @@
                 document.getElementById('inp-emp-cnpj').value = data.employer.cnpj || '';
                 document.getElementById('inp-emp-end').value = data.employer.end || '';
                 document.getElementById('inp-emp-titulo').value = data.employer.titulo || 'DEMONSTRATIVO DE PAGAMENTO';
+                if (document.getElementById('inp-emp-logo-option') && data.employer.logoOption) {
+                    document.getElementById('inp-emp-logo-option').value = data.employer.logoOption;
+                }
+                if (data.employer.customLogo) {
+                    customLogoDataURL = data.employer.customLogo;
+                }
+                handleLogoChange();
             }
             if (data.employee) {
                 document.getElementById('inp-mat').value = data.employee.mat || '';
