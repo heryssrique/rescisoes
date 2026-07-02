@@ -217,10 +217,16 @@ app.use(errorHandler);
 
 // ── Conexão MongoDB e inicialização ───────────────────────────────────────
 async function start() {
+  // Iniciar o servidor Express imediatamente para que a API esteja sempre disponível
+  app.listen(PORT, () => {
+    logger.info(`🚀 API rodando na porta ${PORT}`);
+    logger.info(`   Health: http://localhost:${PORT}/api/health`);
+  });
+
   try {
     logger.info('⏳ Iniciando conexão com o MongoDB...');
     const connectOptions = {
-      serverSelectionTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 5000,
       heartbeatFrequencyMS: 2000,
     };
 
@@ -230,14 +236,9 @@ async function start() {
     // Iniciar tarefas agendadas
     initCron();
     logger.info(`✅ Tarefas agendadas (Cron) inicializadas`);
-
-    app.listen(PORT, () => {
-      logger.info(`🚀 API rodada na porta ${PORT}`);
-      logger.info(`   Health: http://localhost:${PORT}/api/health`);
-    });
   } catch (err) {
-    logger.error('❌ ERRO CRÍTICO NA CONEXÃO MONGODB:', err);
-    process.exit(1);
+    logger.warn('⚠️ ERRO DE CONEXÃO MONGODB (Modo Offline Ativado): ' + err.message);
+    logger.warn('⚠️ O servidor continuará respondendo em modo offline/fallback no ambiente local.');
   }
 }
 
