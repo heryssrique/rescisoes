@@ -444,6 +444,54 @@
         <h1>📊 Gerador de Holerite / Demonstrativo de Pagamento</h1>
         <p class="subtitle">Preencha os dados abaixo ou adicione proventos e descontos. O holerite será atualizado instantaneamente nas 2 vias prontas para impressão.</p>
 
+        <!-- GERENCIADOR DE MODELOS -->
+        <div class="form-section" style="background: #fdfaf6; padding: 15px; border-radius: 8px; border: 1px solid #f0e6d2;">
+            <h3 style="color: #d97706; margin-bottom: 10px;">💾 Salvar / Carregar Modelo (Para Próximos Meses)</h3>
+            <div class="grid-inputs" style="align-items: flex-end;">
+                <div class="input-group">
+                    <label>Modelos Salvos no Navegador:</label>
+                    <select id="sel-template" onchange="loadSelectedTemplate()"></select>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-danger" onclick="deleteSelectedTemplate()">🗑️ Excluir Salvo</button>
+                </div>
+                <div class="input-group">
+                    <label>Nome para Salvar Modelo (ex: Agnaldo - Julho/2026):</label>
+                    <input type="text" id="inp-tpl-name" placeholder="Digite um nome para o modelo...">
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn btn-success" onclick="saveCurrentTemplate()">💾 Salvar no Navegador</button>
+                    <button class="btn btn-primary" onclick="exportTemplateJSON()">📥 Exportar Arquivo</button>
+                    <label class="btn btn-warning" style="margin: 0; cursor: pointer;">
+                        📤 Importar Arquivo <input type="file" id="inp-import-file" accept=".json" style="display: none;" onchange="importTemplateJSON(event)">
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- DADOS DO EMPREGADOR -->
+        <div class="form-section">
+            <h3>🏢 Dados do Empregador (Empresa)</h3>
+            <div class="grid-inputs">
+                <div class="input-group" style="grid-column: span 2;">
+                    <label>Razão Social / Nome do Empregador</label>
+                    <input type="text" id="inp-emp-razao" value="Concreta Construção e Incorporação Ltda" oninput="updateHolerite()">
+                </div>
+                <div class="input-group">
+                    <label>CNPJ / CPF</label>
+                    <input type="text" id="inp-emp-cnpj" value="04.327.690/0001-49" oninput="updateHolerite()">
+                </div>
+                <div class="input-group" style="grid-column: span 2;">
+                    <label>Endereço / Cidade / UF</label>
+                    <input type="text" id="inp-emp-end" value="R. Santo André,495 | São José do Rio Preto - SP" oninput="updateHolerite()">
+                </div>
+                <div class="input-group">
+                    <label>Título do Cabeçalho</label>
+                    <input type="text" id="inp-emp-titulo" value="DEMONSTRATIVO DE PAGAMENTO" oninput="updateHolerite()">
+                </div>
+            </div>
+        </div>
+
         <div class="form-section">
             <h3>1. Dados do Colaborador & Competência</h3>
             <div class="grid-inputs">
@@ -661,6 +709,12 @@
         }
 
         function generateHoleriteHTML() {
+            // Coletar dados do empregador
+            const empRazao = document.getElementById('inp-emp-razao').value || '';
+            const empCnpj = document.getElementById('inp-emp-cnpj').value || '';
+            const empEnd = document.getElementById('inp-emp-end').value || '';
+            const empTitulo = document.getElementById('inp-emp-titulo').value || 'DEMONSTRATIVO DE PAGAMENTO';
+
             // Coletar cabeçalho
             const mat = document.getElementById('inp-mat').value || '';
             const nome = document.getElementById('inp-nome').value || '';
@@ -735,10 +789,10 @@
                         </svg>
                     </div>
                     <div class="company-info">
-                        <h2>DEMONSTRATIVO DE PAGAMENTO</h2>
-                        <p><strong>Concreta Construção e Incorporação Ltda</strong></p>
-                        <p>R. Santo André,495 | São José do Rio Preto - SP</p>
-                        <p>04.327.690/0001-49</p>
+                        <h2>${empTitulo}</h2>
+                        <p><strong>${empRazao}</strong></p>
+                        <p>${empEnd}</p>
+                        <p>${empCnpj}</p>
                     </div>
                 </div>
 
@@ -852,9 +906,174 @@
             document.getElementById('copy-2').innerHTML = html;
         }
 
+        function getFormDataObject() {
+            const events = [];
+            document.querySelectorAll('#editor-rows tr').forEach(r => {
+                events.push({
+                    cod: r.querySelector('.ev-cod').value,
+                    desc: r.querySelector('.ev-desc').value,
+                    ref: r.querySelector('.ev-ref').value,
+                    tipo: r.querySelector('.ev-tipo').value,
+                    val: r.querySelector('.ev-val').value
+                });
+            });
+
+            return {
+                employer: {
+                    razao: document.getElementById('inp-emp-razao').value,
+                    cnpj: document.getElementById('inp-emp-cnpj').value,
+                    end: document.getElementById('inp-emp-end').value,
+                    titulo: document.getElementById('inp-emp-titulo').value
+                },
+                employee: {
+                    mat: document.getElementById('inp-mat').value,
+                    nome: document.getElementById('inp-nome').value,
+                    cpf: document.getElementById('inp-cpf').value,
+                    adm: document.getElementById('inp-adm').value,
+                    cargo: document.getElementById('inp-cargo').value,
+                    cbo: document.getElementById('inp-cbo').value,
+                    comp: document.getElementById('inp-comp').value,
+                    secao: document.getElementById('inp-secao').value,
+                    bco: document.getElementById('inp-bco').value,
+                    ag: document.getElementById('inp-ag').value,
+                    cs: document.getElementById('inp-cs').value
+                },
+                events: events,
+                bases: {
+                    salbase: document.getElementById('inp-salbase').value,
+                    baseinss: document.getElementById('inp-baseinss').value,
+                    basefgts: document.getElementById('inp-basefgts').value,
+                    fgtsmes: document.getElementById('inp-fgtsmes').value,
+                    baseirrf: document.getElementById('inp-baseirrf').value,
+                    faixairrf: document.getElementById('inp-faixairrf').value
+                }
+            };
+        }
+
+        function setFormDataObject(data) {
+            if (!data) return;
+            if (data.employer) {
+                document.getElementById('inp-emp-razao').value = data.employer.razao || '';
+                document.getElementById('inp-emp-cnpj').value = data.employer.cnpj || '';
+                document.getElementById('inp-emp-end').value = data.employer.end || '';
+                document.getElementById('inp-emp-titulo').value = data.employer.titulo || 'DEMONSTRATIVO DE PAGAMENTO';
+            }
+            if (data.employee) {
+                document.getElementById('inp-mat').value = data.employee.mat || '';
+                document.getElementById('inp-nome').value = data.employee.nome || '';
+                document.getElementById('inp-cpf').value = data.employee.cpf || '';
+                document.getElementById('inp-adm').value = data.employee.adm || '';
+                document.getElementById('inp-cargo').value = data.employee.cargo || '';
+                document.getElementById('inp-cbo').value = data.employee.cbo || '';
+                document.getElementById('inp-comp').value = data.employee.comp || '';
+                document.getElementById('inp-secao').value = data.employee.secao || '';
+                document.getElementById('inp-bco').value = data.employee.bco || '';
+                document.getElementById('inp-ag').value = data.employee.ag || '';
+                document.getElementById('inp-cs').value = data.employee.cs || '';
+            }
+            if (Array.isArray(data.events)) {
+                const tbody = document.getElementById('editor-rows');
+                tbody.innerHTML = '';
+                data.events.forEach(ev => {
+                    addEventRow(ev.cod || '', ev.desc || '', ev.ref || '', ev.tipo || 'Vencimento', ev.val || '');
+                });
+            }
+            if (data.bases) {
+                document.getElementById('inp-salbase').value = data.bases.salbase || '';
+                document.getElementById('inp-baseinss').value = data.bases.baseinss || '';
+                document.getElementById('inp-basefgts').value = data.bases.basefgts || '';
+                document.getElementById('inp-fgtsmes').value = data.bases.fgtsmes || '';
+                document.getElementById('inp-baseirrf').value = data.bases.baseirrf || '';
+                document.getElementById('inp-faixairrf').value = data.bases.faixairrf || '';
+            }
+            updateHolerite();
+        }
+
+        function loadTemplatesList() {
+            const templates = JSON.parse(localStorage.getItem('holerite_templates') || '{}');
+            const sel = document.getElementById('sel-template');
+            sel.innerHTML = '<option value="">-- Selecione um modelo salvo --</option>';
+            Object.keys(templates).forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                sel.appendChild(opt);
+            });
+        }
+
+        function saveCurrentTemplate() {
+            const nameInput = document.getElementById('inp-tpl-name');
+            const name = nameInput.value.trim();
+            if (!name) {
+                alert('Por favor, digite um nome para salvar o modelo (ex: Agnaldo - Julho/2026).');
+                return;
+            }
+            const templates = JSON.parse(localStorage.getItem('holerite_templates') || '{}');
+            templates[name] = getFormDataObject();
+            localStorage.setItem('holerite_templates', JSON.stringify(templates));
+            loadTemplatesList();
+            document.getElementById('sel-template').value = name;
+            alert('✅ Modelo "' + name + '" salvo com sucesso no navegador!');
+        }
+
+        function loadSelectedTemplate() {
+            const name = document.getElementById('sel-template').value;
+            if (!name) return;
+            const templates = JSON.parse(localStorage.getItem('holerite_templates') || '{}');
+            if (templates[name]) {
+                setFormDataObject(templates[name]);
+            }
+        }
+
+        function deleteSelectedTemplate() {
+            const name = document.getElementById('sel-template').value;
+            if (!name) {
+                alert('Selecione um modelo na lista para excluir.');
+                return;
+            }
+            if (!confirm('Deseja realmente excluir o modelo "' + name + '"?')) return;
+            const templates = JSON.parse(localStorage.getItem('holerite_templates') || '{}');
+            delete templates[name];
+            localStorage.setItem('holerite_templates', JSON.stringify(templates));
+            loadTemplatesList();
+            alert('Modelo excluído.');
+        }
+
+        function exportTemplateJSON() {
+            const data = getFormDataObject();
+            const nome = document.getElementById('inp-nome').value.trim() || 'modelo';
+            const comp = (document.getElementById('inp-comp').value.trim() || 'data').replace(/[\/\s]+/g, '_');
+            const filename = `holerite_${nome}_${comp}.json`.toLowerCase();
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importTemplateJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    setFormDataObject(data);
+                    alert('✅ Modelo carregado com sucesso a partir do arquivo!');
+                } catch(err) {
+                    alert('Erro ao ler arquivo JSON de modelo.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
         // Inicializar com o modelo enviado
         window.onload = () => {
             loadExampleData();
+            loadTemplatesList();
         };
     </script>
 </body>
