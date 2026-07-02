@@ -182,16 +182,16 @@
             border: 1.2px solid var(--border);
             font-family: Arial, Helvetica, sans-serif;
             color: #000;
-            font-size: 9px;
+            font-size: 10px;
             background: #fff;
-            margin-bottom: 2mm;
+            margin-bottom: 3.5mm;
         }
 
         /* Top Header */
         .holerite-header {
             display: flex;
             align-items: center;
-            padding: 4px 8px;
+            padding: 5px 10px;
             border-bottom: 1.2px solid var(--border);
         }
 
@@ -208,16 +208,16 @@
         }
 
         .company-info h2 {
-            font-size: 13px;
+            font-size: 15px;
             font-weight: bold;
             letter-spacing: 0.5px;
-            margin-bottom: 1px;
+            margin-bottom: 2px;
         }
 
         .company-info p {
-            font-size: 8.5px;
-            line-height: 1.25;
-            margin: 1px 0;
+            font-size: 10px;
+            line-height: 1.3;
+            margin: 1.5px 0;
         }
 
         /* Colaborador Header Grid */
@@ -229,18 +229,20 @@
             display: flex;
             border-bottom: 1px solid var(--border);
         }
+
         .info-row:last-child {
             border-bottom: none;
         }
 
         .info-cell {
-            padding: 2px 5px;
+            padding: 3.5px 6px;
             border-right: 1px solid var(--border);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            font-size: 8.5px;
+            font-size: 9.5px;
         }
+
         .info-cell:last-child {
             border-right: none;
         }
@@ -255,32 +257,58 @@
         .events-table th {
             border-bottom: 1.2px solid var(--border);
             border-right: 1px solid var(--border);
-            padding: 2.5px 4px;
+            padding: 4px 6px;
             font-weight: bold;
             text-align: center;
             background-color: #fff;
-            font-size: 8.5px;
+            font-size: 9.5px;
         }
-        .events-table th:last-child { border-right: none; }
+
+        .events-table th:last-child {
+            border-right: none;
+        }
 
         .events-table td {
-            padding: 1.5px 4px;
+            padding: 2.5px 6px;
             border-right: 1px solid var(--border);
             vertical-align: top;
-            font-size: 8.5px;
+            font-size: 9.5px;
         }
-        .events-table td:last-child { border-right: none; }
+
+        .events-table td:last-child {
+            border-right: none;
+        }
 
         .events-body {
-            height: 48mm; /* Altura otimizada para encaixar 2 vias em 1 folha A4 */
+            height: 55mm;
+            /* Altura otimizada aproveitando melhor a folha A4 e suportando fontes maiores */
         }
 
         /* Colunas larguras exatas */
-        .col-cod { width: 8%; text-align: center; }
-        .col-desc { width: 44%; text-align: left; }
-        .col-ref { width: 14%; text-align: right; }
-        .col-venc { width: 17%; text-align: right; }
-        .col-desc-val { width: 17%; text-align: right; }
+        .col-cod {
+            width: 8%;
+            text-align: center;
+        }
+
+        .col-desc {
+            width: 44%;
+            text-align: left;
+        }
+
+        .col-ref {
+            width: 14%;
+            text-align: right;
+        }
+
+        .col-venc {
+            width: 17%;
+            text-align: right;
+        }
+
+        .col-desc-val {
+            width: 17%;
+            text-align: right;
+        }
 
         /* Rodapé da tabela de eventos (Totais) */
         .totals-section {
@@ -304,27 +332,34 @@
             display: flex;
             border-bottom: 1px solid var(--border);
         }
-        .totals-subrow:last-child { border-bottom: none; }
+
+        .totals-subrow:last-child {
+            border-bottom: none;
+        }
 
         .total-box {
             flex: 1;
-            padding: 2px 4px;
+            padding: 3px 6px;
             border-right: 1px solid var(--border);
             text-align: right;
         }
-        .total-box:last-child { border-right: none; }
+
+        .total-box:last-child {
+            border-right: none;
+        }
 
         .total-label {
-            font-size: 8px;
+            font-size: 9px;
             text-align: center;
             border-bottom: 1px solid var(--border);
-            padding: 1px;
+            padding: 2px;
             background: #fff;
         }
+
         .total-value {
-            font-size: 10px;
+            font-size: 11px;
             font-weight: bold;
-            padding: 2px 4px;
+            padding: 3px 6px;
             text-align: right;
         }
 
@@ -332,22 +367,24 @@
             display: flex;
             width: 100%;
         }
+
         .liquido-label {
             width: 50%;
-            padding: 3px 4px;
+            padding: 4px 6px;
             font-weight: bold;
-            font-size: 10px;
+            font-size: 11px;
             border-right: 1px solid var(--border);
             text-align: center;
             display: flex;
             align-items: center;
             justify-content: center;
         }
+
         .liquido-value {
             width: 50%;
-            padding: 3px 4px;
+            padding: 4px 6px;
             font-weight: bold;
-            font-size: 11px;
+            font-size: 12.5px;
             text-align: right;
         }
 
@@ -362,42 +399,49 @@
         .bases-table th {
             border-right: 1px solid var(--border);
             border-bottom: 1px solid var(--border);
-            padding: 2px;
-            font-size: 8px;
+            padding: 3px;
+            font-size: 9px;
             font-weight: normal;
             text-align: center;
         }
-        .bases-table th:last-child { border-right: none; }
+
+        .bases-table th:last-child {
+            border-right: none;
+        }
 
         .bases-table td {
             border-right: 1px solid var(--border);
-            padding: 2.5px;
-            font-size: 8.5px;
+            padding: 3.5px;
+            font-size: 9.5px;
             text-align: center;
         }
-        .bases-table td:last-child { border-right: none; }
+
+        .bases-table td:last-child {
+            border-right: none;
+        }
 
         /* Assinaturas / Recebimento */
         .receipt-footer {
-            padding: 4px 12px;
+            padding: 5px 12px;
         }
 
         .receipt-text {
             text-align: center;
-            font-size: 8px;
-            margin-bottom: 12px;
+            font-size: 9px;
+            margin-bottom: 14px;
         }
 
         .signatures {
             display: flex;
             justify-content: space-around;
             align-items: flex-end;
-            margin-bottom: 2px;
+            margin-bottom: 3px;
         }
 
         .sig-line {
             text-align: center;
         }
+
         .sig-line .line {
             border-bottom: 1px solid #000;
             margin-bottom: 2px;
@@ -407,11 +451,13 @@
         .cut-line {
             display: flex;
             align-items: center;
-            margin: 2.5mm 0;
+            margin: 3mm 0;
             color: #555;
-            font-size: 9.5px;
+            font-size: 10px;
         }
-        .cut-line::before, .cut-line::after {
+
+        .cut-line::before,
+        .cut-line::after {
             content: '';
             flex: 1;
             border-bottom: 1.2px dashed #555;
