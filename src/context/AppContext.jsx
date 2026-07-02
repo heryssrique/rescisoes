@@ -492,19 +492,20 @@ export function AppProvider({ children }) {
       toggleTheme: () => dispatch({ type: 'TOGGLE_THEME' }),
       togglePerformanceMode: () => dispatch({ type: 'TOGGLE_PERFORMANCE_MODE' }),
       updateConfig: (name, key, payload) => dispatch({ type: 'UPDATE_CONFIG', configName: name, key, payload }),
-      changeStatus: async (d, newStatus) => {
+      changeStatus: async (d, newStatus, extraFields = {}) => {
         const isCancelado = newStatus === 'cancelado';
         const isConcluido = newStatus === 'concluido';
         const willArchive = (isCancelado || isConcluido) && !d.arquivado;
 
         const updated = {
           ...d,
+          ...extraFields,
           status: newStatus,
           arquivado: d.arquivado || willArchive,
           historico: [...(d.historico || []), {
             data: new Date().toISOString(),
             acao: `Status alterado para ${newStatus.toUpperCase()}`,
-            nota: `Alteração via detalhe`
+            nota: extraFields.dataProgramadaPagamento ? `Data programada definida para ${extraFields.dataProgramadaPagamento}` : `Alteração via detalhe`
           }]
         };
 

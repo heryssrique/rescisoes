@@ -35,6 +35,10 @@ export function DetailView({ id }) {
   const [showNoteInput, setShowNoteInput] = useState(false);
 
   // Mover hooks para antes do early return para evitar Erro #300 do React
+  const [showProgModal, setShowProgModal] = useState(false);
+  const [dataProgInput, setDataProgInput] = useState('');
+  const [isChangingToPComp, setIsChangingToPComp] = useState(false);
+
   const idsToRemove = useMemo(() => ['d4', 'd5', 'h6', 'h7'], []);
   const checklist = useMemo(() => (d?.checklist || []).filter(c => !idsToRemove.includes(c.id)), [d?.checklist, idsToRemove]);
   
@@ -106,9 +110,9 @@ export function DetailView({ id }) {
     setShowNoteInput(false);
   }
 
-  async function handleStatusChange(newStatus) {
+  async function handleStatusChange(newStatus, extraFields = {}) {
     try {
-      await actions.changeStatus(d, newStatus);
+      await actions.changeStatus(d, newStatus, extraFields);
       if (newStatus === 'pago') {
         const style = localStorage.getItem('desligest_confetti_style') || 'royal_gold';
         actions.triggerCelebration(style);
@@ -314,7 +318,15 @@ export function DetailView({ id }) {
                   key={s.key}
                   className={`chip btn-sm ${d.status === s.key ? 'active' : ''}`}
                   style={{ fontSize: 11 }}
-                  onClick={() => handleStatusChange(s.key)}
+                  onClick={() => {
+                    if (s.key === 'pendente_comprovante') {
+                      setIsChangingToPComp(true);
+                      setDataProgInput(d.dataProgramadaPagamento || getPaymentDate(d.dataDesligamento, 10) || format(new Date(), 'yyyy-MM-dd'));
+                      setShowProgModal(true);
+                    } else {
+                      handleStatusChange(s.key);
+                    }
+                  }}
                 >
                   {s.short}
                 </button>
@@ -361,6 +373,42 @@ export function DetailView({ id }) {
               <span style={{ color: 'var(--accent-yellow)', fontWeight: 600 }}>{formatDate(getPaymentDate(d.dataDesligamento, 10))}</span>
               <DaysUntilPayment dataPagamento={getPaymentDate(d.dataDesligamento, 10)} />
             </div>
+          </div>
+        </div>
+        <div className="info-item" style={{ gridColumn: '1 / -1', borderLeft: '3px solid var(--accent-blue)', background: 'var(--bg-secondary)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <div className="info-item-label" style={{ color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Calendar size={13} /> Data Programada do Pagamento (P. Comp.)
+              </div>
+              <div className="info-item-value" style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
+                {d.dataProgramadaPagamento ? (
+                  <>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
+                      {formatDate(d.dataProgramadaPagamento)}
+                    </span>
+                    <span style={{ background: 'rgba(59, 130, 246, 0.15)', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 600 }}>
+                      <DaysUntilPayment dataPagamento={d.dataProgramadaPagamento} />
+                    </span>
+                  </>
+                ) : (
+                  <span style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: 12 }}>
+                    Não informada (Clique em P. Comp. na etapa atual ou no botão ao lado para programar)
+                  </span>
+                )}
+              </div>
+            </div>
+            <button
+              className="btn btn-secondary btn-sm"
+              style={{ fontSize: 11 }}
+              onClick={() => {
+                setIsChangingToPComp(false);
+                setDataProgInput(d.dataProgramadaPagamento || getPaymentDate(d.dataDesligamento, 10) || format(new Date(), 'yyyy-MM-dd'));
+                setShowProgModal(true);
+              }}
+            >
+              <Edit2 size={12} /> {d.dataProgramadaPagamento ? 'Alterar Data Programada' : 'Definir Data Programada'}
+            </button>
           </div>
         </div>
         <div className="info-item">
@@ -552,6 +600,63 @@ export function DetailView({ id }) {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {showProgModal && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }} onClick={e => e.target === e.currentTarget && setShowProgModal(false)}>
+          <div className="modal" style={{ width: '100%', maxWidth: 420 }}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Calendar size={16} style={{ color: 'var(--accent-blue)' }} /> Data Programada do Pagamento
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                  {isChangingToPComp ? 'Avançando para: Pendente de Comprovante (P. Comp.)' : 'Programação de Pagamento'}
+                </div>
+              </div>
+              <button className="btn btn-icon" onClick={() => setShowProgModal(false)}><X size={16} /></button>
+            </div>
+            <div className="modal-body">
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.5 }}>
+                {isChangingToPComp
+                  ? 'Antes de mover para a etapa Pendente de Comprovante (P. Comp.), informe a data programada para a realização do pagamento:'
+                  : 'Informe ou altere a data programada para o pagamento desta rescisão:'}
+              </p>
+              <div className="form-group">
+                <label className="form-label" style={{ fontSize: 12, fontWeight: 600 }}>Data Programada</label>
+                <input
+                  type="date"
+                  className="form-input"
+                  style={{ width: '100%' }}
+                  value={dataProgInput}
+                  onChange={e => setDataProgInput(e.target.value)}
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '16px 20px', borderTop: '1px solid var(--border)' }}>
+              <button className="btn btn-secondary" onClick={() => setShowProgModal(false)}>Cancelar</button>
+              <button
+                className="btn btn-primary"
+                onClick={async () => {
+                  if (!dataProgInput) {
+                    toast('Por favor, informe a data programada.', 'error');
+                    return;
+                  }
+                  setShowProgModal(false);
+                  if (isChangingToPComp) {
+                    await handleStatusChange('pendente_comprovante', { dataProgramadaPagamento: dataProgInput });
+                  } else {
+                    await actions.updateDesligamento({ ...d, dataProgramadaPagamento: dataProgInput });
+                    toast('Data programada atualizada com sucesso!', 'success');
+                  }
+                }}
+              >
+                Confirmar e Salvar
+              </button>
+            </div>
           </div>
         </div>
       )}
