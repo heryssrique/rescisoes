@@ -20,7 +20,7 @@ router.get('/', auth, async (req, res, next) => {
 
     if (status && status !== 'todos') filter.status = status;
     if (motivo && motivo !== 'todos') filter.motivo = motivo;
-    
+
     if (q) {
       const regex = new RegExp(q, 'i');
       filter.$or = [
@@ -32,7 +32,7 @@ router.get('/', auth, async (req, res, next) => {
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    
+
     const [desligamentos, total] = await Promise.all([
       Desligamento.find(filter)
         .sort({ [sort]: sortOrder })
@@ -120,7 +120,7 @@ router.put('/:id', auth, async (req, res, next) => {
       updates,
       { returnDocument: 'after', runValidators: true }
     );
-    
+
     res.json(doc);
   } catch (err) {
     console.error(`[PUT /desligamentos/${req.params.id}] Error:`, err);
@@ -140,7 +140,7 @@ router.patch('/:id/checklist/:itemId', auth, async (req, res, next) => {
     item.done = !item.done;
     item.doneAt = item.done ? new Date().toISOString() : null;
     if (item.done) item.notApplicable = false;
-    
+
     if (doc.status === 'concluido' && item.id === 'p2' && item.done && !doc.arquivado) {
       doc.arquivado = true;
       doc.historico.push({
@@ -222,7 +222,7 @@ router.post('/bulk-archive', auth, async (req, res, next) => {
     const { ids } = req.body;
     const result = await Desligamento.updateMany(
       { _id: { $in: ids }, status: { $in: ['pago', 'cancelado'] } },
-      { 
+      {
         $set: { arquivado: true },
         $push: { historico: { data: new Date().toISOString(), acao: `Arquivado em lote por ${req.user.name}`, nota: '' } }
       }
@@ -238,7 +238,7 @@ router.post('/bulk-status', auth, async (req, res, next) => {
     const { ids, status } = req.body;
     const result = await Desligamento.updateMany(
       { _id: { $in: ids } },
-      { 
+      {
         $set: { status },
         $push: { historico: { data: new Date().toISOString(), acao: `Status alterado em lote para '${status}' por ${req.user.name}`, nota: '' } }
       }
@@ -284,19 +284,19 @@ router.post('/bulk', auth, async (req, res) => {
   try {
     const data = Array.isArray(req.body) ? req.body : [req.body];
     console.log(`[POST /desligamentos/bulk] Tentando importar ${data.length} registros`);
-    
+
     // insertMany com runValidators garante que o schema seja respeitado
     const docs = await Desligamento.insertMany(data, { runValidators: true });
-    
+
     console.log(`[POST /desligamentos/bulk] Sucesso: ${docs.length} registros inseridos`);
     res.status(201).json({ inserted: docs.length, docs });
   } catch (err) {
     console.error('[POST /desligamentos/bulk] Erro:', err);
-    
+
     // Captura erros de validação do Mongoose
     if (err.name === 'ValidationError') {
-      return res.status(422).json({ 
-        error: 'Erro de validação nos dados', 
+      return res.status(422).json({
+        error: 'Erro de validação nos dados',
         detail: err.message,
         errors: err.errors // Detalhes por campo
       });
@@ -304,9 +304,9 @@ router.post('/bulk', auth, async (req, res) => {
 
     // Erros de escrita em lote do MongoDB
     if (err.name === 'MongoBulkWriteError' || err.name === 'BulkWriteError') {
-      return res.status(422).json({ 
-        error: 'Erro na escrita em lote (probabilidade de dados duplicados ou inválidos)', 
-        detail: err.message 
+      return res.status(422).json({
+        error: 'Erro na escrita em lote (probabilidade de dados duplicados ou inválidos)',
+        detail: err.message
       });
     }
 
@@ -340,9 +340,9 @@ router.post('/migrate-archive-old', auth, async (req, res, next) => {
       const parts = s.split(/[\/\-]/);
       if (parts.length === 3) {
         const [a, b, c] = parts;
-        if (c.length === 4) s = `${c}-${b.padStart(2,'0')}-${a.padStart(2,'0')}`;
-        else if (a.length === 4) s = `${a}-${b.padStart(2,'0')}-${c.padStart(2,'0')}`;
-        else if (c.length === 2) s = `20${c}-${b.padStart(2,'0')}-${a.padStart(2,'0')}`;
+        if (c.length === 4) s = `${c}-${b.padStart(2, '0')}-${a.padStart(2, '0')}`;
+        else if (a.length === 4) s = `${a}-${b.padStart(2, '0')}-${c.padStart(2, '0')}`;
+        else if (c.length === 2) s = `20${c}-${b.padStart(2, '0')}-${a.padStart(2, '0')}`;
       }
       const d = new Date(s);
       return isNaN(d) ? null : d;
@@ -353,8 +353,8 @@ router.post('/migrate-archive-old', auth, async (req, res, next) => {
 
     const docs = todas.filter(doc => {
       const d = parseDate(doc.dataPagamento)
-             || parseDate(doc.dataDesligamento)
-             || (doc.createdAt ? new Date(doc.createdAt) : null);
+        || parseDate(doc.dataDesligamento)
+        || (doc.createdAt ? new Date(doc.createdAt) : null);
       return d && d < CUTOFF_DATE;
     });
 

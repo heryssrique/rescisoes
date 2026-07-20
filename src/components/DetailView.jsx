@@ -38,6 +38,8 @@ export function DetailView({ id }) {
   const [showProgModal, setShowProgModal] = useState(false);
   const [dataProgInput, setDataProgInput] = useState('');
   const [isChangingToPComp, setIsChangingToPComp] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
 
   const idsToRemove = useMemo(() => ['d4', 'd5', 'h6', 'h7'], []);
   const checklist = useMemo(() => (d?.checklist || []).filter(c => !idsToRemove.includes(c.id)), [d?.checklist, idsToRemove]);
@@ -334,7 +336,12 @@ export function DetailView({ id }) {
               <button
                 className={`chip btn-sm ${d.status === 'cancelado' ? 'active' : ''}`}
                 style={{ fontSize: 11, borderColor: 'rgba(239,68,68,0.3)', color: '#f87171' }}
-                onClick={() => handleStatusChange('cancelado')}
+                onClick={() => {
+                  if (d.status !== 'cancelado') {
+                    setCancelReason('');
+                    setShowCancelModal(true);
+                  }
+                }}
               >
                 Cancelar
               </button>
@@ -655,6 +662,52 @@ export function DetailView({ id }) {
                 }}
               >
                 Confirmar e Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCancelModal && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }} onClick={e => e.target === e.currentTarget && setShowCancelModal(false)}>
+          <div className="modal" style={{ width: '100%', maxWidth: 420 }}>
+            <div className="modal-header">
+              <div className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#f87171' }}>
+                <AlertTriangle size={16} /> Cancelar Processo
+              </div>
+              <button className="btn btn-icon" onClick={() => setShowCancelModal(false)}><X size={16} /></button>
+            </div>
+            <div className="modal-body">
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
+                Por favor, informe o motivo do cancelamento deste processo. Ele será registrado no histórico.
+              </p>
+              <div className="form-group">
+                <label className="form-label" style={{ fontSize: 12, fontWeight: 600 }}>Motivo do Cancelamento</label>
+                <textarea
+                  className="form-input"
+                  style={{ width: '100%', resize: 'vertical' }}
+                  rows={3}
+                  value={cancelReason}
+                  onChange={e => setCancelReason(e.target.value)}
+                  placeholder="Ex: Desistência do colaborador, erro de cadastro..."
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '16px 20px', borderTop: '1px solid var(--border)' }}>
+              <button className="btn btn-secondary" onClick={() => setShowCancelModal(false)}>Voltar</button>
+              <button
+                className="btn btn-danger"
+                onClick={async () => {
+                  if (!cancelReason.trim()) {
+                    toast('Por favor, informe o motivo.', 'error');
+                    return;
+                  }
+                  setShowCancelModal(false);
+                  await handleStatusChange('cancelado', { motivoCancelamento: cancelReason });
+                }}
+              >
+                Confirmar Cancelamento
               </button>
             </div>
           </div>

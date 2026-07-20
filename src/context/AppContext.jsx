@@ -505,7 +505,9 @@ export function AppProvider({ children }) {
           historico: [...(d.historico || []), {
             data: new Date().toISOString(),
             acao: `Status alterado para ${newStatus.toUpperCase()}`,
-            nota: extraFields.dataProgramadaPagamento ? `Data programada definida para ${extraFields.dataProgramadaPagamento}` : `Alteração via detalhe`
+            nota: extraFields.motivoCancelamento 
+              ? `Motivo: ${extraFields.motivoCancelamento}` 
+              : (extraFields.dataProgramadaPagamento ? `Data programada definida para ${extraFields.dataProgramadaPagamento}` : `Alteração via detalhe`)
           }]
         };
 
