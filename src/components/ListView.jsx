@@ -113,7 +113,7 @@ const TermCard = memo(({ d, onOpen, onArchive, isSelected, onSelect }) => {
         </div>
         <div className="term-meta-item">
           <div className="term-meta-label">Desligamento</div>
-          <div className="term-meta-value">{formatDate(d.dataDesligamento)}</div>
+          <div className="term-meta-value" style={{ color: 'var(--accent-red)', fontWeight: 700 }}>{formatDate(d.dataDesligamento)}</div>
         </div>
         <div className="term-meta-item">
           <div className="term-meta-label">Prazos de Pagamento (7d / 10d corridos)</div>
