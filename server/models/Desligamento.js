@@ -26,6 +26,7 @@ const DesligamentoSchema = new mongoose.Schema(
     dataComunicado: { type: String, default: '' },
     dataDesligamento: { type: String, default: '' },
     dataPagamento: { type: String, default: '' },
+    dataProgramadaPagamento: { type: String, default: '' },
     prazoPagamento: { type: String, default: '10' },
     motivo: {
       type: String,
@@ -45,9 +46,11 @@ const DesligamentoSchema = new mongoose.Schema(
     },
     responsavel: { type: String, trim: true, default: '' },
     observacoes: { type: String, default: '' },
+    motivoCancelamento: { type: String, default: '' },
     arquivado: { type: Boolean, default: false },
     checklist: { type: [ChecklistItemSchema], default: [] },
     historico: { type: [HistoricoItemSchema], default: [] },
+    anexos: { type: Array, default: [] },
   },
   {
     timestamps: true, // createdAt, updatedAt automáticos
