@@ -67,6 +67,37 @@ function AppContent() {
   const { state, dispatch, actions } = useApp();
   const { toast } = useToast();
   const notifiedPrazos = useRef(new Set());
+
+  // --- Auto Logout por Inatividade ---
+  const inactivityTimerRef = useRef(null);
+  const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutos
+
+  const resetInactivityTimer = React.useCallback(() => {
+    if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+    if (state.user) {
+      inactivityTimerRef.current = setTimeout(() => {
+        actions.logout();
+        toast('Sua sessão expirou por inatividade. Faça login novamente.', 'warning');
+      }, INACTIVITY_TIMEOUT);
+    }
+  }, [state.user, actions, toast]);
+
+  useEffect(() => {
+    if (!state.user) return;
+    
+    resetInactivityTimer();
+    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+    const handleActivity = () => resetInactivityTimer();
+
+    events.forEach(e => window.addEventListener(e, handleActivity));
+
+    return () => {
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+      events.forEach(e => window.removeEventListener(e, handleActivity));
+    };
+  }, [state.user, resetInactivityTimer]);
+  // -----------------------------------
+
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallBtn, setShowInstallBtn] = useState(false);
 
