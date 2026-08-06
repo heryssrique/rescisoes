@@ -569,8 +569,10 @@ export function DetailView({ id }) {
           {showNoteInput && (
             <div className="card" style={{ marginBottom: 16 }}>
               <div className="form-group" style={{ marginBottom: 10 }}>
-                <label className="form-label">Ação/Título</label>
+                <label className="form-label" htmlFor="note-action">Ação/Título</label>
                 <input
+                  id="note-action"
+                  name="action"
                   className="form-input"
                   placeholder="Ex: Documentação entregue"
                   value={acaoNote}
@@ -578,8 +580,10 @@ export function DetailView({ id }) {
                 />
               </div>
               <div className="form-group" style={{ marginBottom: 10 }}>
-                <label className="form-label">Nota / Observação</label>
+                <label className="form-label" htmlFor="note-details">Nota / Observação</label>
                 <textarea
+                  id="note-details"
+                  name="details"
                   className="form-input"
                   placeholder="Detalhes adicionais..."
                   value={nota}
@@ -632,8 +636,10 @@ export function DetailView({ id }) {
                   : 'Informe ou altere a data programada para o pagamento desta rescisão:'}
               </p>
               <div className="form-group">
-                <label className="form-label" style={{ fontSize: 12, fontWeight: 600 }}>Data Programada</label>
+                <label className="form-label" htmlFor="prog-date" style={{ fontSize: 12, fontWeight: 600 }}>Data Programada</label>
                 <input
+                  id="prog-date"
+                  name="dataProgramada"
                   type="date"
                   className="form-input"
                   style={{ width: '100%' }}
@@ -682,8 +688,10 @@ export function DetailView({ id }) {
                 Por favor, informe o motivo do cancelamento deste processo. Ele será registrado no histórico.
               </p>
               <div className="form-group">
-                <label className="form-label" style={{ fontSize: 12, fontWeight: 600 }}>Motivo do Cancelamento</label>
+                <label className="form-label" htmlFor="cancel-reason" style={{ fontSize: 12, fontWeight: 600 }}>Motivo do Cancelamento</label>
                 <textarea
+                  id="cancel-reason"
+                  name="motivoCancelamento"
                   className="form-input"
                   style={{ width: '100%', resize: 'vertical' }}
                   rows={3}

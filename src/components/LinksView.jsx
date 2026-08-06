@@ -62,9 +62,11 @@ function LinkFormModal({ link, onSave, onClose, saving }) {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div className="form-group">
-            <label className="form-label">Nome</label>
+            <label className="form-label" htmlFor="link-name">Nome</label>
             <input
               required
+              id="link-name"
+              name="label"
               className="form-input"
               placeholder="Ex: Cálculo Exato"
               value={form.label}
@@ -74,9 +76,11 @@ function LinkFormModal({ link, onSave, onClose, saving }) {
           </div>
 
           <div className="form-group">
-            <label className="form-label">URL</label>
+            <label className="form-label" htmlFor="link-url">URL</label>
             <input
               required
+              id="link-url"
+              name="url"
               type="url"
               className="form-input"
               placeholder="https://exemplo.com"
@@ -87,8 +91,10 @@ function LinkFormModal({ link, onSave, onClose, saving }) {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Categoria</label>
+            <label className="form-label" htmlFor="link-category">Categoria</label>
             <select
+              id="link-category"
+              name="category"
               className="form-input"
               value={form.category}
               onChange={e => setForm({ ...form, category: e.target.value })}
@@ -101,8 +107,10 @@ function LinkFormModal({ link, onSave, onClose, saving }) {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Descrição (opcional)</label>
+            <label className="form-label" htmlFor="link-description">Descrição (opcional)</label>
             <input
+              id="link-description"
+              name="description"
               className="form-input"
               placeholder="Breve descrição do link"
               value={form.description}
