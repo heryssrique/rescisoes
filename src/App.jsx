@@ -121,9 +121,9 @@ function AppContent() {
     const activeRaw = applyColigadaFilter(desligamentos || [], globalColigadaFilter);
     const archivedRaw = applyColigadaFilter(archivedDesligamentos || [], globalColigadaFilter);
     const allRaw = [...activeRaw, ...archivedRaw];
-    const pendentesComprovante = allRaw.filter(d => isOnlyMissingComprovante(d));
-    const mainDesligamentos = activeRaw.filter(d => !isOnlyMissingComprovante(d));
-    const mainArquivados = archivedRaw.filter(d => !isOnlyMissingComprovante(d));
+    const pendentesComprovante = allRaw.filter(d => d.status === 'pendente_comprovante' || isOnlyMissingComprovante(d));
+    const mainDesligamentos = activeRaw.filter(d => d.status !== 'pendente_comprovante' && !isOnlyMissingComprovante(d));
+    const mainArquivados = archivedRaw.filter(d => d.status !== 'pendente_comprovante' && !isOnlyMissingComprovante(d));
     const globalVencidos = mainDesligamentos.filter(d => {
       const isPaid = (d.checklist || []).some(c => c.id === 'p1' && (c.done || c.notApplicable));
       if (['pago', 'cancelado', 'pendente_comprovante', 'concluido'].includes(d.status) || isPaid || !d.dataPagamento) return false;

@@ -11,6 +11,6 @@ export const isOnlyMissingComprovante = (d) => {
   const p1 = checklist.find(c => c.id === 'p1');
   const p2 = checklist.find(c => c.id === 'p2');
   const paid = (p1 && (p1.done || p1.notApplicable)) || d.status === 'pago' || d.status === 'pendente_comprovante';
-  const noReceipt = p2 && !p2.done && !p2.notApplicable;
+  const noReceipt = !p2 || (!p2.done && !p2.notApplicable);
   return paid && noReceipt;
 };
