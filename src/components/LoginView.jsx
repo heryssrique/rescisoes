@@ -166,21 +166,61 @@ function LoginForm({ onLogin }) {
               {isRegistering && (
                 <div style={{ position: 'relative' }}>
                   <Users size={15} color="var(--text-muted)" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
-                  <input type="text" className="form-input" style={{ paddingLeft: 42, height: 46 }} placeholder="Nome completo" value={name} onChange={e => setName(e.target.value)} />
+                  <input
+                    type="text"
+                    id="fallback-name"
+                    name="name"
+                    autoComplete="name"
+                    className="form-input"
+                    style={{ paddingLeft: 42, height: 46 }}
+                    placeholder="Nome completo"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                  />
                 </div>
               )}
               <div style={{ position: 'relative' }}>
                 <Mail size={15} color="var(--text-muted)" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
-                <input type="email" className="form-input" style={{ paddingLeft: 42, height: 46 }} placeholder="seu@email.com" value={email} onChange={e => setEmail(e.target.value)} />
+                <input
+                  type="email"
+                  id="fallback-email"
+                  name="email"
+                  autoComplete="email"
+                  className="form-input"
+                  style={{ paddingLeft: 42, height: 46 }}
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                />
               </div>
               <div style={{ position: 'relative' }}>
                 <Lock size={15} color="var(--text-muted)" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
-                <input type="password" className="form-input" style={{ paddingLeft: 42, height: 46 }} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} />
+                <input
+                  type="password"
+                  id="fallback-password"
+                  name="password"
+                  autoComplete={isRegistering ? "new-password" : "current-password"}
+                  className="form-input"
+                  style={{ paddingLeft: 42, height: 46 }}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                />
               </div>
               {isRegistering && (
                 <div style={{ position: 'relative' }}>
                   <Lock size={15} color="var(--text-muted)" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
-                  <input type="password" className="form-input" style={{ paddingLeft: 42, height: 46 }} placeholder="Confirmar senha" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+                  <input
+                    type="password"
+                    id="fallback-confirm-password"
+                    name="confirmPassword"
+                    autoComplete="new-password"
+                    className="form-input"
+                    style={{ paddingLeft: 42, height: 46 }}
+                    placeholder="Confirmar senha"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                  />
                 </div>
               )}
               {error && (

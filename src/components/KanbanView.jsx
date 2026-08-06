@@ -5,15 +5,7 @@ import { formatDate } from '../utils/formatters';
 import { Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const isOnlyMissingComprovante = (d) => {
-  if (d.status === 'concluido' || d.status === 'cancelado') return false;
-  const checklist = d.checklist || [];
-  const p1 = checklist.find(c => c.id === 'p1');
-  const p2 = checklist.find(c => c.id === 'p2');
-  const paid = (p1 && p1.done) || d.status === 'pago';
-  const noReceipt = p2 && !p2.done && !p2.notApplicable;
-  return paid && noReceipt;
-};
+import { isOnlyMissingComprovante } from '../utils/statusUtils';
 
 export function KanbanView({ data: injectedData }) {
   const { state, dispatch } = useApp();
@@ -29,7 +21,7 @@ export function KanbanView({ data: injectedData }) {
       <div className="kanban-board">
         {(state.statusFlow || []).map((col, idx) => {
           const items = desligamentos.filter(d => {
-            const isPending = isOnlyMissingComprovante(d);
+            const isPending = d.status === 'pendente_comprovante' || isOnlyMissingComprovante(d);
             if (col.key === 'pendente_comprovante') return isPending;
             if (isPending) return false;
             return d.status === col.key;
