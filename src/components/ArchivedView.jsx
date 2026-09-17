@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { StatusBadge, MotivoBadge, ColigadaBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress } from './Shared';
 import { formatDate } from '../utils/formatters';
 import { MOTIVOS } from '../data/initialData';
-import { Search, ChevronRight, Calendar, User, Archive, ChevronDown, ChevronUp, Clock, RotateCcw } from 'lucide-react';
+import { Search, ChevronRight, Calendar, User, Archive, ChevronDown, ChevronUp, Clock, RotateCcw, X } from 'lucide-react';
 import { getPaymentDate } from '../utils/dateUtils';
 
 function groupByPaymentDate(desligamentos) {
@@ -93,6 +93,8 @@ export function ArchivedView({ data: injectedData }) {
   const { loading } = state;
   const [search, setSearch] = useState('');
   const [filterMotivo, setFilterMotivo] = useState('todos');
+  const [dataInicial, setDataInicial] = useState('');
+  const [dataFinal, setDataFinal] = useState('');
   const [page, setPage] = useState(1);
   const itemsPerPage = 50;
 
@@ -120,9 +122,13 @@ export function ArchivedView({ data: injectedData }) {
     if (!archivedDesligamentos) return [];
     return archivedDesligamentos.filter(d => {
       const matchMotivo = filterMotivo === 'todos' || d.motivo === filterMotivo;
-      return matchMotivo;
+      // Datas são strings ISO (YYYY-MM-DD), então a comparação lexicográfica já ordena corretamente
+      const dataRef = d.dataDesligamento || '';
+      const matchInicio = !dataInicial || (dataRef && dataRef >= dataInicial);
+      const matchFim = !dataFinal || (dataRef && dataRef <= dataFinal);
+      return matchMotivo && matchInicio && matchFim;
     });
-  }, [archivedDesligamentos, filterMotivo]);
+  }, [archivedDesligamentos, filterMotivo, dataInicial, dataFinal]);
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginatedData = useMemo(() => {
@@ -169,6 +175,38 @@ export function ArchivedView({ data: injectedData }) {
             <option key={m.value} value={m.value}>{m.label}</option>
           ))}
         </select>
+
+        <div className="date-range" title="Filtrar pela data de desligamento">
+          <label className="date-range-label" htmlFor="filter-data-inicial">Desligamento de</label>
+          <input
+            id="filter-data-inicial"
+            name="dataInicial"
+            type="date"
+            value={dataInicial}
+            max={dataFinal || undefined}
+            onChange={e => { setDataInicial(e.target.value); setPage(1); }}
+          />
+          <label className="date-range-label" htmlFor="filter-data-final">até</label>
+          <input
+            id="filter-data-final"
+            name="dataFinal"
+            type="date"
+            value={dataFinal}
+            min={dataInicial || undefined}
+            onChange={e => { setDataFinal(e.target.value); setPage(1); }}
+          />
+          {(dataInicial || dataFinal) && (
+            <button
+              type="button"
+              className="date-range-clear"
+              title="Limpar período"
+              aria-label="Limpar período"
+              onClick={() => { setDataInicial(''); setDataFinal(''); setPage(1); }}
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -180,7 +218,13 @@ export function ArchivedView({ data: injectedData }) {
         <div className="empty-state">
           <Archive size={64} style={{ color: 'var(--border)' }} />
           <p>Nenhum processo arquivado encontrado</p>
-          <span>{search ? 'Tente outros termos de busca' : 'Processos terminados ou cancelados podem ser arquivados'}</span>
+          <span>
+            {search
+              ? 'Tente outros termos de busca'
+              : (dataInicial || dataFinal)
+                ? 'Nenhum desligamento no período selecionado. Tente ampliar as datas.'
+                : 'Processos terminados ou cancelados podem ser arquivados'}
+          </span>
         </div>
       ) : (
         <>

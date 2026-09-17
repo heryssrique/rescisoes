@@ -418,6 +418,64 @@ html, body, #root {
   background: var(--bg-card);
 }
 
+.date-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
+  transition: border-color 0.2s;
+  flex-wrap: wrap;
+}
+
+.date-range:focus-within {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+
+.date-range-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.date-range input[type="date"] {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  color-scheme: dark;
+  min-width: 118px;
+}
+
+:root[data-theme='light'] .date-range input[type="date"] {
+  color-scheme: light;
+}
+
+.date-range-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+
+.date-range-clear:hover {
+  color: var(--accent-red, #ef4444);
+  background: var(--bg-hover, rgba(148,163,184,0.12));
+}
+
 /* Buttons */
 .btn {
   display: inline-flex;
