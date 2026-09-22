@@ -27,11 +27,10 @@ const errorHandler = (err, req, res, next) => {
       stack: err.stack
     });
   } else {
-    // Production: We still expose the message for remote debugging during this launch phase
+    // Production: Don't leak stack traces
     res.status(err.statusCode).json({
       status: err.status,
-      message: err.message,
-      detail: err.isOperational ? undefined : err.stack // Only show stack for non-operational errors
+      message: err.isOperational ? err.message : 'Erro interno do servidor',
     });
   }
 };

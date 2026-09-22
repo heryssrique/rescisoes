@@ -22,7 +22,9 @@ router.get('/', auth, async (req, res, next) => {
     if (motivo && motivo !== 'todos') filter.motivo = motivo;
 
     if (q) {
-      const regex = new RegExp(q, 'i');
+      // Escapar caracteres especiais para evitar ReDoS
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(escaped, 'i');
       filter.$or = [
         { nome: regex },
         { cargo: regex },

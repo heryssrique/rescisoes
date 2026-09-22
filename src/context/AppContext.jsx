@@ -106,6 +106,7 @@ function reducer(state, action) {
       localStorage.removeItem('desligest_auth_user');
       localStorage.removeItem('desligest_view');
       localStorage.removeItem('desligest_selected');
+      localStorage.removeItem('desligest_cache_v2'); // Limpar cache de PII no logout
       return { ...s, user: null, desligamentos: [], archivedDesligamentos: [], view: 'lista', selected: null };
     case 'SET_VIEW':
       localStorage.setItem('desligest_view', action.view);

@@ -10,26 +10,25 @@ const validate = require('../middleware/validate');
 const { loginSchema, registerSchema } = require('../schemas/authSchema');
 const { ApiError } = require('../middleware/errorMiddleware');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_desligest';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('CRÍTICO: JWT_SECRET não está definido nas variáveis de ambiente.');
+}
 
 // Register User
 router.post('/register', validate(registerSchema), async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
-    
+
     if (mongoose.connection.readyState !== 1) {
-      const fallbackUser = { id: 'offline_user_' + Date.now(), name, email, role: 'admin' };
-      const token = jwt.sign(fallbackUser, JWT_SECRET, { expiresIn: '7d' });
-      return res.status(201).json({ token, user: fallbackUser, offlineMode: true });
+      throw new ApiError(503, 'Serviço de banco de dados temporariamente indisponível. Tente novamente mais tarde.');
     }
 
     let user;
     try {
       user = await User.findOne({ email });
     } catch (dbErr) {
-      const fallbackUser = { id: 'offline_user_' + Date.now(), name, email, role: 'admin' };
-      const token = jwt.sign(fallbackUser, JWT_SECRET, { expiresIn: '7d' });
-      return res.status(201).json({ token, user: fallbackUser, offlineMode: true });
+      throw new ApiError(503, 'Erro ao conectar ao banco de dados.');
     }
 
     if (user) {
@@ -44,10 +43,10 @@ router.post('/register', validate(registerSchema), async (req, res, next) => {
     await user.save();
 
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-    
-    res.status(201).json({ 
-      token, 
-      user: { id: user._id, name: user.name, email: user.email, role: user.role } 
+
+    res.status(201).json({
+      token,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
     });
   } catch (err) {
     next(err);
@@ -58,41 +57,32 @@ router.post('/register', validate(registerSchema), async (req, res, next) => {
 router.post('/login', validate(loginSchema), async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    
+
     if (mongoose.connection.readyState !== 1) {
-      const fallbackUser = { id: 'offline_admin', name: email.split('@')[0] || 'Administrador Local', email, role: 'admin' };
-      const token = jwt.sign(fallbackUser, JWT_SECRET, { expiresIn: '7d' });
-      return res.json({ token, user: fallbackUser, offlineMode: true });
+      throw new ApiError(503, 'Serviço de banco de dados temporariamente indisponível.');
     }
 
     let user;
     try {
       user = await User.findOne({ email });
     } catch (dbErr) {
-      const fallbackUser = { id: 'offline_admin', name: email.split('@')[0] || 'Administrador Local', email, role: 'admin' };
-      const token = jwt.sign(fallbackUser, JWT_SECRET, { expiresIn: '7d' });
-      return res.json({ token, user: fallbackUser, offlineMode: true });
+      throw new ApiError(503, 'Erro de conexão com o banco de dados.');
     }
 
     if (!user) {
-      if (password === 'admin123' || password === '123456') {
-        const fallbackUser = { id: 'dev_admin', name: email.split('@')[0] || 'Admin Dev', email, role: 'admin' };
-        const token = jwt.sign(fallbackUser, JWT_SECRET, { expiresIn: '7d' });
-        return res.json({ token, user: fallbackUser });
-      }
       throw new ApiError(400, 'E-mail ou senha incorretos');
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch && password !== 'admin123') {
+    if (!isMatch) {
       throw new ApiError(400, 'E-mail ou senha incorretos');
     }
 
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-    
-    res.json({ 
-      token, 
-      user: { id: user._id, name: user.name, email: user.email, role: user.role } 
+
+    res.json({
+      token,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
     });
   } catch (err) {
     next(err);
