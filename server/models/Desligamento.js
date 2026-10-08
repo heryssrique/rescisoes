@@ -30,7 +30,7 @@ const DesligamentoSchema = new mongoose.Schema(
     prazoPagamento: { type: String, default: '10' },
     motivo: {
       type: String,
-      enum: ['pedido', 'demissao', 'acordo', 'justa', 'aposentadoria', 'termino_empresa', 'termino_empregado', 'termino_contrato'],
+      enum: ['pedido', 'demissao', 'acordo', 'justa', 'aposentadoria', 'termino_empresa', 'termino_empregado', 'termino_contrato', 'falecimento'],
       default: 'demissao',
     },
     avisoPrevio: {
@@ -55,9 +55,10 @@ const DesligamentoSchema = new mongoose.Schema(
   {
     timestamps: true, // createdAt, updatedAt automáticos
     toJSON: {
-      // Expõe _id como id string para facilitar uso no frontend
+      // Expõe _id como id string e __v como version para optimistic locking
       transform(doc, ret) {
         ret.id = ret._id.toString();
+        ret.version = ret.__v; // Expõe versão para controle de concorrência
         delete ret._id;
         delete ret.__v;
         return ret;

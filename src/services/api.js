@@ -10,7 +10,7 @@ async function request(method, endpoint, body) {
     method,
     headers: { 'Content-Type': 'application/json' },
   };
-  
+
   const token = localStorage.getItem('token');
   if (token) {
     options.headers['Authorization'] = `Bearer ${token}`;
@@ -24,14 +24,26 @@ async function request(method, endpoint, body) {
 
   if (!res.ok) {
     let message = `HTTP ${res.status}`;
+    let details = null;
     try {
       const err = await res.json();
       // Backend retorna { status, message } em produção ou { status, error, message, stack } em dev
       message = err.message || err.error || message;
+      details = err;
     } catch {
       // Ignora erro de parsing do JSON
     }
-    throw new Error(message);
+
+    const error = new Error(message);
+    error.status = res.status;
+    error.details = details;
+
+    // Optimistic locking: a UI recarrega o documento do servidor.
+    if (res.status === 409 && details?.currentVersion !== undefined) {
+      window.dispatchEvent(new CustomEvent('desligest:version-conflict', { detail: details }));
+    }
+
+    throw error;
   }
 
   return res.json();

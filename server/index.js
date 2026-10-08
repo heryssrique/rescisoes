@@ -103,6 +103,8 @@ app.get('/api/health', (req, res) => {
 if (process.env.NODE_ENV !== 'production') {
   const User = require('./models/User');
   const Desligamento = require('./models/Desligamento');
+  // Endpoints de dev poderiam ser adicionados aqui (seed, migrations one-time, etc.)
+}
 
 // ── 404 Handler ────────────────────────────────────────────────────────────
 app.use((req, res, next) => {

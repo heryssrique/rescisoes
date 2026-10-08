@@ -283,6 +283,15 @@ export function AppProvider({ children }) {
     }
   }, []);
 
+  useEffect(() => {
+    const onConflict = () => {
+      fetchAll();
+      fetchArchived();
+    };
+    window.addEventListener('desligest:version-conflict', onConflict);
+    return () => window.removeEventListener('desligest:version-conflict', onConflict);
+  }, [fetchAll, fetchArchived]);
+
   const checkAuthStatus = useCallback(async () => {
     dispatch({ type: 'SET_AUTH_CHECKED' });
   }, []);

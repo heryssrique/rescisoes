@@ -79,15 +79,26 @@ router.post('/', auth, validate(desligamentoCreateSchema), async (req, res, next
   }
 });
 
-// ── PUT /api/desligamentos/:id ─────────────────────────────────────────────
+// ── PUT /api/desligamentos/:id (com Optimistic Locking) ───────────────────
 router.put('/:id', auth, async (req, res, next) => {
   try {
     const existing = await Desligamento.findById(req.params.id);
     if (!existing) throw new ApiError(404, 'Processo não encontrado');
 
+    // Optimistic Locking: verificar versão do documento
+    const clientVersion = req.body.version;
+    if (clientVersion !== undefined && clientVersion !== existing.__v) {
+      return res.status(409).json({
+        error: 'Conflito de edição',
+        message: 'Este processo foi modificado por outro usuário. Recarregue a página e tente novamente.',
+        currentVersion: existing.__v,
+        yourVersion: clientVersion
+      });
+    }
+
     const updates = req.body;
     const historyEntries = [];
-    const ignoreFields = ['historico', 'checklist', 'updatedAt', 'createdAt', '__v', '_id', 'anexos'];
+    const ignoreFields = ['historico', 'checklist', 'updatedAt', 'createdAt', '__v', '_id', 'version', 'anexos'];
 
     for (const key in updates) {
       if (ignoreFields.includes(key) || updates[key] === undefined) continue;
@@ -117,6 +128,9 @@ router.put('/:id', auth, async (req, res, next) => {
       updates.historico = [...currentHistory, ...historyEntries];
     }
 
+    // Remove 'version' do payload antes de atualizar
+    delete updates.version;
+
     const doc = await Desligamento.findByIdAndUpdate(
       req.params.id,
       updates,
@@ -130,62 +144,104 @@ router.put('/:id', auth, async (req, res, next) => {
   }
 });
 
-// ── PATCH /api/desligamentos/:id/checklist/:itemId ─────────────────────────
+// ── PATCH /api/desligamentos/:id/checklist/:itemId (Atômico com $set) ─────
 router.patch('/:id/checklist/:itemId', auth, async (req, res, next) => {
   try {
-    const doc = await Desligamento.findById(req.params.id);
+    const { id, itemId } = req.params;
+    const doc = await Desligamento.findById(id);
     if (!doc) throw new ApiError(404, 'Processo não encontrado');
 
-    const item = doc.checklist.find(c => c.id === req.params.itemId);
-    if (!item) throw new ApiError(404, 'Item de checklist não encontrado');
+    const itemIndex = doc.checklist.findIndex(c => c.id === itemId);
+    if (itemIndex === -1) throw new ApiError(404, 'Item de checklist não encontrado');
 
+    // Toggle done status
+    const item = doc.checklist[itemIndex];
     item.done = !item.done;
     item.doneAt = item.done ? new Date().toISOString() : null;
     if (item.done) item.notApplicable = false;
 
+    // Verificar auto-arquivamento
+    let archiveHistory = null;
     if (doc.status === 'concluido' && item.id === 'p2' && item.done && !doc.arquivado) {
       doc.arquivado = true;
-      doc.historico.push({
+      archiveHistory = {
         data: new Date().toISOString(),
         acao: 'Arquivado (Automático)',
         nota: 'Comprovante anexado no status Concluído'
-      });
+      };
     }
 
-    await doc.save();
-    res.json(doc);
+    // Atualização atômica: usar $set posicional para não overwrite outras mudanças
+    const updateOps = {
+      $set: {
+        [`checklist.${itemIndex}.done`]: item.done,
+        [`checklist.${itemIndex}.doneAt`]: item.doneAt,
+        [`checklist.${itemIndex}.notApplicable`]: item.notApplicable,
+      }
+    };
+
+    if (doc.arquivado) {
+      updateOps.$set.arquivado = true;
+      if (archiveHistory) {
+        updateOps.$push = { historico: archiveHistory };
+      }
+    }
+
+    const updated = await Desligamento.findByIdAndUpdate(id, updateOps, { returnDocument: 'after', runValidators: true });
+    res.json(updated);
   } catch (err) {
     next(err);
   }
 });
 
-// ── PATCH /api/desligamentos/:id/checklist/:itemId/nao-aplicavel ────────────
+// ── PATCH /api/desligamentos/:id/checklist/:itemId/nao-aplicavel (Atômico) ─
 router.patch('/:id/checklist/:itemId/nao-aplicavel', auth, async (req, res, next) => {
   try {
-    const doc = await Desligamento.findById(req.params.id);
+    const { id, itemId } = req.params;
+    const doc = await Desligamento.findById(id);
     if (!doc) throw new ApiError(404, 'Processo não encontrado');
 
-    const item = doc.checklist.find(c => c.id === req.params.itemId);
-    if (!item) throw new ApiError(404, 'Item de checklist não encontrado');
+    const itemIndex = doc.checklist.findIndex(c => c.id === itemId);
+    if (itemIndex === -1) throw new ApiError(404, 'Item de checklist não encontrado');
 
+    const item = doc.checklist[itemIndex];
     item.notApplicable = !item.notApplicable;
+
     if (item.notApplicable) {
       // Marcar como N/A limpa o done
       item.done = false;
       item.doneAt = null;
     }
 
+    // Verificar auto-arquivamento
+    let archiveHistory = null;
     if (doc.status === 'concluido' && item.id === 'p2' && item.notApplicable && !doc.arquivado) {
       doc.arquivado = true;
-      doc.historico.push({
+      archiveHistory = {
         data: new Date().toISOString(),
         acao: 'Arquivado (Automático)',
         nota: 'Comprovante marcado como N/A no status Concluído'
-      });
+      };
     }
 
-    await doc.save();
-    res.json(doc);
+    // Atualização atômica
+    const updateOps = {
+      $set: {
+        [`checklist.${itemIndex}.notApplicable`]: item.notApplicable,
+        [`checklist.${itemIndex}.done`]: item.done,
+        [`checklist.${itemIndex}.doneAt`]: item.doneAt,
+      }
+    };
+
+    if (doc.arquivado) {
+      updateOps.$set.arquivado = true;
+      if (archiveHistory) {
+        updateOps.$push = { historico: archiveHistory };
+      }
+    }
+
+    const updated = await Desligamento.findByIdAndUpdate(id, updateOps, { returnDocument: 'after', runValidators: true });
+    res.json(updated);
   } catch (err) {
     next(err);
   }

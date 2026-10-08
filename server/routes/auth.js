@@ -1,5 +1,15 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const router = express.Router();
+
+const authAttemptLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  message: { error: 'Muitas tentativas. Tente novamente em 15 minutos.' },
+});
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -16,7 +26,7 @@ if (!JWT_SECRET) {
 }
 
 // Register User
-router.post('/register', validate(registerSchema), async (req, res, next) => {
+router.post('/register', authAttemptLimiter, validate(registerSchema), async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
@@ -54,7 +64,7 @@ router.post('/register', validate(registerSchema), async (req, res, next) => {
 });
 
 // Login User
-router.post('/login', validate(loginSchema), async (req, res, next) => {
+router.post('/login', authAttemptLimiter, validate(loginSchema), async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
