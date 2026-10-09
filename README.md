@@ -1,6 +1,6 @@
 # 🚀 Sistema de Gestão de Rescisões (DesliGest)
 
-O **DesliGest** é uma plataforma corporativa premium para o acompanhamento e gestão de desligamentos, projetada para departamentos de Recursos Humanos que buscam **máxima eficiência**, **controle rigoroso de prazos** e **rastreabilidade total**.
+O **DesliGest** é uma plataforma corporativa para o acompanhamento e gestão de desligamentos, projetada para departamentos de Recursos Humanos que buscam **máxima eficiência**, **controle rigoroso de prazos** e **rastreabilidade total**.
 
 ![Version](https://img.shields.io/badge/version-2.4.0-blue)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
