@@ -512,7 +512,7 @@ export function DetailView({ id }) {
                     >
                       N/A
                     </button>
-                    {(item.etapa === 'documentacao' || item.etapa === 'homologacao') && (
+                    {(item.id === 'h3') && (
                       <div className="dropdown" style={{ marginLeft: 5 }}>
                         <button
                           className={`btn btn-sm ${item.documento?.signed === false ? 'btn-danger' : item.documento?.signed === true ? 'btn-success' : 'btn-secondary'}`}
