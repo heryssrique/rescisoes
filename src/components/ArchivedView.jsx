@@ -95,6 +95,7 @@ export function ArchivedView({ data: injectedData }) {
   const [filterMotivo, setFilterMotivo] = useState('todos');
   const [dataInicial, setDataInicial] = useState('');
   const [dataFinal, setDataFinal] = useState('');
+  const [filterDocs, setFilterDocs] = useState('todos'); // 'assinados', 'nao-assinados'
   const [page, setPage] = useState(1);
   const itemsPerPage = 50;
 
@@ -126,9 +127,17 @@ export function ArchivedView({ data: injectedData }) {
       const dataRef = d.dataDesligamento || '';
       const matchInicio = !dataInicial || (dataRef && dataRef >= dataInicial);
       const matchFim = !dataFinal || (dataRef && dataRef <= dataFinal);
-      return matchMotivo && matchInicio && matchFim;
+
+      let matchDocs = true;
+      if (filterDocs === 'assinados') {
+        matchDocs = (d.checklist || []).every(c => c.documento?.signed !== false);
+      } else if (filterDocs === 'nao-assinados') {
+        matchDocs = (d.checklist || []).some(c => c.documento?.signed === false);
+      }
+
+      return matchMotivo && matchInicio && matchFim && matchDocs;
     });
-  }, [archivedDesligamentos, filterMotivo, dataInicial, dataFinal]);
+  }, [archivedDesligamentos, filterMotivo, dataInicial, dataFinal, filterDocs]);
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginatedData = useMemo(() => {
@@ -174,6 +183,12 @@ export function ArchivedView({ data: injectedData }) {
           {MOTIVOS.map(m => (
             <option key={m.value} value={m.value}>{m.label}</option>
           ))}
+        </select>
+
+        <select id="filter-docs-archived" className="filter-select" value={filterDocs} onChange={e => { setFilterDocs(e.target.value); setPage(1); }}>
+          <option value="todos">Todos os documentos</option>
+          <option value="assinados">Assinados</option>
+          <option value="nao-assinados">Não assinados</option>
         </select>
 
         <div className="date-range" title="Filtrar pela data de desligamento">

@@ -247,7 +247,31 @@ router.patch('/:id/checklist/:itemId/nao-aplicavel', auth, async (req, res, next
   }
 });
 
-// ── PATCH /api/desligamentos/:id/historico ─────────────────────────────────
+// ── PATCH /api/desligamentos/:id/checklist/:itemId/documento (Atômico) ─────
+router.patch('/:id/checklist/:itemId/documento', auth, async (req, res, next) => {
+  try {
+    const { id, itemId } = req.params;
+    const { signed, motivo } = req.body;
+    const doc = await Desligamento.findById(id);
+    if (!doc) throw new ApiError(404, 'Processo não encontrado');
+
+    const itemIndex = doc.checklist.findIndex(c => c.id === itemId);
+    if (itemIndex === -1) throw new ApiError(404, 'Item de checklist não encontrado');
+
+    const updateOps = {
+      $set: {
+        [`checklist.${itemIndex}.documento.signed`]: signed,
+        [`checklist.${itemIndex}.documento.motivo`]: motivo || '',
+      }
+    };
+
+    const updated = await Desligamento.findByIdAndUpdate(id, updateOps, { returnDocument: 'after', runValidators: true });
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.patch('/:id/historico', auth, async (req, res, next) => {
   try {
     const doc = await Desligamento.findByIdAndUpdate(

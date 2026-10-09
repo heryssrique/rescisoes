@@ -4,6 +4,7 @@ import { useToast } from './Toast';
 import { StatusBadge, MotivoBadge, ColigadaBadge, ProgressSteps, DaysUntilPayment, ChecklistProgress, AvisoBadge } from './Shared';
 import { formatDate, formatDateTime } from '../utils/formatters';
 import { ModalEditarDesligamento } from './Modals';
+import { DocumentoMotivoModal } from './DocumentoMotivoModal';
 import {
   ArrowLeft, Edit2, Trash2, Calendar, User, Briefcase,
   CheckSquare, Clock, AlertTriangle, MessageSquare, Plus, Loader,
@@ -40,6 +41,7 @@ export function DetailView({ id }) {
   const [isChangingToPComp, setIsChangingToPComp] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+  const [showDocMotivoModal, setShowDocMotivoModal] = useState(null); // { itemId, initialMotivo }
 
   const idsToRemove = useMemo(() => ['d4', 'd5', 'h6', 'h7'], []);
   const checklist = useMemo(() => (d?.checklist || []).filter(c => !idsToRemove.includes(c.id)), [d?.checklist, idsToRemove]);
@@ -503,13 +505,20 @@ export function DetailView({ id }) {
                   </div>
 
                   <div className="todo-actions">
-                    <button 
+                    <button
                       className={`todo-btn-na ${item.notApplicable ? 'active' : ''}`}
                       onClick={(e) => { e.preventDefault(); handleToggleNaoAplicavel(item.id); }}
                       title={item.notApplicable ? "Remover N/A" : "Marcar como não aplicável"}
                     >
                       N/A
                     </button>
+                    {(item.etapa === 'documentacao' || item.etapa === 'homologacao') && (
+                      <div className="dropdown" style={{ marginLeft: 5 }}>
+                        <button className="btn btn-secondary btn-sm" onClick={() => setShowDocMotivoModal({ itemId: item.id, initialMotivo: item.documento?.motivo || '' })}>
+                          Docs
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -517,6 +526,17 @@ export function DetailView({ id }) {
             );
           })}
         </div>
+      )}
+
+      {showDocMotivoModal && (
+        <DocumentoMotivoModal
+          onClose={() => setShowDocMotivoModal(null)}
+          onSave={async (motivo) => {
+            await actions.updateChecklistItemDocumento(d.id, showDocMotivoModal.itemId, { signed: false, motivo });
+            setShowDocMotivoModal(null);
+          }}
+          initialMotivo={showDocMotivoModal.initialMotivo}
+        />
       )}
 
       {activeTab === 'anexos' && (

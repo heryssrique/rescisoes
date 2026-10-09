@@ -92,6 +92,11 @@ export function toggleChecklistNaoAplicavel(desligamentoId, itemId) {
   return request('PATCH', `/desligamentos/${desligamentoId}/checklist/${itemId}/nao-aplicavel`);
 }
 
+/** Atualiza status de documentos de um item do checklist sem enviar o doc inteiro. */
+export function updateChecklistItemDocumento(desligamentoId, itemId, data) {
+  return request('PATCH', `/desligamentos/${desligamentoId}/checklist/${itemId}/documento`, data);
+}
+
 /**
  * Adiciona uma entrada ao histórico sem substituir o array.
  * @param {string} desligamentoId

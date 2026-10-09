@@ -67,6 +67,19 @@ function reducer(state, action) {
       });
       return { ...s, desligamentos: updateList(s.desligamentos), archivedDesligamentos: updateList(s.archivedDesligamentos) };
     }
+    case 'TOGGLE_DOCUMENTO_OPTIMISTIC': {
+      const updateList = (list) => list.map(d => {
+        if (d.id !== action.desligamentoId) return d;
+        return {
+          ...d,
+          checklist: (d.checklist || []).map(c => {
+            if (c.id !== action.itemId) return c;
+            return { ...c, documento: { signed: action.signed, motivo: action.motivo } };
+          }),
+        };
+      });
+      return { ...s, desligamentos: updateList(s.desligamentos), archivedDesligamentos: updateList(s.archivedDesligamentos) };
+    }
     case 'ARCHIVE_DESLIGAMENTO':
       return {
         ...s,
@@ -477,6 +490,11 @@ export function AppProvider({ children }) {
       toggleNaoAplicavel: async (desligamentoId, itemId) => {
         dispatch({ type: 'TOGGLE_NAO_APLICAVEL_OPTIMISTIC', desligamentoId, itemId });
         const doc = await api.toggleChecklistNaoAplicavel(desligamentoId, itemId);
+        dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: doc });
+      },
+      updateChecklistItemDocumento: async (desligamentoId, itemId, data) => {
+        dispatch({ type: 'TOGGLE_DOCUMENTO_OPTIMISTIC', desligamentoId, itemId, ...data });
+        const doc = await api.updateChecklistItemDocumento(desligamentoId, itemId, data);
         dispatch({ type: 'UPDATE_DESLIGAMENTO', payload: doc });
       },
       addHistorico: async (desligamentoId, entry) => {

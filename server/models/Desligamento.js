@@ -7,6 +7,10 @@ const ChecklistItemSchema = new mongoose.Schema({
   done: { type: Boolean, default: false },
   doneAt: { type: String, default: null },
   notApplicable: { type: Boolean, default: false },
+  documento: {
+    signed: { type: Boolean, default: null },
+    motivo: { type: String, default: '' },
+  },
 }, { _id: false });
 
 const HistoricoItemSchema = new mongoose.Schema({
