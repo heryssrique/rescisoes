@@ -2,7 +2,7 @@
 
 O **DesliGest** é uma plataforma corporativa premium para o acompanhamento e gestão de desligamentos, projetada para departamentos de Recursos Humanos que buscam **máxima eficiência**, **controle rigoroso de prazos** e **rastreabilidade total**.
 
-![Version](https://img.shields.io/badge/version-2.2.0-blue)
+![Version](https://img.shields.io/badge/version-2.4.0-blue)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
 ![Node](https://img.shields.io/badge/Node-22-339933?logo=node.js)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Latest-47A248?logo=mongodb)
@@ -12,47 +12,74 @@ O **DesliGest** é uma plataforma corporativa premium para o acompanhamento e ge
 
 ## ✨ Funcionalidades de Elite
 
-### 🗓️ Calendário de Prazos (Novo!)
+### 📊 Dashboard Executivo
+*   Gráficos interativos de pizza e barras com **exportação para PNG/XLSX**.
+*   Filtros dinâmicos por período (dia, semana, mês, ano, customizado).
+*   Comparação de sazonalidade ano a ano.
+*   Visão de turnover por coligada e motivos de desligamento.
+
+### 📅 Calendário de Prazos
 *   Visão mensal interativa de todos os vencimentos de pagamentos.
-*   Navegação intuitiva com acesso direto aos detalhes do processo por um clique.
+*   Navegação intuitiva com acesso direto aos detalhes do processo.
+*   Indicadores visuais de urgência (vencido, hoje, próximo).
 
-### 🛡️ Histórico e Auditoria Global (Novo!)
-*   **Monitoramento em Tempo Real**: Veja todas as atividades do sistema em um único lugar.
-*   **Integridade de Dados**: O sistema compara e registra automaticamente quem alterou cada campo, garantindo total conformidade (Compliance).
+### 🛡️ Histórico e Auditoria Global
+*   **Monitoramento em Tempo Real**: Todas as atividades do sistema em um único lugar.
+*   **Rastreabilidade Total**: Sistema compara e registra automaticamente quem alterou cada campo (diff automático).
+*   **Conformidade LGPD**: Cada alteração é registrada com usuário, data e valor anterior/novo.
 
-### 📎 Gestão de Documentos e Anexos (Novo!)
-*   Centralização radical: Anexe PDFs, comprovantes e fotos diretamente no card de cada colaborador.
+### 📎 Gestão de Documentos e Anexos
+*   Anexe PDFs, comprovantes e fotos diretamente no card de cada colaborador.
+*   **Controle de Documentos Assinados**: Item TRCT (h3) agora possui estado signed/unsigned com motivo.
 *   Histórico de anexos integrado para controle documental simplificado.
 
-### ⚡ Performance e Estabilidade (Novo!)
-*   **Controle de Concorrência de API**: Sistema inteligente que evita o empilhamento de requisições, garantindo que o servidor nunca seja sobrecarregado.
-*   **Busca com Debounce**: Interface ultra-responsiva que economiza CPU e elimina atrasos de digitação.
-### Memoização Crítica
-Foram aplicados padrões preventivos de renderização excessiva:
-*   **React.memo**: Em componentes repetitivos pesados (ex: `TermCard`).
-*   **useCallback**: Para funções passadas como props que disparariam re-renderizações de filhos.
-*   **useMemo**: Para cálculos de estatísticas de dashboard e filtragem de listas.
+### 📋 Fluxo de Trabalho Otimizado
+*   **Quadro Kanban**: Visualize o gargalo operacional por etapas.
+*   **Checklist Dinâmico**: 17 etapas automáticas organizadas por fase (Comunicado, Documentação, Homologação, Pagamento, Conclusão).
+*   Itens podem ser marcados como "Não Aplicável".
+*   **Lista de Pendentes**: Visão dedicada para processos "Pagos" sem comprovante.
+*   **Arquivados com Filtro**: Histórico completo com filtro por período e motivo.
 
-### 🚦 Prevenção de Loops e Stacking
-Para garantir infraestrutura resiliente, o `AppContext` implementa:
-*   **loadingRef**: Controle sem estado via `useRef` para impedir que o sistema dispare `fetchAll` ou `fetchArchived` enquanto uma requisição já estiver em "vôo".
-*   **Deep Comparison Notifier**: O sistema de notificações utiliza comparação serializada para evitar atualizações de estado quando o conteúdo da notificação não sofreu alterações reais.
+### ⚡ Performance e Estabilidade
+*   **Controle de Concorrência**: Optimistic Locking com verificação de versão (HTTP 409).
+*   **Busca com Debounce**: Interface ultra-responsiva.
+*   **Auto-Logout**: Deslogamento automático após 30 minutos de inatividade.
+*   **Modo Performance**: Alternar animações para melhor desempenho.
+*   **Cache Protegido**: Dados sensíveis são removidos do localStorage no logout.
 
----
+### 🧮 Calculadora de Rescisões
+*   **Simulação Completa**: Suporte a todos os tipos (Sem/CJ, Justa Causa, Pedido, Acordo Mútuo, Término Contrato, Falecimento, Aposentadoria).
+*   **Módulos de Cálculo**:
+  *   Saldo de Salário
+  *   Aviso Prévio (indenizado/trabalhado)
+  *   Férias (vencidas + proporcionais)
+  *   13º Salário (proporcional)
+  *   Multa FGTS (40% + depósito)
+  *   INSS e IRRF (com deductions)
+*   **Verbas Customizáveis**: Adicione/edit/remova proventos e descontos.
+*   **Recálculo Automático**: Impostos são recalculados ao alterar verbas.
+*   **Memória de Cálculo**: Explicação detalhada com base legal.
+*   **Exportação PDF**: Relatório completo para arquivo.
+*   **Botão "Prévia"**: Envia dados do processo para a calculadora com um clique.
 
-## 📱 Progressive Web App (PWA)
-O sistema opera como um aplicativo híbrido moderno:
-*   **Service Worker**: Registrado em `public/sw.js`, gerencia o cache básico e permite que a aplicação seja instalada.
-*   **Manifest**: Define a identidade visual do app em `public/manifest.json`.
-*   **Notification API**: Integrada ao browser para alertas persistentes fora da aba do sistema.
+### 💳 Gerador de Holerites (Standalone)
+*   Página 독립na para geração de demonstrativos de pagamento.
+*   Modelo "Concreta Construções" incluso.
+*   Salvar/carregar modelos no navegador.
+*   Impressão otimizada para 2 vias em uma página A4.
 
-### 📦 Funcionalidades Core
-*   **Checklist Dinâmico**: 15+ etapas automáticas organizadas por fluxo de trabalho (Comunicado, Documentação, Homologação, Pagamento).
-*   **Calculadora de Rescisão Integrada**: Motor inteligente para simulação de rescisões, exibição de memória de cálculo detalhada com embasamento jurídico e exportação em PDF.
-*   **Dashboard Executivo**: Estatísticas gráficas por motivo de desligamento e por empresa (Coligada).
-*   **Quadro Kanban**: Visualize o gargalo operacional por etapas do processo.
-*   **Importação Inteligente**: Suporte para importação em lote via planilha CSV.
-*   **Modos Dark & Light**: Interface adaptativa premium com animações via *Framer Motion*.
+### 🔐 Segurança Empresarial
+*   **JWT Obrigatório**: Token obrigatório sem fallbacks.
+*   **RBAC Completo**: Papéis Admin e RH com permissões granulares.
+*   **Sanitização**: Proteção contra NoSQL Injection, XSS e ReDoS.
+*   **Rate Limiting**: Proteção contra ataques de força bruta.
+*   **Helmet**: Headers de segurança HTTP.
+*   **Logs Protegidos**: Query strings com PII não são logadas.
+
+### 🌐 Progressive Web App
+*   Instale como aplicativo nativo no desktop ou mobile.
+*   Service Worker com estratégia Stale-While-Revalidate.
+*   Notificações nativas do browser para alertas de prazo.
 
 ---
 
@@ -60,10 +87,38 @@ O sistema opera como um aplicativo híbrido moderno:
 
 | Camada | Tecnologias |
 | :--- | :--- |
-| **Frontend** | React 19, Vite, Framer Motion, Lucide icons, Date-fns |
-| **Backend** | Node.js, Express (Express 5/Latest), Mongoose |
-| **Database** | MongoDB (Capped Collections para Audit logs) |
-| **DevOps** | Git, NPM Scripts, ESLint |
+| **Frontend** | React 19, Vite 7, Framer Motion, Lucide React, Recharts, date-fns, XLSX, jsPDF |
+| **Backend** | Node.js 22, Express 5, Mongoose 9, JWT, Zod, bcrypt |
+| **Database** | MongoDB (Mongoose ODM) |
+| **Email** | Nodemailer (SMTP configurável) |
+| **Scheduler** | node-cron (resumos diários) |
+| **Logging** | Winston (logs de erro e acesso) |
+| **Deploy** | Vercel (frontend), Render (backend) |
+
+---
+
+## 📂 Arquitetura do Sistema
+
+```
+├── server/                    # API Backend
+│   ├── index.js              # Entry point, middleware, routes
+│   ├── models/               # Mongoose schemas (User, Desligamento, Link)
+│   ├── routes/               # API routes (auth, desligamentos, links)
+│   ├── middleware/           # Auth, validation, error handling
+│   ├── schemas/              # Zod validation schemas
+│   ├── services/             # Cron, email
+│   ├── scripts/              # CLI migration tools
+│   └── utils/                # Logger
+├── src/                      # Frontend React
+│   ├── components/           # 20+ React components (views)
+│   ├── context/              # AppContext (state + actions)
+│   ├── data/                 # Constants, checklist template
+│   ├── services/             # API client
+│   └── utils/calculators/    # Rescisão calculation engine
+├── public/                   # PWA assets
+├── holerite_gerador.html     # Gerador standalone de holerites
+└── package.json              # Root scripts (dev combined)
+```
 
 ---
 
@@ -75,20 +130,20 @@ O sistema opera como um aplicativo híbrido moderno:
 
 ### Configuração Inicial
 
-1. **Servidor (Backend)**:
+1. **Backend**:
 ```bash
 cd server
 npm install
-cp .env.example .env # Configure sua MONGODB_URI e JWT_SECRET
+cp .env.example .env
+# Configure: MONGODB_URI, JWT_SECRET, ADMIN_EMAIL
 ```
 
-2. **Cliente (Frontend)**:
+2. **Frontend**:
 ```bash
 npm install
 ```
 
-### Execução Combinada (Recommended)
-Na raiz do projeto:
+3. **Execução Combinada**:
 ```bash
 npm run dev
 ```
@@ -97,40 +152,70 @@ npm run dev
 
 ---
 
-## 📂 Arquitetura do Sistema
+## 🔐 Variáveis de Ambiente
 
-```text
-├── server/            # API Service Layer
-│   ├── models/        # Schemas do banco de dados (User, Desligamento)
-│   ├── routes/        # Router logic e Middlewares de Auditoria
-│   └── seed/          # Initial data generation
-├── src/               # UI Layer (React SPA)
-│   ├── components/    # Atomic and composite components
-│   ├── context/       # Global State (AppProvider + useReducer)
-│   ├── data/          # Constants and workflow templates
-│   └── utils/         # Date logic and formatters
+### Backend (`server/.env`)
+| Variável | Descrição |
+|----------|-----------|
+| `PORT` | Porta do servidor (padrão: 3001) |
+| `NODE_ENV` | ambiente (production/development) |
+| `MONGODB_URI` | String de conexão MongoDB |
+| `JWT_SECRET` | **Obrigatório** - chave de assinatura JWT |
+| `FRONTEND_ORIGIN` | URL do frontend para CORS |
+| `ADMIN_EMAIL` | Email do admin inicial |
+| `MAIL_HOST/PORT/USER/PASS` | Configuração SMTP |
+
+### Frontend (`.env.production`)
+| Variável | Descrição |
+|----------|-----------|
+| `VITE_API_URL` | URL da API em produção |
+
+---
+
+## 📋 Tipos de Rescisão Suportados
+
+1.  **Pedido de Demissão** - Iniciativa do empregado
+2.  **Demissão sem Justa Causa** - Desligamento pelo empregador
+3.  **Demissão com Justa Causa** - Dispensa disciplinar
+4.  **Acordo Mútuo** - CLT Art. 484-A (§6)
+5.  **Término Antecipado — Empresa** - Contrato prazo determinado
+6.  **Término Antecipado — Empregado**
+7.  **Término de Contrato** - Fim de prazo determinado
+8.  **Falecimento** - Morte do empregado
+9.  **Aposentadoria** - Aposentadoria do empregado
+
+---
+
+## 🔧 Scripts Disponíveis
+
+```bash
+npm run dev          # Inicia frontend + backend
+npm run dev:client   # Apenas frontend (Vite)
+npm run dev:server   # Apenas backend (nodemon)
+npm run build        # Build de produção
+npm run seed         # Popula dados iniciais no banco
+
+# Server
+cd server && npm run dev    # Desenvolvimento
+cd server && npm run start  # Produção
+cd server && npm run seed   # Seed de dados
 ```
 
 ---
 
-## 🔐 Segurança e Conectividade
-*   **CORS Blindado**: Configuração rigorosa de origens permitidas para segurança em ambientes de deploy (Vercel + Render).
-*   **Rate Limiting**: Proteção antiespam que bloqueia IPs maliciosos e ataques de força bruta.
-*   **RBAC (Role-Based Access Control)**: O sistema suporta diferentes níveis de permissão (Admin/Operador).
-*   **Segurança de Dados**: Sanitização de inputs contra NoSQL Injection e Hashing de senhas.
-*   **UX Inclusiva**: Contraste aprimorado para o modo claro e animações suaves para redução de carga cognitiva.
-
----
-
 ## 🏢 Sobre o Projeto
-Este documento detalha o funcionamento interno, arquitetura e decisões técnicas tomadas no desenvolvimento do **DesliGest (v2.2.0)**.
+
+**DesliGest (v2.4.0)** - Soluções Inteligentes em RH
+
+Este documento detalha o funcionamento interno, arquitetura e decisões técnicas do sistema. Para informações sobre correções de segurança aplicadas, consulte [SECURITY_FIXES.md](SECURITY_FIXES.md).
 
 ---
 
 ## 👤 Autor
-**Heryssrique Silva** - [GitHub](https://github.com/heryssrique)
+
+**Henrique Silva** - [GitHub](https://github.com/heryssrique)
 
 ---
 
 > [!TIP]
-> **Dica Executiva**: Utilize a visão de **Calendário** para planejar datas de pico de pagamento no início do mês e a **Auditoria Global** para revisões rápidas de conformidade.
+> **Dica Executiva**: Utilize a visão de **Calendário** para planejar datas de pico no início do mês, a **Lista de Pendentes** para cobranças de comprovantes, e o **Histórico Global** para auditorias rápidas de conformidade.
