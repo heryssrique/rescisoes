@@ -514,8 +514,23 @@ export function DetailView({ id }) {
                     </button>
                     {(item.etapa === 'documentacao' || item.etapa === 'homologacao') && (
                       <div className="dropdown" style={{ marginLeft: 5 }}>
-                        <button className="btn btn-secondary btn-sm" onClick={() => setShowDocMotivoModal({ itemId: item.id, initialMotivo: item.documento?.motivo || '' })}>
-                          Docs
+                        <button
+                          className={`btn btn-sm ${item.documento?.signed === false ? 'btn-danger' : item.documento?.signed === true ? 'btn-success' : 'btn-secondary'}`}
+                          onClick={() => {
+                            if (item.documento?.signed === false) {
+                              // Já está não assinado -> abrir modal para mudar
+                              setShowDocMotivoModal({ itemId: item.id, initialMotivo: item.documento?.motivo || '' });
+                            } else if (item.documento?.signed === true) {
+                              // Assinado -> marcar como não assinado (abre modal)
+                              setShowDocMotivoModal({ itemId: item.id, initialMotivo: '' });
+                            } else {
+                              // Não definido -> perguntar o que fazer
+                              setShowDocMotivoModal({ itemId: item.id, initialMotivo: '' });
+                            }
+                          }}
+                          style={{ minWidth: 90 }}
+                        >
+                          {item.documento?.signed === false ? 'Não Ass.' : item.documento?.signed === true ? 'Ass.' : 'Docs'}
                         </button>
                       </div>
                     )}
@@ -531,8 +546,8 @@ export function DetailView({ id }) {
       {showDocMotivoModal && (
         <DocumentoMotivoModal
           onClose={() => setShowDocMotivoModal(null)}
-          onSave={async (motivo) => {
-            await actions.updateChecklistItemDocumento(d.id, showDocMotivoModal.itemId, { signed: false, motivo });
+          onSave={async (signed, motivo) => {
+            await actions.updateChecklistItemDocumento(d.id, showDocMotivoModal.itemId, { signed, motivo });
             setShowDocMotivoModal(null);
           }}
           initialMotivo={showDocMotivoModal.initialMotivo}
