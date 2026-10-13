@@ -138,4 +138,54 @@ router.patch('/users/:id/role', auth, async (req, res, next) => {
   }
 });
 
+// Create user (admin only)
+router.post('/users', auth, validate(registerSchema), async (req, res, next) => {
+  try {
+    if (req.user.role !== 'admin') throw new ApiError(403, 'Apenas admins podem criar usuários.');
+    const { name, email, password } = req.body;
+
+    if (mongoose.connection.readyState !== 1) {
+      throw new ApiError(503, 'Serviço de banco de dados temporariamente indisponível.');
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      throw new ApiError(400, 'E-mail já está em uso.');
+    }
+
+    // Default role is 'hr' for admin-created users
+    const user = new User({ name, email, password, role: 'hr' });
+    await user.save();
+
+    res.status(201).json({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Delete user (admin only)
+router.delete('/users/:id', auth, async (req, res, next) => {
+  try {
+    if (req.user.role !== 'admin') throw new ApiError(403, 'Apenas admins podem deletar usuários.');
+
+    // Prevent self-deletion
+    if (req.params.id === req.user.id) {
+      throw new ApiError(400, 'Você não pode deletar sua própria conta.');
+    }
+
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) throw new ApiError(404, 'Usuário não encontrado.');
+
+    res.json({ message: 'Usuário deletado com sucesso.', id: req.params.id });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

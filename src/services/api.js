@@ -152,6 +152,20 @@ export function checkAuth() {
   return request('GET', '/auth/me');
 }
 
+// ─── User Management (admin only) ────────────────────────────────────────
+export function getUsers() {
+  return request('GET', '/auth/users');
+}
+export function createUser(name, email, password) {
+  return request('POST', '/auth/users', { name, email, password });
+}
+export function updateUserRole(id, role) {
+  return request('PATCH', `/auth/users/${id}/role`, { role });
+}
+export function deleteUser(id) {
+  return request('DELETE', `/auth/users/${id}`);
+}
+
 // ─── Links Úteis ──────────────────────────────────────────────────────────
 export function getLinks() {
   return request('GET', '/links');

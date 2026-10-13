@@ -177,6 +177,8 @@ function reducer(state, action) {
       return { ...s, activeCelebration: action.payload };
     case 'SET_LINKS':
       return { ...s, linksUteis: action.payload };
+    case 'SET_USERS':
+      return { ...s, users: action.payload };
     case 'OPEN_NEW_MODAL':
       return { ...s, isNewModalOpen: true, newModalData: action.payload };
     case 'CLOSE_NEW_MODAL':
@@ -237,7 +239,7 @@ function getInitialState() {
       user: null, isAuthChecked: true, desligamentos: [], archivedDesligamentos: [],
       view: 'lista', selected: null, theme: 'dark', performanceMode: false, globalColigadaFilter: 'todas',
       loading: true, error: null, offline: false, notifications: [], readNotificationIds: [],
-      coligadas: {}, motivos: [], statusFlow: [], checklistTemplate: [], linksUteis: [],
+      coligadas: {}, motivos: [], statusFlow: [], checklistTemplate: [], linksUteis: [], users: [],
       triggerConfetti: false,
       activeCelebration: null,
       isNewModalOpen: false,
@@ -317,6 +319,16 @@ export function AppProvider({ children }) {
       dispatch({ type: 'SET_LINKS', payload: Array.isArray(links) ? links : [] });
     } catch (err) {
       // fallback: manter os links do localStorage
+    }
+  }, []);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const users = await api.getUsers();
+      dispatch({ type: 'SET_USERS', payload: Array.isArray(users) ? users : [] });
+      return users;
+    } catch (err) {
+      // Apenas admins têm acesso; silencia erros para outros roles
     }
   }, []);
 
@@ -612,10 +624,26 @@ export function AppProvider({ children }) {
         await fetchLinks();
         return res;
       },
+      // ─── User Management (admin only) ─────────────────────────────────
+      fetchUsers,
+      addUser: async (name, email, password) => {
+        const user = await api.createUser(name, email, password);
+        await fetchUsers();
+        return user;
+      },
+      updateUserRole: async (id, role) => {
+        const user = await api.updateUserRole(id, role);
+        await fetchUsers();
+        return user;
+      },
+      deleteUser: async (id) => {
+        await api.deleteUser(id);
+        await fetchUsers();
+      },
       openNewModal: (data) => dispatch({ type: 'OPEN_NEW_MODAL', payload: data }),
       closeNewModal: () => dispatch({ type: 'CLOSE_NEW_MODAL' }),
     }
-  }), [state, fetchAll, fetchArchived, fetchLinks]);
+  }), [state, fetchAll, fetchArchived, fetchLinks, fetchUsers]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

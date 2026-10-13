@@ -9,7 +9,7 @@ import { differenceInDays, parseISO, startOfDay } from 'date-fns';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { CelebrationCanvas3D } from './components/CelebrationCanvas3D';
 import {
-  LayoutList, Columns, Plus, Users, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut, HelpCircle, FileText, Sun, Moon, Calendar, History, Link, Monitor, Zap, ZapOff, Calculator
+  LayoutList, Columns, Plus, Users, AlertTriangle, Loader, FileSpreadsheet, Archive, PieChart as PieChartIcon, PanelLeftClose, Settings, LogOut, HelpCircle, FileText, Sun, Moon, Calendar, History, Link, Monitor, Zap, ZapOff, Calculator, Shield
 } from 'lucide-react';
 
 const Dashboard = lazy(() => import('./components/Dashboard').then(m => ({ default: m.Dashboard })));
@@ -24,6 +24,7 @@ const HelpView = lazy(() => import('./components/HelpView').then(m => ({ default
 const ReportsView = lazy(() => import('./components/ReportsView').then(m => ({ default: m.ReportsView })));
 const LinksView = lazy(() => import('./components/LinksView').then(m => ({ default: m.LinksView })));
 const CalculatorView = lazy(() => import('./components/CalculatorView').then(m => ({ default: m.CalculatorView })));
+const UsersView = lazy(() => import('./components/UsersView').then(m => ({ default: m.UsersView })));
 
 const LoadingScreen = ({ message }) => (
   <div className="loading-screen">
@@ -159,12 +160,14 @@ function AppContent() {
     { id: 'links', label: 'Links Úteis', icon: <Link size={15} /> },
     { id: 'configuracoes', label: 'Configurações', icon: <Settings size={15} /> },
     { id: 'ajuda', label: 'Central de Ajuda', icon: <HelpCircle size={15} /> },
+    ...(user?.role === 'admin' ? [{ id: 'usuarios', label: 'Gerenciar Usuários', icon: <Shield size={15} /> }] : []),
   ];
 
   const viewTitles = {
     dashboard: 'Estatísticas do RH', lista: 'Processos de Desligamento', kanban: 'Quadro Kanban', calendar: 'Calendário de Prazos',
     pendentes: 'Aguardando Comprovante', arquivados: 'Processos Arquivados', relatorios: 'Central de Relatórios',
     audit: 'Log de Auditoria Global', links: 'Links e Ferramentas', configuracoes: 'Configurações do Sistema', ajuda: 'Central de Ajuda', detalhe: 'Detalhe do Processo', calculadora: 'Calculadora de Rescisão',
+    usuarios: 'Gerenciar Usuários',
   };
 
   const selectedName = selected ? (processedData.all.find(d => d.id === selected)?.nome) : '';
@@ -173,6 +176,7 @@ function AppContent() {
     calendar: 'Visualização mensal de vencimentos', pendentes: 'Processos com pagamento pendente de arquivo', arquivados: 'Histórico de processos finalizados',
     relatorios: 'Exportar dados para auditoria e gerência', audit: 'Monitoramento de alterações em tempo real', links: 'Atalhos para ferramentas de cálculo e portais', configuracoes: 'Administração de dados e preferências',
     ajuda: 'Guia de uso e funcionalidades', detalhe: selectedName, calculadora: 'Simulação de cálculos rescisórios',
+    usuarios: 'Controle de acesso e permissões do sistema',
   };
 
   return (
@@ -289,6 +293,7 @@ function AppContent() {
                 {view === 'calculadora' && <CalculatorView />}
                 {view === 'configuracoes' && <SettingsView />}
                 {view === 'ajuda' && <HelpView />}
+                {view === 'usuarios' && user?.role === 'admin' && <UsersView />}
                 {view === 'detalhe' && selected && <DetailView id={selected} />}
               </Suspense>
             </motion.div>
