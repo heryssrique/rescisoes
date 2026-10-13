@@ -297,15 +297,16 @@ export function DetailView({ id }) {
             </button>
           )}
           
-          {!confirmDelete
-            ? <button className="btn btn-danger btn-sm" onClick={() => setConfirmDelete(true)} id="btn-excluir">
-                <Trash2 size={13} /> Excluir
-              </button>
-            : <div style={{ display: 'flex', gap: 6 }}>
-                <button className="btn btn-danger btn-sm" onClick={handleDelete}>Confirmar</button>
-                <button className="btn btn-secondary btn-sm" onClick={() => setConfirmDelete(false)}>Cancelar</button>
-              </div>
-          }
+          {state.user?.role === 'admin' && (
+            !confirmDelete
+              ? <button className="btn btn-danger btn-sm" onClick={() => setConfirmDelete(true)} id="btn-excluir">
+                  <Trash2 size={13} /> Excluir
+                </button>
+              : <div style={{ display: 'flex', gap: 6 }}>
+                  <button className="btn btn-danger btn-sm" onClick={handleDelete}>Confirmar</button>
+                  <button className="btn btn-secondary btn-sm" onClick={() => setConfirmDelete(false)}>Cancelar</button>
+                </div>
+          )}
         </div>
       </div>
 

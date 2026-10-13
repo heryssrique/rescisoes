@@ -154,13 +154,15 @@ function AppContent() {
     { id: 'pendentes', label: 'Pend. Comprovante', icon: <AlertTriangle size={15} />, badge: processedData.counts.pending },
     { id: 'arquivados', label: 'Arquivados', icon: <Archive size={15} />, badge: processedData.counts.archived },
     { id: 'relatorios', label: 'Relatórios', icon: <FileText size={15} /> },
-    { id: 'audit', label: 'Histórico Global', icon: <History size={15} /> },
     { id: 'dashboard', label: 'Estatísticas', icon: <PieChartIcon size={15} /> },
     { id: 'calculadora', label: 'Calculadora', icon: <Calculator size={15} /> },
     { id: 'links', label: 'Links Úteis', icon: <Link size={15} /> },
-    { id: 'configuracoes', label: 'Configurações', icon: <Settings size={15} /> },
     { id: 'ajuda', label: 'Central de Ajuda', icon: <HelpCircle size={15} /> },
-    ...(user?.role === 'admin' ? [{ id: 'usuarios', label: 'Gerenciar Usuários', icon: <Shield size={15} /> }] : []),
+    ...(user?.role === 'admin' ? [
+      { id: 'audit', label: 'Histórico Global', icon: <History size={15} /> },
+      { id: 'configuracoes', label: 'Configurações', icon: <Settings size={15} /> },
+      { id: 'usuarios', label: 'Gerenciar Usuários', icon: <Shield size={15} /> }
+    ] : []),
   ];
 
   const viewTitles = {
@@ -288,10 +290,10 @@ function AppContent() {
                 {view === 'kanban' && <KanbanView data={[...processedData.mainDesligamentos, ...processedData.pendentesComprovante]} />}
                 {view === 'arquivados' && <ArchivedView data={processedData.mainArquivados} />}
                 {view === 'relatorios' && <ReportsView ativos={processedData.mainDesligamentos} arquivados={processedData.mainArquivados} />}
-                {view === 'audit' && <AuditLogView data={processedData.all} />}
+                {view === 'audit' && user?.role === 'admin' && <AuditLogView data={processedData.all} />}
                 {view === 'links' && <LinksView />}
                 {view === 'calculadora' && <CalculatorView />}
-                {view === 'configuracoes' && <SettingsView />}
+                {view === 'configuracoes' && user?.role === 'admin' && <SettingsView />}
                 {view === 'ajuda' && <HelpView />}
                 {view === 'usuarios' && user?.role === 'admin' && <UsersView />}
                 {view === 'detalhe' && selected && <DetailView id={selected} />}

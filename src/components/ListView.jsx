@@ -526,16 +526,18 @@ export function ListView({ data: injectedData }) {
                 <Archive size={14} />
                 Arquivar
               </button>
-              <button 
-                type="button"
-                className="btn btn-danger btn-sm" 
-                onClick={handleBulkDelete} 
-                title="Excluir selecionados"
-                style={{ cursor: 'pointer', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 6 }}
-              >
-                <Trash2 size={14} />
-                Excluir
-              </button>
+              {state.user?.role === 'admin' && (
+                <button
+                  type="button"
+                  className="btn btn-danger btn-sm"
+                  onClick={handleBulkDelete}
+                  title="Excluir selecionados"
+                  style={{ cursor: 'pointer', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Trash2 size={14} />
+                  Excluir
+                </button>
+              )}
               <button 
                 type="button"
                 className="btn-icon-sm" 
