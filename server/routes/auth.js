@@ -20,6 +20,7 @@ const { auth } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const { loginSchema, registerSchema } = require('../schemas/authSchema');
 const { ApiError } = require('../middleware/errorMiddleware');
+const { sendPasswordResetEmail } = require('../services/mailService');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -202,18 +203,26 @@ router.post('/forgot-password', authAttemptLimiter, async (req, res, next) => {
       user.resetPasswordExpires = Date.now() + 3600000; // 1 hora
       await user.save();
 
-      return res.json({
+      // Enviar e-mail de recuperação
+      await sendPasswordResetEmail(user.email, resetToken);
+
+      // Em desenvolvimento, retornamos o token para facilitar testes
+      const isDev = process.env.NODE_ENV !== 'production';
+
+      res.json({
         success: true,
-        message: 'Se o e-mail estiver cadastrado, as instruções de recuperação foram geradas.',
-        devResetToken: resetToken,
-        devEmail: user.email
+        message: isDev
+          ? 'E-mail de recuperação enviado (veja o console do servidor ou use o token abaixo em dev).'
+          : 'Se o e-mail estiver cadastrado, as instruções de recuperação foram enviadas.',
+        ...(isDev && { devResetToken: resetToken, devEmail: user.email })
+      });
+    } else {
+      // Por segurança, não revelamos se o e-mail existe ou não
+      res.json({
+        success: true,
+        message: 'Se o e-mail estiver cadastrado, as instruções de recuperação foram enviadas.'
       });
     }
-
-    res.json({
-      success: true,
-      message: 'Se o e-mail estiver cadastrado, as instruções de recuperação foram geradas.'
-    });
   } catch (err) {
     next(err);
   }
