@@ -690,3 +690,63 @@
 {"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-10-13 15:02:26"}
 {"level":"warn","message":"⚠️ ERRO DE CONEXÃO MONGODB (Modo Offline Ativado): querySrv ECONNREFUSED _mongodb._tcp.desligest.760wbkg.mongodb.net","service":"desligest-api","timestamp":"2026-10-13 15:02:26"}
 {"level":"warn","message":"⚠️ O servidor continuará respondendo em modo offline/fallback no ambiente local.","service":"desligest-api","timestamp":"2026-10-13 15:02:26"}
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-10-13 15:19:36"}
+{"level":"info","message":"🚀 API rodando na porta 3001","service":"desligest-api","timestamp":"2026-10-13 15:19:36"}
+{"level":"info","message":"   Health: http://localhost:3001/api/health","service":"desligest-api","timestamp":"2026-10-13 15:19:36"}
+{"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-10-13 15:19:36"}
+{"level":"warn","message":"⚠️ ERRO DE CONEXÃO MONGODB (Modo Offline Ativado): querySrv ECONNREFUSED _mongodb._tcp.desligest.760wbkg.mongodb.net","service":"desligest-api","timestamp":"2026-10-13 15:19:36"}
+{"level":"warn","message":"⚠️ O servidor continuará respondendo em modo offline/fallback no ambiente local.","service":"desligest-api","timestamp":"2026-10-13 15:19:36"}
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-10-13 15:19:50"}
+{"level":"info","message":"🚀 API rodando na porta 3001","service":"desligest-api","timestamp":"2026-10-13 15:19:50"}
+{"level":"info","message":"   Health: http://localhost:3001/api/health","service":"desligest-api","timestamp":"2026-10-13 15:19:50"}
+{"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-10-13 15:19:50"}
+{"level":"warn","message":"⚠️ ERRO DE CONEXÃO MONGODB (Modo Offline Ativado): querySrv ECONNREFUSED _mongodb._tcp.desligest.760wbkg.mongodb.net","service":"desligest-api","timestamp":"2026-10-13 15:19:50"}
+{"level":"warn","message":"⚠️ O servidor continuará respondendo em modo offline/fallback no ambiente local.","service":"desligest-api","timestamp":"2026-10-13 15:19:50"}
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-10-13 15:20:12"}
+{"level":"info","message":"🚀 API rodando na porta 3001","service":"desligest-api","timestamp":"2026-10-13 15:20:12"}
+{"level":"info","message":"   Health: http://localhost:3001/api/health","service":"desligest-api","timestamp":"2026-10-13 15:20:12"}
+{"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-10-13 15:20:12"}
+{"level":"warn","message":"⚠️ ERRO DE CONEXÃO MONGODB (Modo Offline Ativado): querySrv ECONNREFUSED _mongodb._tcp.desligest.760wbkg.mongodb.net","service":"desligest-api","timestamp":"2026-10-13 15:20:12"}
+{"level":"warn","message":"⚠️ O servidor continuará respondendo em modo offline/fallback no ambiente local.","service":"desligest-api","timestamp":"2026-10-13 15:20:12"}
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-10-13 15:20:15"}
+{"level":"info","message":"🚀 API rodando na porta 3001","service":"desligest-api","timestamp":"2026-10-13 15:20:15"}
+{"level":"info","message":"   Health: http://localhost:3001/api/health","service":"desligest-api","timestamp":"2026-10-13 15:20:15"}
+{"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-10-13 15:20:15"}
+{"level":"warn","message":"⚠️ ERRO DE CONEXÃO MONGODB (Modo Offline Ativado): querySrv ECONNREFUSED _mongodb._tcp.desligest.760wbkg.mongodb.net","service":"desligest-api","timestamp":"2026-10-13 15:20:15"}
+{"level":"warn","message":"⚠️ O servidor continuará respondendo em modo offline/fallback no ambiente local.","service":"desligest-api","timestamp":"2026-10-13 15:20:15"}
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-10-13 15:21:20"}
+{"level":"info","message":"🚀 API rodando na porta 3001","service":"desligest-api","timestamp":"2026-10-13 15:21:20"}
+{"level":"info","message":"   Health: http://localhost:3001/api/health","service":"desligest-api","timestamp":"2026-10-13 15:21:20"}
+{"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-10-13 15:21:20"}
+{"level":"warn","message":"⚠️ ERRO DE CONEXÃO MONGODB (Modo Offline Ativado): querySrv ECONNREFUSED _mongodb._tcp.desligest.760wbkg.mongodb.net","service":"desligest-api","timestamp":"2026-10-13 15:21:20"}
+{"level":"warn","message":"⚠️ O servidor continuará respondendo em modo offline/fallback no ambiente local.","service":"desligest-api","timestamp":"2026-10-13 15:21:20"}
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-10-13 15:21:32"}
+{"level":"info","message":"🚀 API rodando na porta 3001","service":"desligest-api","timestamp":"2026-10-13 15:21:32"}
+{"level":"info","message":"   Health: http://localhost:3001/api/health","service":"desligest-api","timestamp":"2026-10-13 15:21:32"}
+{"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-10-13 15:21:32"}
+{"level":"warn","message":"⚠️ ERRO DE CONEXÃO MONGODB (Modo Offline Ativado): querySrv ECONNREFUSED _mongodb._tcp.desligest.760wbkg.mongodb.net","service":"desligest-api","timestamp":"2026-10-13 15:21:32"}
+{"level":"warn","message":"⚠️ O servidor continuará respondendo em modo offline/fallback no ambiente local.","service":"desligest-api","timestamp":"2026-10-13 15:21:32"}
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-10-13 15:21:45"}
+{"level":"info","message":"🚀 API rodando na porta 3001","service":"desligest-api","timestamp":"2026-10-13 15:21:45"}
+{"level":"info","message":"   Health: http://localhost:3001/api/health","service":"desligest-api","timestamp":"2026-10-13 15:21:45"}
+{"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-10-13 15:21:45"}
+{"level":"warn","message":"⚠️ ERRO DE CONEXÃO MONGODB (Modo Offline Ativado): querySrv ECONNREFUSED _mongodb._tcp.desligest.760wbkg.mongodb.net","service":"desligest-api","timestamp":"2026-10-13 15:21:45"}
+{"level":"warn","message":"⚠️ O servidor continuará respondendo em modo offline/fallback no ambiente local.","service":"desligest-api","timestamp":"2026-10-13 15:21:45"}
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-10-13 15:21:58"}
+{"level":"info","message":"🚀 API rodando na porta 3001","service":"desligest-api","timestamp":"2026-10-13 15:21:58"}
+{"level":"info","message":"   Health: http://localhost:3001/api/health","service":"desligest-api","timestamp":"2026-10-13 15:21:58"}
+{"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-10-13 15:21:58"}
+{"level":"warn","message":"⚠️ ERRO DE CONEXÃO MONGODB (Modo Offline Ativado): querySrv ECONNREFUSED _mongodb._tcp.desligest.760wbkg.mongodb.net","service":"desligest-api","timestamp":"2026-10-13 15:21:58"}
+{"level":"warn","message":"⚠️ O servidor continuará respondendo em modo offline/fallback no ambiente local.","service":"desligest-api","timestamp":"2026-10-13 15:21:58"}
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-10-13 15:22:13"}
+{"level":"info","message":"🚀 API rodando na porta 3001","service":"desligest-api","timestamp":"2026-10-13 15:22:13"}
+{"level":"info","message":"   Health: http://localhost:3001/api/health","service":"desligest-api","timestamp":"2026-10-13 15:22:13"}
+{"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-10-13 15:22:13"}
+{"level":"warn","message":"⚠️ ERRO DE CONEXÃO MONGODB (Modo Offline Ativado): querySrv ECONNREFUSED _mongodb._tcp.desligest.760wbkg.mongodb.net","service":"desligest-api","timestamp":"2026-10-13 15:22:13"}
+{"level":"warn","message":"⚠️ O servidor continuará respondendo em modo offline/fallback no ambiente local.","service":"desligest-api","timestamp":"2026-10-13 15:22:13"}
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-10-13 15:22:31"}
+{"level":"info","message":"🚀 API rodando na porta 3001","service":"desligest-api","timestamp":"2026-10-13 15:22:31"}
+{"level":"info","message":"   Health: http://localhost:3001/api/health","service":"desligest-api","timestamp":"2026-10-13 15:22:31"}
+{"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-10-13 15:22:31"}
+{"level":"warn","message":"⚠️ ERRO DE CONEXÃO MONGODB (Modo Offline Ativado): querySrv ECONNREFUSED _mongodb._tcp.desligest.760wbkg.mongodb.net","service":"desligest-api","timestamp":"2026-10-13 15:22:31"}
+{"level":"warn","message":"⚠️ O servidor continuará respondendo em modo offline/fallback no ambiente local.","service":"desligest-api","timestamp":"2026-10-13 15:22:31"}

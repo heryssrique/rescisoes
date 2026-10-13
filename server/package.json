@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js",
+    "dev": "node --watch index.js",
     "seed": "node seed/run.js"
   },
   "keywords": [],
@@ -25,13 +25,11 @@
     "mailtrap": "^5.0.0",
     "mongo-sanitize": "^1.1.0",
     "mongoose": "^9.2.4",
-    "node-cron": "^3.0.3",
-    "nodemailer": "^9.0.1",
+    "node-cron": "^4.6.0",
+    "nodemailer": "^10.1.0",
     "winston": "^3.17.0",
     "xss-clean": "^0.1.4",
     "zod": "^3.24.2"
   },
-  "devDependencies": {
-    "nodemon": "^3.1.14"
-  }
+  "overrides": {}
 }
