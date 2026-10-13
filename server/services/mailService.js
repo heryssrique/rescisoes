@@ -1,25 +1,29 @@
-const nodemailer = require('nodemailer');
+const { MailtrapClient } = require('mailtrap');
 const logger = require('../utils/logger');
 
-const getTransporter = () => {
-  return nodemailer.createTransport({
-    host: process.env.MAIL_HOST || 'smtp.mailtrap.io',
-    port: parseInt(process.env.MAIL_PORT) || 2525,
-    secure: process.env.MAIL_SECURE === 'true',
-    auth: {
-      user: process.env.MAIL_USER,
-      pass: process.env.MAIL_PASS,
-    },
-  });
+// Cliente Mailtrap (apenas inicializa se tiver token configurado)
+const getMailtrapClient = () => {
+  const token = process.env.MAILTRAP_TOKEN;
+  if (!token) {
+    logger.warn('MAILTRAP_TOKEN não configurado. E-mails não serão enviados.');
+    return null;
+  }
+  return new MailtrapClient({ token });
 };
 
 const sendSummaryEmail = async (to, data) => {
+  const client = getMailtrapClient();
+  if (!client) return false;
+
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
   try {
-    const transporter = getTransporter();
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const info = await transporter.sendMail({
-      from: `"DesliGest" <${process.env.MAIL_FROM || 'noreply@desligest.com'}>`,
-      to,
+    const response = await client.send({
+      from: {
+        email: process.env.MAIL_FROM || 'noreply@desligest.com',
+        name: 'DesliGest'
+      },
+      to: [{ email: to }],
       subject: `Resumo Diário de Rescisões - ${new Date().toLocaleDateString()}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -29,21 +33,31 @@ const sendSummaryEmail = async (to, data) => {
         </div>
       `,
     });
-    logger.info('E-mail enviado: %s', info.messageId);
+    logger.info('E-mail de resumo enviado: %s', response.messageId);
+    return true;
   } catch (err) {
     logger.error('Erro ao enviar e-mail de resumo:', err);
+    return false;
   }
 };
 
 const sendPasswordResetEmail = async (to, resetToken) => {
-  try {
-    const transporter = getTransporter();
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const resetUrl = `${frontendUrl}/auth?mode=reset&token=${resetToken}`;
+  const client = getMailtrapClient();
+  if (!client) {
+    logger.warn('Mailtrap não configurado. Token de recuperação:', resetToken);
+    return false;
+  }
 
-    const info = await transporter.sendMail({
-      from: `"DesliGest" <${process.env.MAIL_FROM || 'noreply@desligest.com'}>`,
-      to,
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const resetUrl = `${frontendUrl}/auth?mode=reset&token=${resetToken}`;
+
+  try {
+    const response = await client.send({
+      from: {
+        email: process.env.MAIL_FROM || 'noreply@desligest.com',
+        name: 'DesliGest'
+      },
+      to: [{ email: to }],
       subject: 'Recuperação de Senha - DesliGest',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -77,18 +91,19 @@ const sendPasswordResetEmail = async (to, resetToken) => {
         </div>
       `,
       text: `
-        DesliGest - Recuperação de Senha
+DesliGest - Recuperação de Senha
 
-        Você solicitou a recuperação de senha da sua conta no DesliGest.
+Você solicitou a recuperação de senha da sua conta no DesliGest.
 
-        Acesse o link abaixo para criar uma nova senha (válido por 1 hora):
-        ${resetUrl}
+Acesse o link abaixo para criar uma nova senha (válido por 1 hora):
+${resetUrl}
 
-        Se você não solicitou esta recuperação, ignore este e-mail.
+Se você não solicitou esta recuperação, ignore este e-mail.
       `,
+      category: 'password_reset'
     });
 
-    logger.info('E-mail de recuperação enviado para %s: %s', to, info.messageId);
+    logger.info('E-mail de recuperação enviado para %s: %s', to, response.messageId);
     return true;
   } catch (err) {
     logger.error('Erro ao enviar e-mail de recuperação:', err);
