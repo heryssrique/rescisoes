@@ -525,6 +525,12 @@ export function AppProvider({ children }) {
         localStorage.setItem('desligest_auth_user', JSON.stringify(res.user));
         dispatch({ type: 'SET_USER', payload: res.user });
       },
+      forgotPassword: async (email) => {
+        return await api.forgotPassword(email);
+      },
+      resetPassword: async (token, newPassword) => {
+        return await api.resetPassword(token, newPassword);
+      },
       logout: () => {
         localStorage.removeItem('token');
         dispatch({ type: 'LOGOUT' });

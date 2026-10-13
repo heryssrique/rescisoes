@@ -14,6 +14,7 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 const { auth } = require('../middleware/auth');
 const validate = require('../middleware/validate');
@@ -183,6 +184,65 @@ router.delete('/users/:id', auth, async (req, res, next) => {
     if (!user) throw new ApiError(404, 'Usuário não encontrado.');
 
     res.json({ message: 'Usuário deletado com sucesso.', id: req.params.id });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ── Forgot Password ────────────────────────────────────────────────────────
+router.post('/forgot-password', authAttemptLimiter, async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) throw new ApiError(400, 'E-mail é obrigatório.');
+
+    const user = await User.findOne({ email });
+    if (user) {
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+      user.resetPasswordExpires = Date.now() + 3600000; // 1 hora
+      await user.save();
+
+      return res.json({
+        success: true,
+        message: 'Se o e-mail estiver cadastrado, as instruções de recuperação foram geradas.',
+        devResetToken: resetToken,
+        devEmail: user.email
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Se o e-mail estiver cadastrado, as instruções de recuperação foram geradas.'
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ── Reset Password ─────────────────────────────────────────────────────────
+router.post('/reset-password', authAttemptLimiter, async (req, res, next) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) throw new ApiError(400, 'Token e nova senha são obrigatórios.');
+    if (newPassword.length < 6) throw new ApiError(400, 'A nova senha deve ter no mínimo 6 caracteres.');
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      throw new ApiError(400, 'Token inválido ou expirado.');
+    }
+
+    user.password = newPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.json({ success: true, message: 'Senha redefinida com sucesso. Faça login com sua nova senha.' });
   } catch (err) {
     next(err);
   }

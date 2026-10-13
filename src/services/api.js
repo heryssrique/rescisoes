@@ -151,6 +151,12 @@ export function register(name, email, password) {
 export function checkAuth() {
   return request('GET', '/auth/me');
 }
+export function forgotPassword(email) {
+  return request('POST', '/auth/forgot-password', { email });
+}
+export function resetPassword(token, newPassword) {
+  return request('POST', '/auth/reset-password', { token, newPassword });
+}
 
 // ─── User Management (admin only) ────────────────────────────────────────
 export function getUsers() {

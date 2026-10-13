@@ -630,3 +630,27 @@
 {"level":"warn","message":"⚠️ ERRO DE CONEXÃO MONGODB (Modo Offline Ativado): querySrv ECONNREFUSED _mongodb._tcp.desligest.760wbkg.mongodb.net","service":"desligest-api","timestamp":"2026-09-17 11:53:08"}
 {"level":"warn","message":"⚠️ O servidor continuará respondendo em modo offline/fallback no ambiente local.","service":"desligest-api","timestamp":"2026-09-17 11:53:08"}
 {"level":"info","message":"Incoming Request: GET /api/health","service":"desligest-api","timestamp":"2026-09-17 11:54:01"}
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-10-13 11:18:19"}
+{"level":"info","message":"🚀 API rodando na porta 3001","service":"desligest-api","timestamp":"2026-10-13 11:18:19"}
+{"level":"info","message":"   Health: http://localhost:3001/api/health","service":"desligest-api","timestamp":"2026-10-13 11:18:19"}
+{"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-10-13 11:18:19"}
+{"level":"warn","message":"⚠️ ERRO DE CONEXÃO MONGODB (Modo Offline Ativado): querySrv ECONNREFUSED _mongodb._tcp.desligest.760wbkg.mongodb.net","service":"desligest-api","timestamp":"2026-10-13 11:18:19"}
+{"level":"warn","message":"⚠️ O servidor continuará respondendo em modo offline/fallback no ambiente local.","service":"desligest-api","timestamp":"2026-10-13 11:18:19"}
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-10-13 11:47:27"}
+{"level":"info","message":"🚀 API rodando na porta 3001","service":"desligest-api","timestamp":"2026-10-13 11:47:27"}
+{"level":"info","message":"   Health: http://localhost:3001/api/health","service":"desligest-api","timestamp":"2026-10-13 11:47:27"}
+{"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-10-13 11:47:27"}
+{"level":"warn","message":"⚠️ ERRO DE CONEXÃO MONGODB (Modo Offline Ativado): querySrv ECONNREFUSED _mongodb._tcp.desligest.760wbkg.mongodb.net","service":"desligest-api","timestamp":"2026-10-13 11:47:27"}
+{"level":"warn","message":"⚠️ O servidor continuará respondendo em modo offline/fallback no ambiente local.","service":"desligest-api","timestamp":"2026-10-13 11:47:27"}
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-10-13 11:47:53"}
+{"level":"info","message":"🚀 API rodando na porta 3001","service":"desligest-api","timestamp":"2026-10-13 11:47:53"}
+{"level":"info","message":"   Health: http://localhost:3001/api/health","service":"desligest-api","timestamp":"2026-10-13 11:47:53"}
+{"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-10-13 11:47:53"}
+{"level":"warn","message":"⚠️ ERRO DE CONEXÃO MONGODB (Modo Offline Ativado): querySrv ECONNREFUSED _mongodb._tcp.desligest.760wbkg.mongodb.net","service":"desligest-api","timestamp":"2026-10-13 11:47:53"}
+{"level":"warn","message":"⚠️ O servidor continuará respondendo em modo offline/fallback no ambiente local.","service":"desligest-api","timestamp":"2026-10-13 11:47:53"}
+{"level":"info","message":"⏳ Iniciando conexão com o MongoDB...","service":"desligest-api","timestamp":"2026-10-13 11:48:19"}
+{"level":"info","message":"🚀 API rodando na porta 3001","service":"desligest-api","timestamp":"2026-10-13 11:48:19"}
+{"level":"info","message":"   Health: http://localhost:3001/api/health","service":"desligest-api","timestamp":"2026-10-13 11:48:19"}
+{"level":"warn","message":"⚠️  MongoDB desconectado. Tentando reconectar...","service":"desligest-api","timestamp":"2026-10-13 11:48:19"}
+{"level":"warn","message":"⚠️ ERRO DE CONEXÃO MONGODB (Modo Offline Ativado): querySrv ECONNREFUSED _mongodb._tcp.desligest.760wbkg.mongodb.net","service":"desligest-api","timestamp":"2026-10-13 11:48:19"}
+{"level":"warn","message":"⚠️ O servidor continuará respondendo em modo offline/fallback no ambiente local.","service":"desligest-api","timestamp":"2026-10-13 11:48:19"}
