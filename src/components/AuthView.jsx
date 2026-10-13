@@ -202,12 +202,12 @@ export function AuthView() {
 
         {/* Login Form */}
         {mode === 'login' && (
-          <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }} autoComplete="on">
             <div className="form-group">
               <label className="form-label">E-mail</label>
               <div style={{ position: 'relative' }}>
                 <Mail size={16} style={{ position: 'absolute', left: 14, top: 12, color: 'var(--text-muted)' }} />
-                <input required type="email" className="form-input" style={inputBaseStyle} placeholder="seu@email.com" value={loginForm.email} onChange={e => setLoginForm({...loginForm, email: e.target.value})} />
+                <input required type="email" autoComplete="email" className="form-input" style={inputBaseStyle} placeholder="seu@email.com" value={loginForm.email} onChange={e => setLoginForm({...loginForm, email: e.target.value})} />
               </div>
             </div>
 
@@ -215,7 +215,7 @@ export function AuthView() {
               <label className="form-label">Senha</label>
               <div style={{ position: 'relative' }}>
                 <Lock size={16} style={{ position: 'absolute', left: 14, top: 12, color: 'var(--text-muted)' }} />
-                <input required type="password" minLength={6} className="form-input" style={inputBaseStyle} placeholder="••••••••" value={loginForm.password} onChange={e => setLoginForm({...loginForm, password: e.target.value})} />
+                <input required type="password" autoComplete="current-password" minLength={6} className="form-input" style={inputBaseStyle} placeholder="••••••••" value={loginForm.password} onChange={e => setLoginForm({...loginForm, password: e.target.value})} />
               </div>
             </div>
 
@@ -233,12 +233,12 @@ export function AuthView() {
 
         {/* Register Form */}
         {mode === 'register' && (
-          <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }} autoComplete="on">
             <div className="form-group">
               <label className="form-label">Nome Completo</label>
               <div style={{ position: 'relative' }}>
                 <UserIcon size={16} style={{ position: 'absolute', left: 14, top: 12, color: 'var(--text-muted)' }} />
-                <input required className="form-input" style={inputBaseStyle} placeholder="Seu nome" value={registerForm.name} onChange={e => setRegisterForm({...registerForm, name: e.target.value})} />
+                <input required autoComplete="name" className="form-input" style={inputBaseStyle} placeholder="Seu nome" value={registerForm.name} onChange={e => setRegisterForm({...registerForm, name: e.target.value})} />
               </div>
             </div>
 
@@ -246,7 +246,7 @@ export function AuthView() {
               <label className="form-label">E-mail</label>
               <div style={{ position: 'relative' }}>
                 <Mail size={16} style={{ position: 'absolute', left: 14, top: 12, color: 'var(--text-muted)' }} />
-                <input required type="email" className="form-input" style={inputBaseStyle} placeholder="seu@email.com" value={registerForm.email} onChange={e => setRegisterForm({...registerForm, email: e.target.value})} />
+                <input required type="email" autoComplete="email" className="form-input" style={inputBaseStyle} placeholder="seu@email.com" value={registerForm.email} onChange={e => setRegisterForm({...registerForm, email: e.target.value})} />
               </div>
             </div>
 
@@ -254,7 +254,7 @@ export function AuthView() {
               <label className="form-label">Senha</label>
               <div style={{ position: 'relative' }}>
                 <Lock size={16} style={{ position: 'absolute', left: 14, top: 12, color: 'var(--text-muted)' }} />
-                <input required type="password" minLength={6} className="form-input" style={inputBaseStyle} placeholder="••••••••" value={registerForm.password} onChange={e => setRegisterForm({...registerForm, password: e.target.value})} />
+                <input required type="password" autoComplete="new-password" minLength={6} className="form-input" style={inputBaseStyle} placeholder="••••••••" value={registerForm.password} onChange={e => setRegisterForm({...registerForm, password: e.target.value})} />
               </div>
             </div>
 
@@ -287,12 +287,12 @@ export function AuthView() {
 
         {/* Reset Password Form */}
         {mode === 'reset' && (
-          <form onSubmit={handleResetSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <form onSubmit={handleResetSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }} autoComplete="off">
             <div className="form-group">
               <label className="form-label">Token de Recuperação</label>
               <div style={{ position: 'relative' }}>
                 <Lock size={16} style={{ position: 'absolute', left: 14, top: 12, color: 'var(--text-muted)' }} />
-                <input required className="form-input" style={inputBaseStyle} placeholder="Cole o token recebido" value={resetForm.token} onChange={e => setResetForm({...resetForm, token: e.target.value})} />
+                <input required autoComplete="off" className="form-input" style={inputBaseStyle} placeholder="Cole o token recebido" value={resetForm.token} onChange={e => setResetForm({...resetForm, token: e.target.value})} />
               </div>
             </div>
 
@@ -300,7 +300,7 @@ export function AuthView() {
               <label className="form-label">Nova Senha</label>
               <div style={{ position: 'relative' }}>
                 <Lock size={16} style={{ position: 'absolute', left: 14, top: 12, color: 'var(--text-muted)' }} />
-                <input required type="password" minLength={6} className="form-input" style={inputBaseStyle} placeholder="••••••••" value={resetForm.newPassword} onChange={e => setResetForm({...resetForm, newPassword: e.target.value})} />
+                <input required type="password" autoComplete="new-password" minLength={6} className="form-input" style={inputBaseStyle} placeholder="••••••••" value={resetForm.newPassword} onChange={e => setResetForm({...resetForm, newPassword: e.target.value})} />
               </div>
             </div>
 
@@ -308,7 +308,7 @@ export function AuthView() {
               <label className="form-label">Confirmar Nova Senha</label>
               <div style={{ position: 'relative' }}>
                 <Lock size={16} style={{ position: 'absolute', left: 14, top: 12, color: 'var(--text-muted)' }} />
-                <input required type="password" minLength={6} className="form-input" style={inputBaseStyle} placeholder="••••••••" value={resetForm.confirmPassword} onChange={e => setResetForm({...resetForm, confirmPassword: e.target.value})} />
+                <input required type="password" autoComplete="new-password" minLength={6} className="form-input" style={inputBaseStyle} placeholder="••••••••" value={resetForm.confirmPassword} onChange={e => setResetForm({...resetForm, confirmPassword: e.target.value})} />
               </div>
             </div>
 
