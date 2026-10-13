@@ -8,7 +8,7 @@ const ROLES = [
   { value: 'hr', label: 'RH', color: 'var(--accent-blue)' }
 ];
 
-function UserFormModal({ user, onSave, onClose, saving, currentUserId }) {
+function UserFormModal({ user, onSave, onClose, saving }) {
   const [form, setForm] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -447,7 +447,6 @@ export function UsersView() {
               setEditingUser(null);
             }}
             saving={saving}
-            currentUserId={currentUser?.id}
           />
         )}
       </AnimatePresence>
