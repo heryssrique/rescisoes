@@ -8,12 +8,12 @@
  *  4. Marca arquivado = true
  *  5. Adiciona entrada no histórico
  *
- * Uso: node server/migrate_archive_old.js
+ * Uso: node api/scripts/migrate_archive_old.js
  */
 
 require('dotenv').config();
 const mongoose = require('mongoose');
-const Desligamento = require('./models/Desligamento');
+const Desligamento = require('../models/Desligamento');
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/desligest';
 const CUTOFF_DATE = '2026-03-01'; // Registros ANTERIORES a esta data serão arquivados

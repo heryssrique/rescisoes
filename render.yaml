@@ -3,7 +3,7 @@ services:
     name: desligamento-backend
     env: node
     plan: free
-    rootDir: server
+    rootDir: api
     buildCommand: npm install
     startCommand: npm start
     envVars:
