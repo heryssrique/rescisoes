@@ -1,221 +1,147 @@
-# 🚀 Sistema de Gestão de Rescisões (DesliGest)
+# Desligamento App - Vercel Deployment
 
-O **DesliGest** é uma plataforma corporativa para o acompanhamento e gestão de desligamentos, projetada para departamentos de Recursos Humanos que buscam **máxima eficiência**, **controle rigoroso de prazos** e **rastreabilidade total**.
+## Summary
 
-![Version](https://img.shields.io/badge/version-2.4.0-blue)
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
-![Node](https://img.shields.io/badge/Node-22-339933?logo=node.js)
-![MongoDB](https://img.shields.io/badge/MongoDB-Latest-47A248?logo=mongodb)
-![PWA](https://img.shields.io/badge/PWA-Ready-orange?logo=progressive-web-apps)
+This repository contains the **Desligamento App**, a Brazilian labor termination management SPA built with React, Framer Motion, and a Node.js/Express backend. The app has been migrated from a Render deployment to Vercel Functions for improved performance and cost efficiency.
 
----
+## Backend (api/)
 
-## ✨ Funcionalidades de Elite
+### Key Features
 
-### 📊 Dashboard Executivo
-*   Gráficos interativos de pizza e barras com **exportação para PNG/XLSX**.
-*   Filtros dinâmicos por período (dia, semana, mês, ano, customizado).
-*   Comparação de sazonalidade ano a ano.
-*   Visão de turnover por coligada e motivos de desligamento.
+- **Modular Express App**: `api/index.js` exports the app as a Vercel serverless function handler.
+- **Database Connection Caching**: `api/db.js` caches the MongoDB connection across serverless invocations to avoid connection pool exhaustion.
+- **Selective Middleware**: `requireDB` middleware ensures DB connection only for data routes (`/api/auth`, `/api/desligamentos`, `/api/links`), while `/api/health` and 404s work without DB.
+- **Cron Job**: The daily summary email is now scheduled via Vercel Cron (`/api/cron/resumo-diario`), protected by `Authorization: Bearer ${CRON_SECRET}`.
+- **Production-Ready Logging**: `api/utils/logger.js` uses only console transport in production; file transports are gated by `NODE_ENV !== 'production'`.
 
-### 📅 Calendário de Prazos
-*   Visão mensal interativa de todos os vencimentos de pagamentos.
-*   Navegação intuitiva com acesso direto aos detalhes do processo.
-*   Indicadores visuais de urgência (vencido, hoje, próximo).
-
-### 🛡️ Histórico e Auditoria Global
-*   **Monitoramento em Tempo Real**: Todas as atividades do sistema em um único lugar.
-*   **Rastreabilidade Total**: Sistema compara e registra automaticamente quem alterou cada campo (diff automático).
-*   **Conformidade LGPD**: Cada alteração é registrada com usuário, data e valor anterior/novo.
-
-### 📎 Gestão de Documentos e Anexos
-*   Anexe PDFs, comprovantes e fotos diretamente no card de cada colaborador.
-*   **Controle de Documentos Assinados**: Item TRCT (h3) agora possui estado signed/unsigned com motivo.
-*   Histórico de anexos integrado para controle documental simplificado.
-
-### 📋 Fluxo de Trabalho Otimizado
-*   **Quadro Kanban**: Visualize o gargalo operacional por etapas.
-*   **Checklist Dinâmico**: 17 etapas automáticas organizadas por fase (Comunicado, Documentação, Homologação, Pagamento, Conclusão).
-*   Itens podem ser marcados como "Não Aplicável".
-*   **Lista de Pendentes**: Visão dedicada para processos "Pagos" sem comprovante.
-*   **Arquivados com Filtro**: Histórico completo com filtro por período e motivo.
-
-### ⚡ Performance e Estabilidade
-*   **Controle de Concorrência**: Optimistic Locking com verificação de versão (HTTP 409).
-*   **Busca com Debounce**: Interface ultra-responsiva.
-*   **Auto-Logout**: Deslogamento automático após 30 minutos de inatividade.
-*   **Modo Performance**: Alternar animações para melhor desempenho.
-*   **Cache Protegido**: Dados sensíveis são removidos do localStorage no logout.
-
-### 🧮 Calculadora de Rescisões
-*   **Simulação Completa**: Suporte a todos os tipos (Sem/CJ, Justa Causa, Pedido, Acordo Mútuo, Término Contrato, Falecimento, Aposentadoria).
-*   **Módulos de Cálculo**:
-  *   Saldo de Salário
-  *   Aviso Prévio (indenizado/trabalhado)
-  *   Férias (vencidas + proporcionais)
-  *   13º Salário (proporcional)
-  *   Multa FGTS (40% + depósito)
-  *   INSS e IRRF (com deductions)
-*   **Verbas Customizáveis**: Adicione/edit/remova proventos e descontos.
-*   **Recálculo Automático**: Impostos são recalculados ao alterar verbas.
-*   **Memória de Cálculo**: Explicação detalhada com base legal.
-*   **Exportação PDF**: Relatório completo para arquivo.
-*   **Botão "Prévia"**: Envia dados do processo para a calculadora com um clique.
-
-### 💳 Gerador de Holerites (Standalone)
-*   Página 독립na para geração de demonstrativos de pagamento.
-*   Modelo "Concreta Construções" incluso.
-*   Salvar/carregar modelos no navegador.
-*   Impressão otimizada para 2 vias em uma página A4.
-
-### 🔐 Segurança Empresarial
-*   **JWT Obrigatório**: Token obrigatório sem fallbacks.
-*   **RBAC Completo**: Papéis Admin e RH com permissões granulares.
-*   **Sanitização**: Proteção contra NoSQL Injection, XSS e ReDoS.
-*   **Rate Limiting**: Proteção contra ataques de força bruta.
-*   **Helmet**: Headers de segurança HTTP.
-*   **Logs Protegidos**: Query strings com PII não são logadas.
-
-### 🌐 Progressive Web App
-*   Instale como aplicativo nativo no desktop ou mobile.
-*   Service Worker com estratégia Stale-While-Revalidate.
-*   Notificações nativas do browser para alertas de prazo.
-
----
-
-## 🛠️ Stack Tecnológica
-
-| Camada | Tecnologias |
-| :--- | :--- |
-| **Frontend** | React 19, Vite 7, Framer Motion, Lucide React, Recharts, date-fns, XLSX, jsPDF |
-| **Backend** | Node.js 22, Express 5, Mongoose 9, JWT, Zod, bcrypt |
-| **Database** | MongoDB (Mongoose ODM) |
-| **Email** | Nodemailer (SMTP configurável) |
-| **Scheduler** | node-cron (resumos diários) |
-| **Logging** | Winston (logs de erro e acesso) |
-| **Deploy** | Vercel (frontend), Render (backend) |
-
----
-
-## 📂 Arquitetura do Sistema
-
-```
-├── server/                    # API Backend
-│   ├── index.js              # Entry point, middleware, routes
-│   ├── models/               # Mongoose schemas (User, Desligamento, Link)
-│   ├── routes/               # API routes (auth, desligamentos, links)
-│   ├── middleware/           # Auth, validation, error handling
-│   ├── schemas/              # Zod validation schemas
-│   ├── services/             # Cron, email
-│   ├── scripts/              # CLI migration tools
-│   └── utils/                # Logger
-├── src/                      # Frontend React
-│   ├── components/           # 20+ React components (views)
-│   ├── context/              # AppContext (state + actions)
-│   ├── data/                 # Constants, checklist template
-│   ├── services/             # API client
-│   └── utils/calculators/    # Rescisão calculation engine
-├── public/                   # PWA assets
-├── holerite_gerador.html     # Gerador standalone de holerites
-└── package.json              # Root scripts (dev combined)
-```
-
----
-
-## 🚀 Guia de Início Rápido
-
-### Pré-requisitos
-*   **Node.js** (v18 ou superior)
-*   **MongoDB** (Local ou Atlas)
-
-### Configuração Inicial
-
-1. **Backend**:
-```bash
-cd server
-npm install
-cp .env.example .env
-# Configure: MONGODB_URI, JWT_SECRET, ADMIN_EMAIL
-```
-
-2. **Frontend**:
-```bash
-npm install
-```
-
-3. **Execução Combinada**:
-```bash
-npm run dev
-```
-*   **Frontend**: `http://localhost:5173`
-*   **Backend API**: `http://localhost:3001`
-
----
-
-## 🔐 Variáveis de Ambiente
-
-### Backend (`server/.env`)
-| Variável | Descrição |
-|----------|-----------|
-| `PORT` | Porta do servidor (padrão: 3001) |
-| `NODE_ENV` | ambiente (production/development) |
-| `MONGODB_URI` | String de conexão MongoDB |
-| `JWT_SECRET` | **Obrigatório** - chave de assinatura JWT |
-| `FRONTEND_ORIGIN` | URL do frontend para CORS |
-| `ADMIN_EMAIL` | Email do admin inicial |
-| `MAIL_HOST/PORT/USER/PASS` | Configuração SMTP |
-
-### Frontend (`.env.production`)
-| Variável | Descrição |
-|----------|-----------|
-| `VITE_API_URL` | URL da API em produção |
-
----
-
-## 📋 Tipos de Rescisão Suportados
-
-1.  **Pedido de Demissão** - Iniciativa do empregado
-2.  **Demissão sem Justa Causa** - Desligamento pelo empregador
-3.  **Demissão com Justa Causa** - Dispensa disciplinar
-4.  **Acordo Mútuo** - CLT Art. 484-A (§6)
-5.  **Término Antecipado — Empresa** - Contrato prazo determinado
-6.  **Término Antecipado — Empregado**
-7.  **Término de Contrato** - Fim de prazo determinado
-8.  **Falecimento** - Morte do empregado
-9.  **Aposentadoria** - Aposentadoria do empregado
-
----
-
-## 🔧 Scripts Disponíveis
+### Environment Variables Required
 
 ```bash
-npm run dev          # Inicia frontend + backend
-npm run dev:client   # Apenas frontend (Vite)
-npm run dev:server   # Apenas backend (nodemon)
-npm run build        # Build de produção
-npm run seed         # Popula dados iniciais no banco
-
-# Server
-cd server && npm run dev    # Desenvolvimento
-cd server && npm run start  # Produção
-cd server && npm run seed   # Seed de dados
+MONGODB_URI=mongodb+srv://...
+JWT_SECRET=your-secret-key
+CRON_SECRET=your-cron-secret
+MAILTRAP_TOKEN=your-mailtrap-token
+MAIL_FROM=noreply@desligest.com
+FRONTEND_URL=https://rescisoes.vercel.app
+ADMIN_EMAIL=admin@desligest.com
+NODE_ENV=production
 ```
 
----
+**Note**: Do NOT set `VITE_API_URL` on Vercel. The frontend should use relative `/api` paths (same-domain, no CORS).
 
-## 🏢 Sobre o Projeto
+### Routes
 
-**DesliGest (v2.4.0)** - Soluções Inteligentes em RH
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `GET /api/auth/me` - Get current user
+- `GET /api/auth/users` - List all users (admin only)
+- `PATCH /api/auth/users/:id/role` - Change user role (admin only)
+- `DELETE /api/auth/users/:id` - Delete user (admin only)
+- `POST /api/auth/forgot-password` - Forgot password
+- `POST /api/auth/reset-password` - Reset password
+- `GET /api/health` - Health check (no DB required)
+- `GET /api/cron/resumo-diario` - Daily summary (protected by CRON_SECRET)
 
-Este documento detalha o funcionamento interno, arquitetura e decisões técnicas do sistema. Para informações sobre correções de segurança aplicadas, consulte [SECURITY_FIXES.md](SECURITY_FIXES.md).
+## Frontend (src/)
 
----
+### Build Outputs
 
-## 👤 Autor
+- Static files are built to `dist/`
+- HTML5 routing is handled via `vercel.json` rewrites
+- Frontend uses relative `/api` paths for all API calls
 
-**Henrique Silva** - [GitHub](https://github.com/heryssrique)
+## Vercel Configuration
 
----
+### vercel.json
 
-> [!TIP]
-> **Dica Executiva**: Utilize a visão de **Calendário** para planejar datas de pico no início do mês, a **Lista de Pendentes** para cobranças de comprovantes, e o **Histórico Global** para auditorias rápidas de conformidade.
+```json
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "functions": {
+    "index.js": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 300
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "crons": [
+    { "path": "/api/cron/resumo-diario", "schedule": "30 8 * * *" }
+  ]
+}
+```
+
+## Deployment
+
+### Prerequisites
+
+1. Vercel CLI: `npm i -g vercel`
+2. Vercel account and project linked (`vercel link`)
+3. Environment variables set in Vercel dashboard or via `vercel env add`
+
+### Deployment Commands
+
+```bash
+# Deploy preview
+vercel deploy
+
+# Deploy to production
+vercel --prod
+
+# Set environment variables
+vercel env add MONGODB_URI
+vercel env add JWT_SECRET
+vercel env add CRON_SECRET
+vercel env add MAILTRAP_TOKEN
+vercel env add MAIL_FROM
+vercel env add FRONTEND_URL
+vercel env add ADMIN_EMAIL
+vercel env add NODE_ENV
+```
+
+### Verification
+
+1. **Local**: `npm run dev:server` starts the Express server locally
+2. **Vercel Preview**: Check Runtime Logs for:
+   - "MongoDB conectado com sucesso"
+   - "Iniciando resumo diário (Vercel Cron)..." at 08:30 UTC
+3. **Production**: Test login and data operations
+4. **Cron**: Test `/api/cron/resumo-diario` with and without `Bearer CRON_SECRET` header
+
+## Known Issues
+
+- **xlsx@0.18.5 Vulnerability**: High-severity prototype pollution/ReDoS. The SheetJS CDN install was blocked by npm's `EALLOWREMOTE` config. This remains a known issue.
+
+## Rollback
+
+If needed, revert to the Render deployment by:
+1. Reverting the `api/` directory changes
+2. Restoring `render.yaml` with appropriate start command
+3. Setting `VITE_API_URL` in frontend
+
+## Architecture Benefits
+
+- **Cold Start Optimization**: MongoDB connection is cached across invocations
+- **Cost Efficiency**: Serverless Functions with Active CPU pricing
+- **Reliability**: Automatic failover and scaling
+- **Compliance**: No disk writes in production (logs go to console)
+- **Security**: No CORS issues (frontend and backend on same domain)
+
+## Success Criteria
+
+- [x] Build succeeds (`npm run build`)
+- [x] Local server starts and responds to `/api/health`
+- [x] Routes protected by `requireDB` return appropriate error when DB unavailable
+- [x] Cron route responds correctly with and without authentication
+- [x] Vercel deploy creates function and cron job successfully
+- [x] Frontend loads and uses relative `/api` paths without CORS errors

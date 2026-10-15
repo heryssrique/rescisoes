@@ -27,3 +27,4 @@ logs/
 # local env
 .env
 api/.env
+.vercel

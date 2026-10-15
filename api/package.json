@@ -31,5 +31,7 @@
     "xss-clean": "^0.1.4",
     "zod": "^3.24.2"
   },
-  "overrides": {}
+  "overrides": {},
+  "devDependencies": {
+  }
 }
