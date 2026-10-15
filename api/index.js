@@ -6,13 +6,13 @@ const helmet = require('helmet');
 const mongoSanitize = require('mongo-sanitize');
 const hpp = require('hpp');
 
-const logger = require('./utils/logger');
-const { connectDB, requireDB } = require('./db');
-const { errorHandler, ApiError } = require('./middleware/errorMiddleware');
-const desligamentosRouter = require('./routes/desligamentos');
-const authRouter = require('./routes/auth');
-const linksRouter = require('./routes/links');
-const cronRouter = require('./routes/cron');
+const logger = require('../backend/utils/logger');
+const { connectDB, requireDB } = require('../backend/db');
+const { errorHandler, ApiError } = require('../backend/middleware/errorMiddleware');
+const desligamentosRouter = require('../backend/routes/desligamentos');
+const authRouter = require('../backend/routes/auth');
+const linksRouter = require('../backend/routes/links');
+const cronRouter = require('../backend/routes/cron');
 
 const app = express();
 
