@@ -19,5 +19,9 @@
   ],
   "crons": [
     { "path": "/api/cron/resumo-diario", "schedule": "30 8 * * *" }
+  ],
+  "excludeFiles": [
+    "api/**/*.js",
+    "!api/index.js"
   ]
 }
