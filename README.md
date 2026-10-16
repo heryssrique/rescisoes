@@ -1,56 +1,56 @@
-# Desligamento App - Vercel Deployment
+# DesliGest - Gestão de Rescisões
 
-## Summary
+## Resumo
 
-This repository contains the **Desligamento App**, a Brazilian labor termination management SPA built with React, Framer Motion, and a Node.js/Express backend. The app has been migrated from a Render deployment to Vercel Functions for improved performance and cost efficiency.
+Este repositório contém o **DesliGest**, uma SPA para gestão de rescisões trabalhistas brasileiras, construída com React, Framer Motion e um backend em Node.js/Express. O sistema foi migrado para **Vercel Functions** para maior performance e eficiência de custo.
 
-## Backend (api/)
+## Backend (`api/`)
 
-### Key Features
+### Principais Características
 
-- **Modular Express App**: `api/index.js` exports the app as a Vercel serverless function handler.
-- **Database Connection Caching**: `api/db.js` caches the MongoDB connection across serverless invocations to avoid connection pool exhaustion.
-- **Selective Middleware**: `requireDB` middleware ensures DB connection only for data routes (`/api/auth`, `/api/desligamentos`, `/api/links`), while `/api/health` and 404s work without DB.
-- **Cron Job**: The daily summary email is now scheduled via Vercel Cron (`/api/cron/resumo-diario`), protected by `Authorization: Bearer ${CRON_SECRET}`.
-- **Production-Ready Logging**: `api/utils/logger.js` uses only console transport in production; file transports are gated by `NODE_ENV !== 'production'`.
+- **App Express Modular**: O arquivo `api/index.js` exporta o app como um handler de função serverless da Vercel.
+- **Cache de Conexão com Banco de Dados**: O arquivo `api/db.cjs` implementa cache da conexão com o MongoDB para evitar a exaustão do pool de conexões entre invocações serverless.
+- **Middleware Seletivo**: O middleware `requireDB` garante a conexão com o banco apenas para rotas de dados (`/api/auth`, `/api/desligamentos`, `/api/links`), permitindo que `/api/health` e erros 404 funcionem sem depender do banco.
+- **Cron Job**: O resumo diário por e-mail é agendado via Vercel Cron (`/api/cron/resumo-diario`), protegido por `Authorization: Bearer ${CRON_SECRET}`.
+- **Logs de Produção**: O `api/utils/logger.cjs` utiliza apenas o transport de console em produção; logs em arquivo são habilitados apenas quando `NODE_ENV !== 'production'`.
 
-### Environment Variables Required
+### Variáveis de Ambiente Necessárias
 
 ```bash
 MONGODB_URI=mongodb+srv://...
-JWT_SECRET=your-secret-key
-CRON_SECRET=your-cron-secret
-MAILTRAP_TOKEN=your-mailtrap-token
+JWT_SECRET=sua-chave-secreta
+CRON_SECRET=seu-segredo-do-cron
+MAILTRAP_TOKEN=seu-token-mailtrap
 MAIL_FROM=noreply@desligest.com
 FRONTEND_URL=https://rescisoes.vercel.app
 ADMIN_EMAIL=admin@desligest.com
 NODE_ENV=production
 ```
 
-**Note**: Do NOT set `VITE_API_URL` on Vercel. The frontend should use relative `/api` paths (same-domain, no CORS).
+**Nota**: NÃO defina `VITE_API_URL` na Vercel. O frontend deve usar caminhos relativos `/api` (mesmo domínio, sem problemas de CORS).
 
-### Routes
+### Rotas da API
 
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `GET /api/auth/me` - Get current user
-- `GET /api/auth/users` - List all users (admin only)
-- `PATCH /api/auth/users/:id/role` - Change user role (admin only)
-- `DELETE /api/auth/users/:id` - Delete user (admin only)
-- `POST /api/auth/forgot-password` - Forgot password
-- `POST /api/auth/reset-password` - Reset password
-- `GET /api/health` - Health check (no DB required)
-- `GET /api/cron/resumo-diario` - Daily summary (protected by CRON_SECRET)
+- `POST /api/auth/register` - Registro de usuário
+- `POST /api/auth/login` - Login de usuário
+- `GET /api/auth/me` - Perfil do usuário logado
+- `GET /api/auth/users` - Lista todos os usuários (apenas admin)
+- `PATCH /api/auth/users/:id/role` - Altera função do usuário (apenas admin)
+- `DELETE /api/auth/users/:id` - Deleta usuário (apenas admin)
+- `POST /api/auth/forgot-password` - Solicita recuperação de senha
+- `POST /api/auth/reset-password` - Redefine a senha com token
+- `GET /api/health` - Verificação de integridade (não requer DB)
+- `GET /api/cron/resumo-diario` - Resumo diário (protegido por CRON_SECRET)
 
-## Frontend (src/)
+## Frontend (`src/`)
 
-### Build Outputs
+### Build e Saída
 
-- Static files are built to `dist/`
-- HTML5 routing is handled via `vercel.json` rewrites
-- Frontend uses relative `/api` paths for all API calls
+- Os arquivos estáticos são gerados na pasta `dist/`.
+- O roteamento HTML5 é gerenciado via rewrites no `vercel.json`.
+- O frontend utiliza caminhos relativos `/api` para todas as chamadas de API.
 
-## Vercel Configuration
+## Configuração da Vercel
 
 ### vercel.json
 
@@ -81,24 +81,24 @@ NODE_ENV=production
 }
 ```
 
-## Deployment
+## Implantação
 
-### Prerequisites
+### Pré-requisitos
 
 1. Vercel CLI: `npm i -g vercel`
-2. Vercel account and project linked (`vercel link`)
-3. Environment variables set in Vercel dashboard or via `vercel env add`
+2. Conta Vercel e projeto vinculado (`vercel link`)
+3. Variáveis de ambiente configuradas no dashboard da Vercel ou via `vercel env add`
 
-### Deployment Commands
+### Comandos de Deploy
 
 ```bash
-# Deploy preview
+# Deploy de preview
 vercel deploy
 
-# Deploy to production
+# Deploy para produção
 vercel --prod
 
-# Set environment variables
+# Configurar variáveis de ambiente
 vercel env add MONGODB_URI
 vercel env add JWT_SECRET
 vercel env add CRON_SECRET
@@ -109,39 +109,39 @@ vercel env add ADMIN_EMAIL
 vercel env add NODE_ENV
 ```
 
-### Verification
+### Verificação
 
-1. **Local**: `npm run dev:server` starts the Express server locally
-2. **Vercel Preview**: Check Runtime Logs for:
+1. **Local**: `npm run dev:server` inicia o servidor Express localmente.
+2. **Vercel Preview**: Verifique os Runtime Logs para:
    - "MongoDB conectado com sucesso"
-   - "Iniciando resumo diário (Vercel Cron)..." at 08:30 UTC
-3. **Production**: Test login and data operations
-4. **Cron**: Test `/api/cron/resumo-diario` with and without `Bearer CRON_SECRET` header
+   - "Iniciando resumo diário (Vercel Cron)..." às 08:30 UTC.
+3. **Produção**: Teste o login e operações de dados.
+4. **Cron**: Teste `/api/cron/resumo-diario` com e sem o header `Bearer CRON_SECRET`.
 
-## Known Issues
+## Problemas Conhecidos
 
-- **xlsx@0.18.5 Vulnerability**: High-severity prototype pollution/ReDoS. The SheetJS CDN install was blocked by npm's `EALLOWREMOTE` config. This remains a known issue.
+- **xlsx@0.18.5 Vulnerabilidade**: Poluição de protótipo/ReDoS de alta severidade. A instalação via CDN do SheetJS foi bloqueada pela config `EALLOWREMOTE` do npm. Este problema permanece conhecido.
 
 ## Rollback
 
-If needed, revert to the Render deployment by:
-1. Reverting the `api/` directory changes
-2. Restoring `render.yaml` with appropriate start command
-3. Setting `VITE_API_URL` in frontend
+Se necessário, retorne para a implantação no Render:
+1. Reverta as mudanças no diretório `api/`.
+2. Restaure o `render.yaml` com o comando de start apropriado.
+3. Configure `VITE_API_URL` no frontend.
 
-## Architecture Benefits
+## Benefícios da Arquitetura
 
-- **Cold Start Optimization**: MongoDB connection is cached across invocations
-- **Cost Efficiency**: Serverless Functions with Active CPU pricing
-- **Reliability**: Automatic failover and scaling
-- **Compliance**: No disk writes in production (logs go to console)
-- **Security**: No CORS issues (frontend and backend on same domain)
+- **Otimização de Cold Start**: Conexão com MongoDB cacheada entre invocações.
+- **Eficiência de Custo**: Funções Serverless com precificação de CPU Ativa.
+- **Confiabilidade**: Failover automático e escalonamento.
+- **Conformidade**: Sem escritas em disco em produção (logs vão para o console).
+- **Segurança**: Sem problemas de CORS (frontend e backend no mesmo domínio).
 
-## Success Criteria
+## Critérios de Sucesso
 
-- [x] Build succeeds (`npm run build`)
-- [x] Local server starts and responds to `/api/health`
-- [x] Routes protected by `requireDB` return appropriate error when DB unavailable
-- [x] Cron route responds correctly with and without authentication
-- [x] Vercel deploy creates function and cron job successfully
-- [x] Frontend loads and uses relative `/api` paths without CORS errors
+- [x] Build concluído com sucesso (`npm run build`)
+- [x] Servidor local inicia e responde ao `/api/health`
+- [x] Rotas protegidas por `requireDB` retornam erro apropriado quando o DB está indisponível
+- [x] Rota de cron responde corretamente com e sem autenticação
+- [x] Deploy da Vercel cria a função e o cron job com sucesso
+- [x] Frontend carrega e usa caminhos `/api` relativos sem erros de CORS

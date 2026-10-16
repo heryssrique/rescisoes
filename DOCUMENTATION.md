@@ -6,7 +6,7 @@ Este documento detalha o funcionamento interno, arquitetura e decisões técnica
 
 ## 🏗️ Arquitetura de Software
 
-O sistema segue o padrão **MERN (MongoDB, Express, React, Node)** com comunicação REST API.
+O sistema segue o padrão **MERN (MongoDB, Express, React, Node)** com comunicação REST API, implantado via **Vercel Functions**.
 
 ---
 
@@ -49,12 +49,19 @@ O sistema não utiliza bibliotecas externas, mas sim um sistema de `state.view` 
 
 ---
 
-### Back-end (Node.js/Express 5)
+### Back-end (Node.js/Express 5 - Vercel Functions)
 
-#### 1. Modelos de Dados (Mongoose)
+O backend foi migrado para Vercel Functions, utilizando arquivos `.cjs` (CommonJS) para evitar que a Vercel detecte cada arquivo como uma função individual, mantendo apenas `api/index.js` como o entrypoint principal.
 
-**Desligamento** (`server/models/Desligamento.js`):
+#### 1. Estratégia de Conexão Serverless (`api/db.cjs`)
 
+Para evitar a exaustão de conexões no MongoDB Atlas (especialmente no tier gratuito), implementamos:
+*   **Cached Promise**: A conexão é armazenada em uma variável no escopo do módulo. Se a função for reutilizada (warm start), ela usa a conexão existente.
+*   **Middleware `requireDB`**: Injetado nas rotas que dependem de dados. Ele verifica se a conexão está ativa (`readyState === 1`) e tenta reconectar se necessário antes de processar a requisição. Se a conexão falhar, retorna um erro 503.
+
+#### 2. Modelos de Dados (Mongoose)
+
+**Desligamento** (`api/models/Desligamento.cjs`):
 ```javascript
 {
   nome: String,              // Nome do ex-funcionário
@@ -66,7 +73,7 @@ O sistema não utiliza bibliotecas externas, mas sim um sistema de `state.view` 
   dataComunicado: Date,
   dataDesligamento: Date,
   dataPagamento: Date,
-  dataProgramadaPagamento: Date,  // Nova: data programada
+  dataProgramadaPagamento: Date,
   prazoPagamento: Number,
   motivo: {                    // Enum:
     type: String,              // 'pedido', 'demissao', 'acordo',
@@ -77,7 +84,7 @@ O sistema não utiliza bibliotecas externas, mas sim um sistema de `state.view` 
                                // 'aguardando', 'pago', 'pendente_comprovante', 'concluido'
   responsavel: String,
   observacoes: String,
-  motivoCancelamento: String,  // Motivo do cancelamento
+  motivoCancelamento: String,
   arquivado: Boolean,
   checklist: [{
     id: String,                // 'c1', 'd1', 'h1', 'p1', 'f1'...
@@ -101,13 +108,11 @@ O sistema não utiliza bibliotecas externas, mas sim um sistema de `state.view` 
     url: String,
     tipo: String,
     dataUpload: Date
-  }],
-  // timestamps: true
+  }]
 }
 ```
 
-**User** (`server/models/User.js`):
-
+**User** (`api/models/User.cjs`):
 ```javascript
 {
   name: String,
@@ -117,8 +122,7 @@ O sistema não utiliza bibliotecas externas, mas sim um sistema de `state.view` 
 }
 ```
 
-**Link** (`server/models/Link.js`):
-
+**Link** (`api/models/Link.cjs`):
 ```javascript
 {
   label: String,
@@ -129,23 +133,24 @@ O sistema não utiliza bibliotecas externas, mas sim um sistema de `state.view` 
 }
 ```
 
-#### 2. Middleware de Auditoria
+#### 3. Middleware de Auditoria
 
 O sistema injeta automaticamente no `historico` o diferencial (diff) entre o estado anterior e o novo em operações `PUT /api/desligamentos/:id`. Cada entrada contém:
-
 *   Campo alterado
 *   Valor anterior
 *   Novo valor
 *   Usuário responsável
 *   Data/hora
 
-#### 3. Segurança
+#### 4. Segurança
 
 *   **JWT**: Obrigatório (`JWT_SECRET`), algoritmo HS256, expiração 7 dias.
-*   **Rate Limiting**: 500 requisições por 15 minutos por IP.
+*   **Rate Limiting**:
+    *   Global: 500 requisições por 15 minutos por IP.
+    *   Auth (`authAttemptLimiter`): Limite rigoroso de 10 tentativas a cada 15 minutos para evitar brute-force no login e recuperação de senha.
 *   **Helmet**: Headers HTTP de segurança.
 *   **HPP**: Proteção contra poluição de parâmetros HTTP.
-*   **mongo-sanitize**: Remove caracteres perigosos de queries.
+*   **mongo-sanitize**: Remove caracteres perigosos de queries NoSQL.
 *   **xss-clean**: Sanitização de inputs.
 *   **ReDoS Protection**: Escape de regex em buscas.
 
@@ -162,6 +167,9 @@ O sistema injeta automaticamente no `historico` o diferencial (diff) entre o est
 | GET | `/me` | ✅ | Perfil do usuário logado |
 | GET | `/users` | 🔒 Admin | Lista todos os usuários |
 | PATCH | `/users/:id/role` | 🔒 Admin | Atualiza papel do usuário |
+| DELETE | `/users/:id` | 🔒 Admin | Remove usuário |
+| POST | `/forgot-password` | ❌ | Solicita e-mail de recuperação |
+| POST | `/reset-password` | ❌ | Redefine senha via token |
 
 ### Desligamentos (`/api/desligamentos`)
 
@@ -290,11 +298,12 @@ Alerta se mês de `dataDesligamento` passou sem item `h2` (Cálculo conferido).
 
 | Script | Local | Descrição |
 |--------|-------|-----------|
-| `seed/run.js` | server | Popula dados iniciais |
-| `promoteAdmin.js` | server/scripts | Promove usuários a admin |
-| `migrate-trct-signed.cjs` | server/scripts | Marca TRCT assinado em arquivados |
-| `quick-migrate.cjs` | server/scripts | Migração rápida (DB URI hardcoded) |
-| `recuperarDados.js` | server/scripts | Recupera dados hardcoded |
+| `seed/run.js` | api/seed | Popula dados iniciais |
+| `promoteAdmin.cjs` | api/scripts | Promove usuários a admin |
+| `migrate-trct-signed.cjs` | api/scripts | Marca TRCT assinado em arquivados |
+| `quick-migrate.cjs` | api/scripts | Migração rápida (DB URI hardcoded) |
+| `recuperarDados.js` | api/scripts | Recupera dados hardcoded |
+| `reset-admin.cjs` | api/scripts | Reseta a senha do administrador |
 
 ---
 
@@ -324,8 +333,8 @@ O projeto foi desenhado sob o princípio de **Baixo Acoplamento**:
 
 *   **Checklist extensível**: Adicione itens em `src/data/initialData.js` sem tocar na lógica.
 *   **Backend agnóstico**: Permite futuras versões mobile.
-*   **Validação centralizada**: Schemas Zod em `server/schemas/`.
-*   **Logs estruturados**: Winston com arquivos separados (error.log, combined.log).
+*   **Validação centralizada**: Schemas Zod em `api/schemas/`.
+*   **Logs estruturados**: Winston com logs direcionados ao console em produção para compatibilidade com Vercel.
 
 ---
 
@@ -361,4 +370,4 @@ O projeto foi desenhado sob o princípio de **Baixo Acoplamento**:
 ---
 
 **Versão**: 2.4.0
-**Última Atualização**: 2026-10-09
+**Última Atualização**: 2026-10-16
