@@ -1,4 +1,4 @@
-const { ApiError } = require('./errorMiddleware');
+const { ApiError } = require('./errorMiddleware.cjs');
 
 const validate = (schema) => (req, res, next) => {
   try {

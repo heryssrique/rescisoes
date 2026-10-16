@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-const { ApiError } = require('./errorMiddleware');
+const User = require('../models/User.cjs');
+const { ApiError } = require('./errorMiddleware.cjs');
 
 // JWT_SECRET deve ser obrigatoriamente definido em variáveis de ambiente
 if (!process.env.JWT_SECRET) {

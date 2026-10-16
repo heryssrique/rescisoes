@@ -1,5 +1,5 @@
 const { MailtrapClient } = require('mailtrap');
-const logger = require('../utils/logger');
+const logger = require('../utils/logger.cjs');
 
 // Cliente Mailtrap (apenas inicializa se tiver token configurado)
 const getMailtrapClient = () => {

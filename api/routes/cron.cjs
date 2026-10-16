@@ -1,8 +1,8 @@
 const express = require('express');
-const Desligamento = require('../models/Desligamento');
-const { connectDB } = require('../db');
-const { sendSummaryEmail } = require('../services/mailService');
-const logger = require('../utils/logger');
+const Desligamento = require('../models/Desligamento.cjs');
+const { connectDB } = require('../db.cjs');
+const { sendSummaryEmail } = require('../services/mailService.cjs');
+const logger = require('../utils/logger.cjs');
 
 const router = express.Router();
 

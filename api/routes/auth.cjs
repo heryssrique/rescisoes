@@ -10,22 +10,24 @@ const authAttemptLimiter = rateLimit({
   skipSuccessfulRequests: true,
   message: { error: 'Muitas tentativas. Tente novamente em 15 minutos.' },
 });
-const User = require('../models/User');
+const User = require('../models/User.cjs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 
-const { auth } = require('../middleware/auth');
-const validate = require('../middleware/validate');
-const { loginSchema, registerSchema } = require('../schemas/authSchema');
-const { ApiError } = require('../middleware/errorMiddleware');
-const { sendPasswordResetEmail } = require('../services/mailService');
+const { auth } = require('../middleware/auth.cjs');
+const validate = require('../middleware/validate.cjs');
+const { loginSchema, registerSchema } = require('../schemas/authSchema.cjs');
+const { ApiError } = require('../middleware/errorMiddleware.cjs');
+const { sendPasswordResetEmail } = require('../services/mailService.cjs');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   throw new Error('CRÍTICO: JWT_SECRET não está definido nas variáveis de ambiente.');
 }
+
+const { requireDB } = require('../db.cjs');
 
 // Register User
 router.post('/register', authAttemptLimiter, validate(registerSchema), async (req, res, next) => {
@@ -65,14 +67,10 @@ router.post('/register', authAttemptLimiter, validate(registerSchema), async (re
   }
 });
 
-// Login User
-router.post('/login', authAttemptLimiter, validate(loginSchema), async (req, res, next) => {
+// Login User - Uses requireDB middleware to ensure database connection
+router.post('/login', authAttemptLimiter, validate(loginSchema), requireDB, async (req, res, next) => {
   try {
     const { email, password } = req.body;
-
-    if (mongoose.connection.readyState !== 1) {
-      throw new ApiError(503, 'Serviço de banco de dados temporariamente indisponível.');
-    }
 
     let user;
     try {

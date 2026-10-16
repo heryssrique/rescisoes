@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const Desligamento = require('../models/Desligamento');
-const { auth, authorize } = require('../middleware/auth');
-const validate = require('../middleware/validate');
-const { desligamentoCreateSchema } = require('../schemas/desligamentoSchema');
-const { ApiError } = require('../middleware/errorMiddleware');
+const Desligamento = require('../models/Desligamento.cjs');
+const { auth, authorize } = require('../middleware/auth.cjs');
+const validate = require('../middleware/validate.cjs');
+const { desligamentoCreateSchema } = require('../schemas/desligamentoSchema.cjs');
+const { ApiError } = require('../middleware/errorMiddleware.cjs');
 
 // ── GET /api/desligamentos (with Pagination) ───────────────────────────────
 router.get('/', auth, async (req, res, next) => {

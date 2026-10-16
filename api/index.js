@@ -6,13 +6,13 @@ const helmet = require('helmet');
 const mongoSanitize = require('mongo-sanitize');
 const hpp = require('hpp');
 
-const logger = require('../backend/utils/logger');
-const { connectDB, requireDB } = require('../backend/db');
-const { errorHandler, ApiError } = require('../backend/middleware/errorMiddleware');
-const desligamentosRouter = require('../backend/routes/desligamentos');
-const authRouter = require('../backend/routes/auth');
-const linksRouter = require('../backend/routes/links');
-const cronRouter = require('../backend/routes/cron');
+const logger = require('./utils/logger.cjs');
+const { connectDB, requireDB } = require('./db.cjs');
+const { errorHandler, ApiError } = require('./middleware/errorMiddleware.cjs');
+const desligamentosRouter = require('./routes/desligamentos.cjs');
+const authRouter = require('./routes/auth.cjs');
+const linksRouter = require('./routes/links.cjs');
+const cronRouter = require('./routes/cron.cjs');
 
 const app = express();
 
@@ -81,7 +81,7 @@ app.use('/api/desligamentos', requireDB, desligamentosRouter);
 app.use('/api/links', requireDB, linksRouter);
 app.use('/api/cron', cronRouter);
 
-app.get('/api/health', (req, res) => {
+app.get('/api/health', requireDB, (req, res) => {
   res.json({
     status: 'ok',
     db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',

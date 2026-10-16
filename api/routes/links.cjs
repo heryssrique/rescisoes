@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const Link = require('../models/Link');
-const { auth } = require('../middleware/auth');
-const validate = require('../middleware/validate');
-const { linkSchema } = require('../schemas/linkSchema');
-const { ApiError } = require('../middleware/errorMiddleware');
+const Link = require('../models/Link.cjs');
+const { auth } = require('../middleware/auth.cjs');
+const validate = require('../middleware/validate.cjs');
+const { linkSchema } = require('../schemas/linkSchema.cjs');
+const { ApiError } = require('../middleware/errorMiddleware.cjs');
 
 // Todas as rotas requerem autenticação
 router.use(auth);

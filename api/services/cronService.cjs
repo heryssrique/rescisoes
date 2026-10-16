@@ -1,7 +1,7 @@
 const cron = require('node-cron');
-const Desligamento = require('../models/Desligamento');
-const { sendSummaryEmail } = require('./mailService');
-const logger = require('../utils/logger');
+const Desligamento = require('../models/Desligamento.cjs');
+const { sendSummaryEmail } = require('./mailService.cjs');
+const logger = require('../utils/logger.cjs');
 
 const initCron = () => {
   // Roda todo dia às 08:30 da manhã
