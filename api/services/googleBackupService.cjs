@@ -14,11 +14,8 @@ async function executarBackupGoogleDocs() {
   const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
   let privateKey = process.env.GOOGLE_PRIVATE_KEY || '';
 
-  // Trata formatos de chave privada (com \n literal ou quebras reais)
-  if (privateKey.includes('\\n')) {
-    privateKey = privateKey.replace(/\\n/g, '\n');
-  }
-  privateKey = privateKey.trim();
+  // Remove aspas externas e converte \n literais em quebras de linha reais
+  privateKey = privateKey.replace(/^["']|["']$/g, '').replace(/\\n/g, '\n').trim();
 
   const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
