@@ -126,6 +126,7 @@ export function ModalImportarPlanilha({ onClose }) {
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false);
   const [preview, setPreview] = useState([]);
+  const [importAsArchived, setImportAsArchived] = useState(false);
   const fileInputRef = useRef();
 
   const handleFileUpload = (e) => {
@@ -219,9 +220,18 @@ export function ModalImportarPlanilha({ onClose }) {
             diasAvisoTrabalhado: String(row[mapping.diasAvisoTrabalhado] || '').trim(),
             responsavel: String(row[mapping.responsavel] ?? '').trim(),
             observacoes: String(row[mapping.observacoes] ?? '').trim(),
-            status: 'comunicado',
-            checklist: CHECKLIST_TEMPLATE.map(c => ({ ...c, done: false, doneAt: null })),
-            historico: [{ data: now, acao: 'Importado via planilha', nota: '' }],
+            status: importAsArchived ? 'pago' : 'comunicado',
+            arquivado: importAsArchived,
+            checklist: CHECKLIST_TEMPLATE.map(c => ({
+              ...c,
+              done: importAsArchived,
+              doneAt: importAsArchived ? now : null,
+            })),
+            historico: [{
+              data: now,
+              acao: importAsArchived ? 'Importado via planilha (Arquivado diretamente)' : 'Importado via planilha',
+              nota: '',
+            }],
           };
         })
         .filter(item => item.nome); // Remove linhas sem nome
@@ -366,19 +376,32 @@ export function ModalImportarPlanilha({ onClose }) {
           )}
         </div>
 
-        <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={onClose} disabled={importing}>Cancelar</button>
+        <div className="modal-footer" style={{ justifyContent: data ? 'space-between' : 'flex-end' }}>
           {data && (
-            <button
-              className="btn btn-primary"
-              onClick={handleImport}
-              disabled={importing || missingRequired}
-            >
-              {importing
-                ? <><Loader size={13} className="spin" /> Importando...</>
-                : `Importar ${data.filter(r => r[mapping.nome]).length} Registros`}
-            </button>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={importAsArchived}
+                onChange={(e) => setImportAsArchived(e.target.checked)}
+                disabled={importing}
+              />
+              Importar todos os registros diretamente como <strong>Arquivados</strong>
+            </label>
           )}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button className="btn btn-secondary" onClick={onClose} disabled={importing}>Cancelar</button>
+            {data && (
+              <button
+                className="btn btn-primary"
+                onClick={handleImport}
+                disabled={importing || missingRequired}
+              >
+                {importing
+                  ? <><Loader size={13} className="spin" /> Importando...</>
+                  : `Importar ${data.filter(r => r[mapping.nome]).length} Registros`}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
