@@ -454,6 +454,12 @@ export function AppProvider({ children }) {
         dispatch({ type: 'ADD_DESLIGAMENTO', payload: doc });
         return doc;
       },
+      importDesligamentos: async (data) => {
+        const res = await api.importDesligamentos(data);
+        await fetchAll();
+        await fetchArchived();
+        return res;
+      },
       updateDesligamento: async (data) => {
         const isCancelado = data.status === 'cancelado';
         const isConcluido = data.status === 'concluido';
