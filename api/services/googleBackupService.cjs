@@ -12,7 +12,14 @@ const logger = require('../utils/logger.cjs');
 
 async function executarBackupGoogleDocs() {
   const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
-  privateKey = (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+  let privateKey = process.env.GOOGLE_PRIVATE_KEY || '';
+
+  // Trata formatos de chave privada (com \n literal ou quebras reais)
+  if (privateKey.includes('\\n')) {
+    privateKey = privateKey.replace(/\\n/g, '\n');
+  }
+  privateKey = privateKey.trim();
+
   const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
   if (!clientEmail || !privateKey) {
