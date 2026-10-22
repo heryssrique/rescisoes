@@ -107,6 +107,21 @@ async function executarBackupGoogleDocs() {
       conteudoTexto += `   ------------------------------------\n`;
     });
 
+    const backupPayload = {
+      versao: "2.0",
+      dataBackup: dataAtual,
+      desligamentos,
+      links,
+      users
+    };
+    const payloadJson = JSON.stringify(backupPayload, null, 2);
+    const payloadBase64 = Buffer.from(payloadJson).toString('base64');
+
+    conteudoTexto += `\n========================================\n`;
+    conteudoTexto += `PAYLOAD DE RESTAURAÇÃO DE DADOS (JSON BASE64):\n`;
+    conteudoTexto += `(Guarde este código. Caso perca os dados do banco, decodifique de Base64 para JSON e importe na aba Configurações)\n\n`;
+    conteudoTexto += `${payloadBase64}\n`;
+
     // 4. Inserir ou atualizar o conteúdo no Google Doc
     const requests = [];
     try {
