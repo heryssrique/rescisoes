@@ -257,23 +257,49 @@ export function ModalImportarPlanilha({ onClose }) {
 
         <div className="modal-body">
           {!data ? (
-            <div className="import-dropzone" onClick={() => fileInputRef.current.click()}>
-              {loading ? (
-                <Loader size={32} className="spin" style={{ color: 'var(--accent-blue)' }} />
-              ) : (
-                <>
-                  <Upload size={32} style={{ color: 'var(--text-muted)', marginBottom: 12 }} />
-                  <div style={{ fontWeight: 500, marginBottom: 4 }}>Clique para selecionar a planilha</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Os cabeçalhos serão identificados automaticamente</div>
-                </>
-              )}
-              <input
-                type="file"
-                ref={fileInputRef}
-                style={{ display: 'none' }}
-                accept=".xlsx, .xls, .csv"
-                onChange={handleFileUpload}
-              />
+            <div>
+              <div className="import-dropzone" onClick={() => fileInputRef.current.click()} style={{ marginBottom: 20 }}>
+                {loading ? (
+                  <Loader size={32} className="spin" style={{ color: 'var(--accent-blue)' }} />
+                ) : (
+                  <>
+                    <Upload size={32} style={{ color: 'var(--text-muted)', marginBottom: 12 }} />
+                    <div style={{ fontWeight: 500, marginBottom: 4 }}>Clique para selecionar a planilha (.xlsx, .xls, .csv)</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Os cabeçalhos serão identificados automaticamente</div>
+                  </>
+                )}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                  accept=".xlsx, .xls, .csv"
+                  onChange={handleFileUpload}
+                />
+              </div>
+
+              {/* Instruções de Layout da Planilha */}
+              <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)', fontSize: 13, lineHeight: 1.5 }}>
+                <div style={{ fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent-blue)' }}>
+                  <AlertTriangle size={16} />
+                  Instruções de Layout para Subir Planilhas
+                </div>
+                <p style={{ color: 'var(--text-muted)', marginBottom: 10, fontSize: 12 }}>
+                  O sistema reconhece automaticamente os cabeçalhos da sua planilha. Certifique-se de que a primeira linha contenha os títulos das colunas correspondentes:
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
+                  <div>• <strong>Nome</strong> <span style={{ color: 'var(--accent-red)' }}>(Obrigatório)</span></div>
+                  <div>• <strong>Coligada / Empresa</strong></div>
+                  <div>• <strong>Cargo</strong> / Função</div>
+                  <div>• <strong>Departamento</strong> / Obra</div>
+                  <div>• <strong>Matrícula</strong> / Chapa</div>
+                  <div>• <strong>Data Admissão</strong></div>
+                  <div>• <strong>Data Desligamento</strong></div>
+                  <div>• <strong>Data Pagamento</strong></div>
+                  <div>• <strong>Motivo</strong> do Desligamento</div>
+                  <div>• <strong>Aviso Prévio</strong> (Ind./Trab.)</div>
+                  <div>• <strong>Responsável</strong> pelo RH</div>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="import-config">
