@@ -17,4 +17,29 @@ UserSchema.pre('save', async function() {
   this.password = await bcrypt.hash(this.password, salt);
 });
 
-module.exports = mongoose.model('User', UserSchema);
+const { userStore } = require('../utils/memoryStore.cjs');
+
+const MongooseModel = mongoose.models.User || mongoose.model('User', UserSchema);
+
+const proxyModel = new Proxy({}, {
+  get(target, prop) {
+    if (global.isMemoryFallback && typeof userStore[prop] === 'function') {
+      return userStore[prop].bind(userStore);
+    }
+    if (typeof MongooseModel[prop] === 'function') {
+      return MongooseModel[prop].bind(MongooseModel);
+    }
+    return MongooseModel[prop];
+  },
+  construct(target, args) {
+    if (global.isMemoryFallback) {
+      return {
+        ...args[0],
+        save: async function() { return userStore.create(args[0]); }
+      };
+    }
+    return new MongooseModel(...args);
+  }
+});
+
+module.exports = proxyModel;

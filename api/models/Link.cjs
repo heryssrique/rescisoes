@@ -23,4 +23,29 @@ LinkSchema.set('toJSON', {
   }
 });
 
-module.exports = mongoose.model('Link', LinkSchema);
+const { linkStore } = require('../utils/memoryStore.cjs');
+
+const MongooseModel = mongoose.models.Link || mongoose.model('Link', LinkSchema);
+
+const proxyModel = new Proxy({}, {
+  get(target, prop) {
+    if (global.isMemoryFallback && typeof linkStore[prop] === 'function') {
+      return linkStore[prop].bind(linkStore);
+    }
+    if (typeof MongooseModel[prop] === 'function') {
+      return MongooseModel[prop].bind(MongooseModel);
+    }
+    return MongooseModel[prop];
+  },
+  construct(target, args) {
+    if (global.isMemoryFallback) {
+      return {
+        ...args[0],
+        save: async function() { return linkStore.create(args[0]); }
+      };
+    }
+    return new MongooseModel(...args);
+  }
+});
+
+module.exports = proxyModel;

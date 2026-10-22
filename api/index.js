@@ -99,3 +99,10 @@ app.use(errorHandler);
 
 // Export app for Vercel serverless functions
 module.exports = app;
+
+const PORT = process.env.PORT || 3001;
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Servidor backend rodando na porta ${PORT}`);
+  });
+}

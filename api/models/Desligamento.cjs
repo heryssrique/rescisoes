@@ -71,9 +71,34 @@ const DesligamentoSchema = new mongoose.Schema(
   }
 );
 
+const { desligamentoStore } = require('../utils/memoryStore.cjs');
+
 // Índices úteis para queries frequentes
 DesligamentoSchema.index({ dataPagamento: 1 });
 DesligamentoSchema.index({ status: 1 });
 DesligamentoSchema.index({ nome: 'text', cargo: 'text', departamento: 'text', matricula: 'text' });
 
-module.exports = mongoose.model('Desligamento', DesligamentoSchema);
+const MongooseModel = mongoose.models.Desligamento || mongoose.model('Desligamento', DesligamentoSchema);
+
+const proxyModel = new Proxy({}, {
+  get(target, prop) {
+    if (global.isMemoryFallback && typeof desligamentoStore[prop] === 'function') {
+      return desligamentoStore[prop].bind(desligamentoStore);
+    }
+    if (typeof MongooseModel[prop] === 'function') {
+      return MongooseModel[prop].bind(MongooseModel);
+    }
+    return MongooseModel[prop];
+  },
+  construct(target, args) {
+    if (global.isMemoryFallback) {
+      return {
+        ...args[0],
+        save: async function() { return desligamentoStore.create(args[0]); }
+      };
+    }
+    return new MongooseModel(...args);
+  }
+});
+
+module.exports = proxyModel;
