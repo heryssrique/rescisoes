@@ -871,7 +871,7 @@ export function SettingsView() {
                     <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>
                       Extraia toda a base de Arquivados e Processos Ativos do sistema para um arquivo estruturado de segurança (JSON) ou restaure dados anteriores.
                     </p>
-                    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
                       <button className="btn" onClick={handleExportData} style={{ background: 'var(--accent-blue)', color: '#fff', fontWeight: 600 }}>
                         Gerar Snapshot de Segurança (.json)
                       </button>
@@ -879,6 +879,24 @@ export function SettingsView() {
                         Restaurar Backup (.json)
                         <input type="file" accept=".json" style={{ display: 'none' }} onChange={handleRestoreBackup} />
                       </label>
+                    </div>
+
+                    {/* Google Docs Hybrid Backup Instructions */}
+                    <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)', fontSize: 13, lineHeight: 1.6 }}>
+                      <div style={{ fontWeight: 700, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent-purple)' }}>
+                        <FileText size={16} />
+                        Backup Híbrido no Google Docs (Nuvem)
+                      </div>
+                      <p style={{ color: 'var(--text-muted)', marginBottom: 8 }}>
+                        O backup automático diário na nuvem é híbrido: o topo exibe o relatório legível para auditoria do RH, e o <strong>rodapé</strong> armazena o <strong>Payload JSON em Base64</strong>.
+                      </p>
+                      <div style={{ fontWeight: 600, marginBottom: 4 }}>Como restaurar os dados caso perca o banco de dados:</div>
+                      <ol style={{ paddingLeft: 20, color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <li>Abra o documento <em>DesliGest - Backup Central</em> na pasta <em>backup Desligest</em> no Google Drive.</li>
+                        <li>Vá até o final da página e copie o bloco de texto criptografado em Base64 que está abaixo de <em>PAYLOAD DE RESTAURAÇÃO DE DADOS (JSON BASE64)</em>.</li>
+                        <li>Cole esse texto em qualquer conversor Base64 para JSON online (ou use um script rápido) para gerar o arquivo <code>.json</code>.</li>
+                        <li>Vá na aba Configurações do DesliGest, clique em <strong>Restaurar Backup (.json)</strong> e envie esse arquivo <code>.json</code>. O banco de dados será restaurado instantaneamente!</li>
+                      </ol>
                     </div>
                   </div>
                 </div>
