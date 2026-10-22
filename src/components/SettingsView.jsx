@@ -173,6 +173,46 @@ export function SettingsView() {
     downloadAnchorNode.remove();
   };
 
+  const handleRestoreBackup = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const ok = await showConfirm(
+      `Deseja restaurar o backup do arquivo "${file.name}"? Isso irá importar/atualizar todos os processos contidos no arquivo.`,
+      { title: 'Restaurar Backup', confirmText: 'Restaurar', type: 'warning' }
+    );
+    if (!ok) {
+      e.target.value = null;
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const json = JSON.parse(event.target.result);
+        const allDocs = [...(json.desligamentos || []), ...(json.archivedDesligamentos || [])];
+        if (allDocs.length === 0 && Array.isArray(json)) {
+          allDocs.push(...json);
+        }
+
+        if (allDocs.length === 0) {
+          toast('Nenhum processo encontrado no arquivo de backup.', 'error');
+          return;
+        }
+
+        const res = await api.restoreBackup({ desligamentos: allDocs });
+        toast(res.message || 'Backup restaurado com sucesso!');
+        await actions.fetchAll();
+        await actions.fetchArchived();
+      } catch (err) {
+        toast(`Erro ao restaurar backup: ${err.message}`, 'error');
+      } finally {
+        e.target.value = null;
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const handleRequestNotifications = () => {
     if (!('Notification' in window)) {
       toast('Este navegador não suporta notificações de área de trabalho.', 'warning');
@@ -829,11 +869,17 @@ export function SettingsView() {
                   <div style={{ flex: 1 }}>
                     <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Retenção e Backup de Dados</h3>
                     <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>
-                      Extraia toda a base de Arquivados e Processos Ativos do localStorage para um arquivo estruturado de segurança (JSON).
+                      Extraia toda a base de Arquivados e Processos Ativos do sistema para um arquivo estruturado de segurança (JSON) ou restaure dados anteriores.
                     </p>
-                    <button className="btn" onClick={handleExportData} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', fontWeight: 600 }}>
-                      Gerar Snapshot de Segurança (.json)
-                    </button>
+                    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                      <button className="btn" onClick={handleExportData} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', fontWeight: 600 }}>
+                        Gerar Snapshot de Segurança (.json)
+                      </button>
+                      <label className="btn" style={{ background: 'var(--accent-purple)', color: 'white', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        Restaurar Backup (.json)
+                        <input type="file" accept=".json" style={{ display: 'none' }} onChange={handleRestoreBackup} />
+                      </label>
+                    </div>
                   </div>
                 </div>
 

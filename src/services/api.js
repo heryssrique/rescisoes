@@ -141,6 +141,11 @@ export function migrateArchiveOld() {
   return request('POST', '/desligamentos/migrate-archive-old');
 }
 
+/** Restaura backup completo do sistema (.json). */
+export function restoreBackup(data) {
+  return request('POST', '/desligamentos/restore', data);
+}
+
 // ─── Auth ─────────────────────────────────────────────────────────────────
 export function login(email, password) {
   return request('POST', '/auth/login', { email, password });

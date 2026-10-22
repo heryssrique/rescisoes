@@ -297,6 +297,43 @@ router.delete('/:id', auth, authorize('admin'), async (req, res, next) => {
   }
 });
 
+// ── POST /api/desligamentos/restore (Admin Only) ──────────────────────────
+router.post('/restore', auth, authorize('admin'), async (req, res, next) => {
+  try {
+    const { desligamentos, links } = req.body;
+
+    if (!Array.isArray(desligamentos)) {
+      throw new ApiError(400, 'Formato de backup inválido: "desligamentos" deve ser um array.');
+    }
+
+    let restoredCount = 0;
+    for (const item of desligamentos) {
+      // Remove _id se houver conflito ou usa upsert baseado em ID/dados
+      const { id, _id, ...itemData } = item;
+      const targetId = _id || id;
+
+      if (targetId) {
+        await Desligamento.findOneAndUpdate(
+          { $or: [{ _id: targetId }, { id: targetId }] },
+          { ...itemData, arquivado: !!itemData.arquivado },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+      } else {
+        await Desligamento.create({ ...itemData, arquivado: !!itemData.arquivado });
+      }
+      restoredCount++;
+    }
+
+    res.json({
+      success: true,
+      message: `Backup restaurado com sucesso! ${restoredCount} processos processados.`,
+      restoredCount
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ── Bulk Actions ──────────────────────────────────────────────────────────
 
 router.post('/bulk-archive', auth, async (req, res, next) => {
