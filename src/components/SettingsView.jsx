@@ -872,7 +872,7 @@ export function SettingsView() {
                       Extraia toda a base de Arquivados e Processos Ativos do sistema para um arquivo estruturado de segurança (JSON) ou restaure dados anteriores.
                     </p>
                     <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                      <button className="btn" onClick={handleExportData} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', fontWeight: 600 }}>
+                      <button className="btn" onClick={handleExportData} style={{ background: 'var(--accent-blue)', color: '#fff', fontWeight: 600 }}>
                         Gerar Snapshot de Segurança (.json)
                       </button>
                       <label className="btn" style={{ background: 'var(--accent-purple)', color: 'white', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
