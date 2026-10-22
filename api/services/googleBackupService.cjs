@@ -27,13 +27,17 @@ async function executarBackupGoogleDocs() {
   try {
     logger.info('☁️ Iniciando backup automático para o Google Docs...');
 
-    // Autenticação com Service Account
-    const auth = new google.auth.JWT(
-      clientEmail,
-      null,
-      privateKey,
-      ['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/documents']
-    );
+    // Autenticação com GoogleAuth (Service Account)
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        client_email: clientEmail,
+        private_key: privateKey,
+      },
+      scopes: [
+        'https://www.googleapis.com/auth/drive.file',
+        'https://www.googleapis.com/auth/documents',
+      ],
+    });
 
     const drive = google.drive({ version: 'v3', auth });
     const docs = google.docs({ version: 'v1', auth });
@@ -113,7 +117,11 @@ async function executarBackupGoogleDocs() {
     logger.info(`✅ Backup realizado com sucesso no Google Docs! Documento ID: ${documentId}`);
     return { success: true, documentId, title: tituloDoc };
   } catch (error) {
-    logger.error('❌ Erro ao executar backup no Google Docs: ' + error.message);
+    const errorMsg = error.response?.data?.error?.message || error.message;
+    logger.error('❌ Erro ao executar backup no Google Docs: ' + errorMsg);
+    if (error.code === 403 || errorMsg.includes('permission') || errorMsg.includes('disabled')) {
+      logger.error('💡 Dica: Verifique se a Google Docs API e Google Drive API estão ativadas no Google Cloud Console para o projeto da conta de serviço e se a pasta do Drive está compartilhada com o e-mail da conta de serviço.');
+    }
     throw error;
   }
 }
