@@ -2,6 +2,7 @@ const express = require('express');
 const Desligamento = require('../models/Desligamento.cjs');
 const { connectDB } = require('../db.cjs');
 const { sendSummaryEmail } = require('../services/mailService.cjs');
+const { executarBackupGoogleDocs } = require('../services/googleBackupService.cjs');
 const logger = require('../utils/logger.cjs');
 
 const router = express.Router();
@@ -56,6 +57,30 @@ router.get('/resumo-diario', async (req, res, next) => {
 
     logger.info('✅ Resumo diário concluído (urgentes: %d, pendentes: %d)', urgentCount, pendingCount);
     res.json({ ok: true, urgentCount, pendingCount, emailSent });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/cron/backup-nuvem
+ * Rota de Cron da Vercel para execução automática do backup no Google Docs.
+ */
+router.get('/backup-nuvem', async (req, res, next) => {
+  const expected = process.env.CRON_SECRET;
+
+  if (!expected) {
+    return res.status(503).json({ error: 'Cron não configurado neste ambiente.' });
+  }
+
+  if (req.headers.authorization !== `Bearer ${expected}`) {
+    return res.status(401).json({ error: 'Não autorizado.' });
+  }
+
+  try {
+    await connectDB();
+    const resultado = await executarBackupGoogleDocs();
+    res.json({ ok: true, ...resultado });
   } catch (err) {
     next(err);
   }

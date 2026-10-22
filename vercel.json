@@ -18,6 +18,7 @@
     }
   ],
   "crons": [
-    { "path": "/api/cron/resumo-diario", "schedule": "30 8 * * *" }
+    { "path": "/api/cron/resumo-diario", "schedule": "30 8 * * *" },
+    { "path": "/api/cron/backup-nuvem", "schedule": "0 0 * * *" }
   ]
 }
