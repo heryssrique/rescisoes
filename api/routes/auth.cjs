@@ -49,11 +49,11 @@ router.post('/register', authAttemptLimiter, validate(registerSchema), async (re
       throw new ApiError(400, 'Usuário já existe. Faça login.');
     }
 
-    // Primeiro usuário cadastrado vira admin automaticamente
-    const userCount = await User.countDocuments();
-    const role = userCount === 0 ? 'admin' : 'hr';
-
-    user = new User({ name, email, password, role });
+    // O auto-cadastro é público, portanto nunca concede admin: caso contrário
+    // qualquer visitante viraria administrador sempre que a coleção estivesse
+    // vazia (banco novo, restaurado ou limpo). O primeiro admin é criado
+    // deliberadamente via `node api/scripts/promoteAdmin.cjs <email>`.
+    user = new User({ name, email, password, role: 'hr' });
     await user.save();
 
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });

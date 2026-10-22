@@ -1,15 +1,17 @@
 const mongoose = require('mongoose');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
-const dns = require('dns');
-try {
-  dns.setServers(['8.8.8.8', '1.1.1.1']);
-} catch (e) {
-  // ignore
-}
 const logger = require('./utils/logger.cjs');
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/desligest';
+
+// O fallback em memória existe APENAS para desenvolvimento local sem MongoDB.
+// Ele contém usuários de teste e NUNCA deve atender tráfego real: em produção
+// a ausência do banco precisa falhar de forma visível (503), não ser mascarada.
+const ALLOW_MEMORY_FALLBACK =
+  process.env.VERCEL_ENV !== 'production' &&
+  process.env.NODE_ENV !== 'production' &&
+  process.env.ALLOW_MEMORY_FALLBACK === 'true';
 
 // Na Vercel o módulo é reaproveitado entre requisições na mesma instância.
 // Sem este cache, cada invocação abriria um novo pool e esgotaria as
@@ -26,7 +28,7 @@ function connectDB() {
   if (!cachedPromise) {
     cachedPromise = mongoose
       .connect(MONGODB_URI, {
-        serverSelectionTimeoutMS: 3000,
+        serverSelectionTimeoutMS: 10000,
         heartbeatFrequencyMS: 2000,
       })
       .then((conn) => {
@@ -34,10 +36,15 @@ function connectDB() {
         return conn;
       })
       .catch((err) => {
-        logger.warn('⚠️ Falha ao conectar ao MongoDB (' + err.message + '). Ativando Modo Fallback em Memória.');
-        global.isMemoryFallback = true;
-        cachedPromise = null;
-        return null;
+        cachedPromise = null; // permite nova tentativa na próxima requisição
+        if (ALLOW_MEMORY_FALLBACK) {
+          logger.warn(
+            'Falha ao conectar ao MongoDB (' + err.message + '). Ativando fallback em memória (apenas desenvolvimento).'
+          );
+          global.isMemoryFallback = true;
+          return null;
+        }
+        throw err;
       });
   }
   return cachedPromise;
@@ -50,9 +57,6 @@ function requireDB(req, res, next) {
   connectDB()
     .then(() => next())
     .catch((err) => {
-      if (global.isMemoryFallback) {
-        return next();
-      }
       logger.error('Falha ao conectar ao MongoDB: ' + err.message);
       res.status(503).json({
         status: 'error',
