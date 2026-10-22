@@ -113,7 +113,7 @@ async function executarBackupGoogleDocs() {
       const currentDoc = await docs.documents.get({ documentId });
       const bodyContent = currentDoc.data.body.content;
       const endIndex = bodyContent[bodyContent.length - 1]?.endIndex || 1;
-      if (endIndex > 1) {
+      if (endIndex > 2) {
         requests.push({
           deleteContentRange: {
             range: {
