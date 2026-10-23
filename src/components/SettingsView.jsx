@@ -173,6 +173,39 @@ export function SettingsView() {
     downloadAnchorNode.remove();
   };
 
+  // Interpreta o conteúdo de um backup, aceitando três formatos:
+  //   1. JSON puro (arquivo .json exportado manualmente)
+  //   2. "GZIP:" + Base64 de JSON compactado (backup automático na nuvem)
+  //   3. Base64 de JSON puro (backups antigos na nuvem)
+  // O formato compactado é detectado pelos magic bytes do gzip (0x1f 0x8b),
+  // então o prefixo "GZIP:" é apenas informativo e pode ser removido pelo usuário.
+  const parseBackupPayload = async (raw) => {
+    const texto = (raw || '').trim();
+    if (!texto) throw new Error('O arquivo está vazio.');
+
+    if (texto.startsWith('{') || texto.startsWith('[')) {
+      return JSON.parse(texto);
+    }
+
+    const base64 = (texto.startsWith('GZIP:') ? texto.slice(5) : texto).replace(/\s/g, '');
+
+    let binario;
+    try {
+      binario = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+    } catch {
+      throw new Error('Conteúdo inválido: não é um JSON nem um payload Base64 válido.');
+    }
+
+    const ehGzip = binario[0] === 0x1f && binario[1] === 0x8b;
+    const jsonTexto = ehGzip
+      ? await new Response(
+          new Blob([binario]).stream().pipeThrough(new DecompressionStream('gzip'))
+        ).text()
+      : new TextDecoder().decode(binario);
+
+    return JSON.parse(jsonTexto);
+  };
+
   const handleRestoreBackup = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -189,7 +222,7 @@ export function SettingsView() {
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
-        const json = JSON.parse(event.target.result);
+        const json = await parseBackupPayload(event.target.result);
         const allDocs = [...(json.desligamentos || []), ...(json.archivedDesligamentos || [])];
         if (allDocs.length === 0 && Array.isArray(json)) {
           allDocs.push(...json);
@@ -876,8 +909,8 @@ export function SettingsView() {
                         Gerar Snapshot de Segurança (.json)
                       </button>
                       <label className="btn" style={{ background: 'var(--accent-purple)', color: 'white', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                        Restaurar Backup (.json)
-                        <input type="file" accept=".json" style={{ display: 'none' }} onChange={handleRestoreBackup} />
+                        Restaurar Backup (.json / .txt)
+                        <input type="file" accept=".json,.txt" style={{ display: 'none' }} onChange={handleRestoreBackup} />
                       </label>
                     </div>
 
@@ -888,14 +921,14 @@ export function SettingsView() {
                         Backup Híbrido no Google Docs (Nuvem)
                       </div>
                       <p style={{ color: 'var(--text-muted)', marginBottom: 8 }}>
-                        O backup automático diário na nuvem é híbrido: o topo exibe o relatório legível para auditoria do RH, e o <strong>rodapé</strong> armazena o <strong>Payload JSON em Base64</strong>.
+                        O backup automático diário na nuvem é híbrido: o topo exibe o relatório legível para auditoria do RH, e o <strong>rodapé</strong> armazena o <strong>Payload JSON compactado em gzip+Base64</strong>.
                       </p>
                       <div style={{ fontWeight: 600, marginBottom: 4 }}>Como restaurar os dados caso perca o banco de dados:</div>
                       <ol style={{ paddingLeft: 20, color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <li>Abra o documento <em>DesliGest - Backup Central</em> na pasta <em>backup Desligest</em> no Google Drive.</li>
-                        <li>Vá até o final da página e copie o bloco de texto criptografado em Base64 que está abaixo de <em>PAYLOAD DE RESTAURAÇÃO DE DADOS (JSON BASE64)</em>.</li>
-                        <li>Cole esse texto em qualquer conversor Base64 para JSON online (ou use um script rápido) para gerar o arquivo <code>.json</code>.</li>
-                        <li>Vá na aba Configurações do DesliGest, clique em <strong>Restaurar Backup (.json)</strong> e envie esse arquivo <code>.json</code>. O banco de dados será restaurado instantaneamente!</li>
+                        <li>Vá até o final da página e copie o bloco de texto que está abaixo de <em>PAYLOAD DE RESTAURAÇÃO DE DADOS (JSON GZIP+BASE64)</em>.</li>
+                        <li>Cole esse texto em um arquivo de texto simples e salve como <code>backup.txt</code>. <strong>Não</strong> é necessário usar nenhum conversor online.</li>
+                        <li>Clique em <strong>Restaurar Backup (.json / .txt)</strong> acima e envie esse arquivo. O sistema descompacta e restaura o banco automaticamente!</li>
                       </ol>
                     </div>
                   </div>

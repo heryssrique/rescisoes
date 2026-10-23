@@ -3,12 +3,24 @@
  *
  * Exporta todos os registros de desligamentos e metadados do sistema
  * e os salva como um documento no Google Drive / Google Docs.
+ *
+ * OBSERVAÇÃO: O Google Docs API tem limite de ~100KB por operação de batchUpdate.
+ * Para contornar isso, o conteúdo é dividido em chunks e inserido sequencialmente.
  */
+const zlib = require('zlib');
 const { google } = require('googleapis');
+
+// Marcador que identifica um payload de backup compactado com gzip antes do
+// Base64. A restauração usa este prefixo para saber que precisa descompactar,
+// mantendo compatibilidade com backups antigos em Base64 puro.
+const PAYLOAD_GZIP_PREFIX = 'GZIP:';
 const Desligamento = require('../models/Desligamento.cjs');
 const Link = require('../models/Link.cjs');
 const User = require('../models/User.cjs');
 const logger = require('../utils/logger.cjs');
+
+// Limite seguro por chunk (Google Docs API tem limite de ~100KB por operação)
+const CHUNK_SIZE = 80000; // 80KB por chunk para ter margem de segurança
 
 async function executarBackupGoogleDocs() {
   const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
@@ -50,10 +62,19 @@ async function executarBackupGoogleDocs() {
     const dataAtual = new Date().toISOString();
     const tituloDoc = `DesliGest - Backup Automático (${new Date().toLocaleDateString('pt-BR')})`;
 
+    // 1. Definir o documento de destino.
+    //
+    // IMPORTANTE: contas de serviço NÃO possuem cota de armazenamento no Google
+    // Drive e por isso não podem ser donas de arquivos. Qualquer tentativa de
+    // criar um documento novo falha com 403 ("Drive storage quota has been
+    // exceeded"), mesmo que a conta tenha permissão de escrita na pasta.
+    // Por isso reutilizamos um documento pré-existente (dono = usuário real),
+    // informado em GOOGLE_DOC_ID, e apenas sobrescrevemos seu conteúdo.
     let documentId = process.env.GOOGLE_DOC_ID;
 
     if (!documentId) {
-      // 1. Criar um novo Google Doc (se GOOGLE_DOC_ID não foi fornecido)
+      // Fallback: tenta criar um documento. Só funciona em Shared Drives ou
+      // com delegação de domínio (impersonation de um usuário real).
       try {
         const docResponse = await docs.documents.create({
           requestBody: {
@@ -83,11 +104,15 @@ async function executarBackupGoogleDocs() {
           }
         }
       } catch (createErr) {
-        if (createErr.message && createErr.message.includes('quota')) {
-          throw new Error('Contas de serviço não possuem cota de armazenamento no Drive. Por favor, crie um Google Doc em seu Drive pessoal, compartilhe com a conta de serviço como Editor e adicione GOOGLE_DOC_ID=<id> no seu .env.');
-        }
-        throw createErr;
+        throw new Error(
+          'Não foi possível criar o documento de backup: ' + createErr.message +
+          '\n💡 Contas de serviço não possuem cota de armazenamento no Drive. ' +
+          'Crie um Google Doc no seu Drive pessoal, compartilhe-o como Editor com ' +
+          clientEmail + ' e defina GOOGLE_DOC_ID=<id> no .env / nas variáveis da Vercel.'
+        );
       }
+    } else {
+      logger.info(`📌 Reutilizando documento de backup existente: ${documentId}`);
     }
 
     // 3. Montar o conteúdo do backup formatado
@@ -114,47 +139,94 @@ async function executarBackupGoogleDocs() {
       links,
       users
     };
-    const payloadJson = JSON.stringify(backupPayload, null, 2);
-    const payloadBase64 = Buffer.from(payloadJson).toString('base64');
+    // JSON compacto + gzip antes do Base64.
+    //
+    // Um Google Doc aceita no máximo ~1.020.000 caracteres. O payload em JSON
+    // identado e Base64 puro chegava a ~12,4 milhões de caracteres (160 chunks),
+    // estourando o limite e fazendo o batchUpdate falhar com FAILED_PRECONDITION.
+    // Compactando, os mesmos dados cabem em ~140.000 caracteres (redução de ~88x).
+    const payloadJson = JSON.stringify(backupPayload);
+    const payloadBase64 = zlib.gzipSync(Buffer.from(payloadJson, 'utf8'), { level: 9 }).toString('base64');
+
+    logger.info(
+      `🗜️ Payload compactado: ${payloadJson.length.toLocaleString()} chars de JSON ` +
+      `→ ${payloadBase64.length.toLocaleString()} chars em gzip+Base64`
+    );
 
     conteudoTexto += `\n========================================\n`;
-    conteudoTexto += `PAYLOAD DE RESTAURAÇÃO DE DADOS (JSON BASE64):\n`;
-    conteudoTexto += `(Guarde este código. Caso perca os dados do banco, decodifique de Base64 para JSON e importe na aba Configurações)\n\n`;
-    conteudoTexto += `${payloadBase64}\n`;
+    conteudoTexto += `PAYLOAD DE RESTAURAÇÃO DE DADOS (JSON GZIP+BASE64):\n`;
+    conteudoTexto += `(Guarde este código. Para restaurar, cole-o na aba Configurações > Restaurar Backup. O sistema descompacta automaticamente.)\n\n`;
+    conteudoTexto += `${PAYLOAD_GZIP_PREFIX}${payloadBase64}\n`;
 
-    // 4. Inserir ou atualizar o conteúdo no Google Doc
-    const requests = [];
-    try {
-      const currentDoc = await docs.documents.get({ documentId });
-      const bodyContent = currentDoc.data.body.content;
-      const endIndex = bodyContent[bodyContent.length - 1]?.endIndex || 1;
-      if (endIndex > 2) {
-        requests.push({
-          deleteContentRange: {
-            range: {
-              startIndex: 1,
-              endIndex: endIndex - 1,
-            },
+    logger.info(`📄 Conteúdo do backup gerado: ${conteudoTexto.length.toLocaleString()} caracteres`);
+
+    // 4. Inserir o conteúdo no Google Doc usando chunks
+    // Primeiro, obter o documento atual para saber o endIndex
+    logger.info('📖 Lendo documento atual...');
+    const currentDoc = await docs.documents.get({ documentId });
+    const bodyContent = currentDoc.data.body.content;
+    const lastElement = bodyContent[bodyContent.length - 1];
+    const endIndex = lastElement.endIndex;
+
+    logger.info(`📊 EndIndex atual do documento: ${endIndex}`);
+
+    // Limpar conteúdo existente (se houver)
+    if (endIndex > 2) {
+      logger.info('🗑️ Limpando conteúdo existente...');
+      try {
+        await docs.documents.batchUpdate({
+          documentId,
+          requestBody: {
+            requests: [{
+              deleteContentRange: {
+                range: {
+                  startIndex: 1,
+                  endIndex: endIndex - 1,
+                },
+              },
+            }],
           },
         });
+        logger.info('✅ Conteúdo existente removido');
+      } catch (e) {
+        logger.warn('⚠️ Erro ao limpar conteúdo existente: ' + e.message);
       }
-    } catch {
-      // Se falhar ao ler, assume documento vazio
     }
 
-    requests.push({
-      insertText: {
-        location: {
-          index: 1,
-        },
-        text: conteudoTexto,
-      },
-    });
+    // Dividir o conteúdo em chunks
+    const chunks = [];
+    for (let i = 0; i < conteudoTexto.length; i += CHUNK_SIZE) {
+      chunks.push(conteudoTexto.slice(i, i + CHUNK_SIZE));
+    }
 
-    await docs.documents.batchUpdate({
-      documentId,
-      requestBody: { requests },
-    });
+    logger.info(`📦 Enviando ${chunks.length} chunk(s) para o documento...`);
+
+    // Inserir cada chunk
+    for (let i = 0; i < chunks.length; i++) {
+      logger.info(`📝 Inserindo chunk ${i + 1}/${chunks.length} (${chunks[i].length.toLocaleString()} chars)...`);
+
+      try {
+        await docs.documents.batchUpdate({
+          documentId,
+          requestBody: {
+            requests: [{
+              insertText: {
+                // Insere sempre no FIM do corpo do documento.
+                // Usar `location: { index: 1 }` empurraria os chunks anteriores
+                // para frente, gravando-os em ordem inversa e corrompendo o
+                // payload Base64 de restauração.
+                endOfSegmentLocation: { segmentId: '' },
+                text: chunks[i],
+              },
+            }],
+          },
+        });
+        logger.info(`✅ Chunk ${i + 1} inserido com sucesso`);
+      } catch (chunkErr) {
+        logger.error(`❌ Erro ao inserir chunk ${i + 1}: ${chunkErr.message}`);
+        throw chunkErr;
+      }
+    }
 
     logger.info(`✅ Backup realizado com sucesso no Google Docs! Documento ID: ${documentId}`);
     return { success: true, documentId, title: tituloDoc };
