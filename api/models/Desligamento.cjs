@@ -80,7 +80,11 @@ DesligamentoSchema.index({ nome: 'text', cargo: 'text', departamento: 'text', ma
 
 const MongooseModel = mongoose.models.Desligamento || mongoose.model('Desligamento', DesligamentoSchema);
 
-const proxyModel = new Proxy({}, {
+// O target precisa ser uma função: um Proxy só expõe [[Construct]] quando o
+// próprio target é construtível. Com o target `{}` usado antes,
+// `new Desligamento(...)` lançava "Desligamento is not a constructor" ANTES de o
+// trap `construct` abaixo ser consultado, tornando-o código morto.
+const proxyModel = new Proxy(function () {}, {
   get(target, prop) {
     if (global.isMemoryFallback && typeof desligamentoStore[prop] === 'function') {
       return desligamentoStore[prop].bind(desligamentoStore);

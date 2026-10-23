@@ -1,6 +1,9 @@
+const crypto = require('crypto');
 const express = require('express');
 const router = express.Router();
 const Desligamento = require('../models/Desligamento.cjs');
+const Link = require('../models/Link.cjs');
+const User = require('../models/User.cjs');
 const { auth, authorize } = require('../middleware/auth.cjs');
 const validate = require('../middleware/validate.cjs');
 const { desligamentoCreateSchema } = require('../schemas/desligamentoSchema.cjs');
@@ -300,7 +303,7 @@ router.delete('/:id', auth, authorize('admin'), async (req, res, next) => {
 // ── POST /api/desligamentos/restore (Admin Only) ──────────────────────────
 router.post('/restore', auth, authorize('admin'), async (req, res, next) => {
   try {
-    const { desligamentos, links } = req.body;
+    const { desligamentos, links, users } = req.body;
 
     if (!Array.isArray(desligamentos)) {
       throw new ApiError(400, 'Formato de backup inválido: "desligamentos" deve ser um array.');
@@ -324,10 +327,94 @@ router.post('/restore', auth, authorize('admin'), async (req, res, next) => {
       restoredCount++;
     }
 
+    // ── Links ───────────────────────────────────────────────────────────────
+    // Cada item é tratado isoladamente: numa recuperação de desastre, um único
+    // registro corrompido não deve abortar a restauração inteira e deixá-la pela
+    // metade. O que falhar é relatado ao final.
+    // runValidators é obrigatório aqui: findOneAndUpdate NÃO roda validadores de
+    // schema por padrão, então sem ele um category fora do enum entraria calado.
+    const falhas = [];
+    let linksCount = 0;
+    if (Array.isArray(links)) {
+      for (const item of links) {
+        const { id, _id, createdAt, updatedAt, __v, ...itemData } = item;
+        const targetId = _id || id;
+
+        try {
+          if (targetId) {
+            await Link.findOneAndUpdate(
+              { _id: targetId },
+              itemData,
+              { upsert: true, setDefaultsOnInsert: true, runValidators: true }
+            );
+          } else {
+            await Link.create(itemData);
+          }
+          linksCount++;
+        } catch (e) {
+          falhas.push(`link "${itemData.label || targetId}": ${e.message}`);
+        }
+      }
+    }
+
+    // ── Usuários ────────────────────────────────────────────────────────────
+    // O backup NUNCA contém senhas: googleBackupService usa .select('-password'),
+    // e isso é intencional — hashes de senha não devem sair para um Google Doc.
+    // Logo:
+    //   • usuário já existente -> atualiza só nome/perfil, preservando a senha atual;
+    //   • usuário ausente      -> cria com senha aleatória inutilizável, e o acesso
+    //                             é recuperado via fluxo "Esqueci minha senha".
+    // Jamais gravamos uma senha previsível, o que tornaria toda conta restaurada
+    // (inclusive admin) acessível a quem conhecesse o código-fonte.
+    let usuariosAtualizados = 0;
+    const usuariosCriados = [];
+    if (Array.isArray(users)) {
+      for (const item of users) {
+        if (!item || !item.email) continue;
+
+        try {
+          const existente = await User.findOne({ email: item.email });
+
+          if (existente) {
+            if (item.name) existente.name = item.name;
+            if (item.role) existente.role = item.role;
+            // password não é tocado, então o hook pre('save') não re-hasheia nada.
+            await existente.save();
+            usuariosAtualizados++;
+          } else {
+            // User.create() dispara o hook pre('save'), que hasheia a senha.
+            await User.create({
+              ...(item._id ? { _id: item._id } : {}),
+              name: item.name || item.email,
+              email: item.email,
+              role: item.role || 'hr',
+              password: crypto.randomBytes(32).toString('hex'),
+            });
+            usuariosCriados.push(item.email);
+          }
+        } catch (e) {
+          falhas.push(`usuário "${item.email}": ${e.message}`);
+        }
+      }
+    }
+
+    const partes = [`${restoredCount} processos`];
+    if (linksCount) partes.push(`${linksCount} links`);
+    if (usuariosAtualizados) partes.push(`${usuariosAtualizados} usuário(s) atualizado(s)`);
+    if (usuariosCriados.length) partes.push(`${usuariosCriados.length} usuário(s) recriado(s)`);
+    if (falhas.length) partes.push(`${falhas.length} item(ns) com falha`);
+
     res.json({
       success: true,
-      message: `Backup restaurado com sucesso! ${restoredCount} processos processados.`,
-      restoredCount
+      message: `Backup restaurado! ${partes.join(', ')}.`,
+      restoredCount,
+      linksCount,
+      usuariosAtualizados,
+      usuariosCriados,
+      falhas,
+      avisoSenhas: usuariosCriados.length
+        ? 'Os usuários recriados não possuem senha utilizável. Cada um deve usar "Esqueci minha senha" na tela de login para definir uma nova.'
+        : null,
     });
   } catch (err) {
     next(err);

@@ -211,7 +211,7 @@ export function SettingsView() {
     if (!file) return;
 
     const ok = await showConfirm(
-      `Deseja restaurar o backup do arquivo "${file.name}"? Isso irá importar/atualizar todos os processos contidos no arquivo.`,
+      `Deseja restaurar o backup do arquivo "${file.name}"? Isso irá importar/atualizar os processos, links e usuários contidos no arquivo. Registros existentes que não estiverem no backup são preservados.`,
       { title: 'Restaurar Backup', confirmText: 'Restaurar', type: 'warning' }
     );
     if (!ok) {
@@ -228,13 +228,40 @@ export function SettingsView() {
           allDocs.push(...json);
         }
 
-        if (allDocs.length === 0) {
-          toast('Nenhum processo encontrado no arquivo de backup.', 'error');
+        const links = Array.isArray(json.links) ? json.links : [];
+        const users = Array.isArray(json.users) ? json.users : [];
+
+        if (allDocs.length === 0 && links.length === 0 && users.length === 0) {
+          toast('Nenhum dado encontrado no arquivo de backup.', 'error');
           return;
         }
 
-        const res = await api.restoreBackup({ desligamentos: allDocs });
+        const res = await api.restoreBackup({ desligamentos: allDocs, links, users });
         toast(res.message || 'Backup restaurado com sucesso!');
+
+        // Senhas não são incluídas no backup, então usuários recriados ficam sem
+        // credencial utilizável. Isso exige confirmação explícita do admin para
+        // não passar batido num toast.
+        if (res.avisoSenhas) {
+          await showConfirm(res.avisoSenhas, {
+            title: 'Atenção: acesso dos usuários recriados',
+            confirmText: 'Entendi',
+            type: 'warning',
+          });
+        }
+
+        // A restauração é tolerante a falhas por item, então o que não entrou
+        // precisa ser mostrado — senão o admin acredita que recuperou tudo.
+        if (Array.isArray(res.falhas) && res.falhas.length > 0) {
+          const amostra = res.falhas.slice(0, 15).join('\n');
+          const resto = res.falhas.length > 15 ? `\n\n...e mais ${res.falhas.length - 15}.` : '';
+          await showConfirm(`Os seguintes itens não puderam ser restaurados:\n\n${amostra}${resto}`, {
+            title: `${res.falhas.length} item(ns) não restaurado(s)`,
+            confirmText: 'Entendi',
+            type: 'warning',
+          });
+        }
+
         await actions.fetchAll();
         await actions.fetchArchived();
       } catch (err) {

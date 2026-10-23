@@ -27,7 +27,11 @@ const { linkStore } = require('../utils/memoryStore.cjs');
 
 const MongooseModel = mongoose.models.Link || mongoose.model('Link', LinkSchema);
 
-const proxyModel = new Proxy({}, {
+// O target precisa ser uma função: um Proxy só expõe [[Construct]] quando o
+// próprio target é construtível. Com o target `{}` usado antes, `new Link(...)`
+// lançava "Link is not a constructor" ANTES de o trap `construct` abaixo ser
+// consultado, tornando-o código morto.
+const proxyModel = new Proxy(function () {}, {
   get(target, prop) {
     if (global.isMemoryFallback && typeof linkStore[prop] === 'function') {
       return linkStore[prop].bind(linkStore);

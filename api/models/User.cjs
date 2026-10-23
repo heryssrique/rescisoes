@@ -21,7 +21,11 @@ const { userStore } = require('../utils/memoryStore.cjs');
 
 const MongooseModel = mongoose.models.User || mongoose.model('User', UserSchema);
 
-const proxyModel = new Proxy({}, {
+// O target precisa ser uma função: um Proxy só expõe [[Construct]] quando o
+// próprio target é construtível. Com o target `{}` usado antes, `new User(...)`
+// lançava "User is not a constructor" ANTES de o trap `construct` abaixo ser
+// consultado, tornando-o código morto.
+const proxyModel = new Proxy(function () {}, {
   get(target, prop) {
     if (global.isMemoryFallback && typeof userStore[prop] === 'function') {
       return userStore[prop].bind(userStore);
